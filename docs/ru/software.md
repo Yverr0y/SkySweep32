@@ -100,6 +100,9 @@ curl -X POST http://192.168.4.1/api/ota \
 | `/api/config` | POST | Обновить конфигурацию |
 | `/api/config/reset` | POST | Сброс конфигурации |
 | `/api/ota` | POST | Загрузка прошивки |
+| `/api/power` | POST | Установка режима питания (`?mode=0-3`) |
+| `/api/logs` | GET | Получить список логов с SD-карты (JSON-массив) |
+| `/api/logs/download` | GET | Скачать лог-файл с SD-карты (`?file=filename`) |
 | `/ws` | WebSocket | Поток данных |
 
 ---

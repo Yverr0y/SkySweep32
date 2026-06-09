@@ -5,6 +5,9 @@
 #include <Update.h>
 #include "config_manager.h"
 #include "power_manager.h"
+#ifdef MODULE_SD_CARD
+#include <SD.h>
+#endif
 
 // ============================================================================
 // Dashboard HTML (stored in PROGMEM to save RAM)

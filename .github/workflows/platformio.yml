@@ -3,8 +3,13 @@ name: PlatformIO CI
 on:
   push:
     branches: [ master, develop ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ master ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -33,16 +38,27 @@ jobs:
         python -m pip install --upgrade pip
         pip install platformio
     
-    - name: Build firmware
-      run: pio run
+    - name: Build Tiers
+      run: |
+        pio run -e esp32dev_base
+        pio run -e esp32dev_standard
+        pio run -e esp32dev_pro
     
-    - name: Build with countermeasures enabled
-      run: pio run -e esp32dev
-      env:
-        PLATFORMIO_BUILD_FLAGS: -DENABLE_COUNTERMEASURES
+    - name: Prepare Release Artifacts
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        mkdir -p build_artifacts
+        cp .pio/build/esp32dev_base/firmware.bin build_artifacts/SkySweep32_Starter_${{ github.ref_name }}.bin
+        cp .pio/build/esp32dev_standard/firmware.bin build_artifacts/SkySweep32_Hunter_${{ github.ref_name }}.bin
+        cp .pio/build/esp32dev_pro/firmware.bin build_artifacts/SkySweep32_Sentinel_${{ github.ref_name }}.bin
     
-    - name: Archive firmware
-      uses: actions/upload-artifact@v3
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
       with:
-        name: firmware
-        path: .pio/build/esp32dev/firmware.bin
+        files: |
+          build_artifacts/SkySweep32_Starter_${{ github.ref_name }}.bin
+          build_artifacts/SkySweep32_Hunter_${{ github.ref_name }}.bin
+          build_artifacts/SkySweep32_Sentinel_${{ github.ref_name }}.bin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,4 +5,4 @@ The project is currently stable at `v0.5.0`.
 
 ## Future Considerations
 - [ ] Implement TFLite Machine Learning Model using collected `SignalDatabase` sets (Requires community datasets)
-- [ ] Complete LoRa Mesh multi-node triangulation math (ToD/RSSI) for operator localization
+- [x] Complete LoRa Mesh multi-node triangulation math (ToD/RSSI) for operator localization (Done in v0.5.0: added trilateration solver inside MeshtasticClient)

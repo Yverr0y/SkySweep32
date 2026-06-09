@@ -64,6 +64,7 @@ public:
     void setTransmitInterval(uint32_t intervalMs);
     int16_t getLastRSSI() const;
     float getLastSNR() const;
+    bool triangulateThreat(const char* droneID, double& outLat, double& outLon);
 };
 
 #endif // MODULE_LORA

@@ -4,22 +4,22 @@
 
 ### Core RF Detection Modules
 
-| Component | Quantity | Specifications | Approx. Cost |
-|-----------|----------|----------------|--------------|
-| ESP32 DevKit | 1 | 240MHz dual-core, WiFi/BT, 520KB RAM | $5-10 |
-| CC1101 Module | 1 | 300-928MHz transceiver | $3-5 |
-| NRF24L01+ Module | 1 | 2.4GHz transceiver with PA+LNA | $2-4 |
-| RX5808 Module | 1 | 5.8GHz video receiver | $3-5 |
-| OLED Display | 1 | 128x64 I2C SSD1306 | $3-5 |
+| Component | Specifications | Quick Search / Buy Links | Common Pitfalls & Notes | Approx. Cost |
+|-----------|----------------|--------------------------|-------------------------|--------------|
+| **ESP32 DevKit V1** | 240MHz dual-core, WiFi/BT, 520KB RAM | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=ESP32+DevKit+V1+30P) / [Amazon](https://www.amazon.com/s?k=ESP32+DevKit+V1+30pin) | ⚠️ Do NOT buy **ESP8266** or **ESP32-S2/S3/C3** unless you are an expert, as the pin layout is completely different. | $5-10 |
+| **CC1101 Module** (8-pin SPI) | 300-928MHz transceiver | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=CC1101+8pin+915mhz) / [Amazon](https://www.amazon.com/s?k=CC1101+915mhz+8pin) | Make sure it's the standard **8-pin SPI version**. Buy the frequency matching your region (e.g. 868MHz for EU, 915MHz for US/UA). | $3-5 |
+| **NRF24L01+ Module** (PA+LNA) | 2.4GHz transceiver | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=NRF24L01%2B+PA+LNA) / [Amazon](https://www.amazon.com/s?k=NRF24L01%2B+PA+LNA) | Must have a **`+`** (plus) in the name. Get the version with external antenna and shielding for better range. | $2-4 |
+| **RX5808 Module** (5.8G) | 5.8GHz video receiver | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=RX5808+module) / [Amazon](https://www.amazon.com/s?k=RX5808+receiver+module) | Standard FPV receiver. Note: Some modules require bridging a jumper/resistor to enable SPI mode. | $3-5 |
+| **OLED Display** (SSD1306) | 128x64 I2C SSD1306 | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=0.96+OLED+I2C+SSD1306) / [Amazon](https://www.amazon.com/s?k=0.96+OLED+I2C+SSD1306) | Ensure it has **4 pins** (VCC, GND, SCL, SDA). Do NOT buy the 7-pin SPI version. | $3-5 |
 
 ### New Feature Modules (6 Enhancements)
 
-| Component | Quantity | Specifications | Purpose | Approx. Cost |
-|-----------|----------|----------------|---------|--------------|
-| GPS Module NEO-6M/7M | 1 | UART, 1Hz-10Hz update rate | Geolocation tracking | $8-12 |
-| LoRa SX1276 Module | 1 | 915MHz, LoRa modulation | Meshtastic mesh | $6-10 |
-| MicroSD Card Module | 1 | SPI interface, supports up to 32GB | Data logging | $2-4 |
-| MicroSD Card | 1 | 8-32GB Class 10 | Log storage | $5-10 |
+| Component | Specifications | Quick Search / Buy Links | Common Pitfalls & Notes | Purpose | Approx. Cost |
+|-----------|----------------|--------------------------|-------------------------|---------|--------------|
+| **GPS Module** (NEO-6M/7M) | UART, 1Hz-10Hz update rate | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=NEO-6M+GPS+module) / [Amazon](https://www.amazon.com/s?k=NEO-6M+GPS+module) | Ensure it comes with a ceramic patch antenna. | Geolocation tracking | $8-12 |
+| **LoRa SX1276 Module** | 915MHz (US/UA) or 868MHz (EU) SPI | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=SX1276+LoRa+module+915mhz) / [Amazon](https://www.amazon.com/s?k=SX1276+LoRa+module+915mhz) | Buy the correct frequency for your region. Must be SPI interface. | Meshtastic mesh | $6-10 |
+| **MicroSD Card Module** | SPI interface, supports up to 32GB | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=MicroSD+card+module+SPI) / [Amazon](https://www.amazon.com/s?k=MicroSD+card+module+SPI) | Choose the SPI interface module, not SDIO. | Data logging | $2-4 |
+| **MicroSD Card** | 8-32GB Class 10 | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=micro+sd+card+16gb) / [Amazon](https://www.amazon.com/s?k=micro+sd+card+16gb) | Needs to be formatted as FAT32 before use. | Log storage | $5-10 |
 
 ### Supporting Components
 
@@ -69,7 +69,7 @@ Each SPI device needs a unique CS pin:
 | NRF24L01+ | GPIO 15 | CSN | Base+ |
 | CC1101 | GPIO 5 | CSN/SS | Standard+ |
 | RX5808 | GPIO 13 | CS | Standard+ |
-| LoRa SX1276 | GPIO 26 | NSS | Pro |
+| LoRa SX1276 | GPIO 14 | NSS | Pro |
 | SD Card | GPIO 27 | CS | Pro |
 
 ### 4. NRF24L01+ CE Pin
@@ -122,12 +122,14 @@ Each SPI device needs a unique CS pin:
 | GPIO 23 | MOSI |
 | GPIO 19 | MISO |
 | GPIO 18 | SCK |
-| GPIO 26 | NSS/CS |
+| GPIO 14 | NSS/CS |
 | GPIO 33 | DIO0 |
 | GPIO 32 | DIO1 |
-| GPIO 25 | RST |
+| GPIO 12 | RST |
 | 3.3V | VCC |
 | GND | GND |
+
+**Note**: LoRa CS (GPIO 14) and RESET (GPIO 12) share pins with the optional I2S Microphone (BCLK & WS). You cannot use both LoRa and Acoustic Detection simultaneously on the same board without custom pin reassignments.
 
 ### 10. Optional Peripherals (Alerts & Power)
 

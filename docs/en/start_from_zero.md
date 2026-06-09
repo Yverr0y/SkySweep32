@@ -7,12 +7,23 @@ Here we will assemble the basic version of the drone detector (Starter Tier) wit
 
 ## 🛒 Step 1: What do I need to buy?
 
-You only need to buy 4 items (available at any electronics store or Amazon/AliExpress):
+To make sure you do not purchase the wrong variations, use the search links below and read the descriptions carefully:
 
-1. **The Brain:** `ESP32 DevKit V1` Board (Usually a black board the size of a flash drive, with a Type-C or MicroUSB port. Get the 30-pin or 38-pin version).
-2. **The Ears (Radio Module):** `NRF24L01+` Module (It's best to get the black board with a screw-on antenna, look for "NRF24L01+ PA+LNA").
-3. **The Face (Screen):** `0.96 inch OLED Display, I2C` (A small blue/white screen with 4 pins at the bottom).
-4. **The Wires:** A bundle of `Dupont jumper wires (Female-to-Female)` (Wires with holes on both ends to slip over the pins).
+1. **The Brain:** **`ESP32 DevKit V1` Board**
+   - *Description:* A black board the size of a flash drive with a micro-USB or USB-C port, and two rows of pins (usually 30 or 38 pins).
+   - *Search Links:* [AliExpress](https://www.aliexpress.com/wholesale?SearchText=ESP32+DevKit+V1+30P) | [Amazon](https://www.amazon.com/s?k=ESP32+DevKit+V1+30pin)
+   - *⚠️ Common Pitfall:* Do **NOT** buy the ESP8266, Arduino Nano, or ESP32-S2/S3/C3 unless you know what you are doing (the pins and chips are completely different).
+2. **The Ears (Radio Module):** **`NRF24L01+` Module**
+   - *Description:* Look for the black board with a screw-on antenna (called "NRF24L01+ PA+LNA" for long range). You can also buy the smaller version with a gold zig-zag PCB antenna, but its range is much shorter.
+   - *Search Links:* [AliExpress](https://www.aliexpress.com/wholesale?SearchText=NRF24L01%2B+PA+LNA) | [Amazon](https://www.amazon.com/s?k=NRF24L01%2B+PA+LNA)
+   - *⚠️ Common Pitfall:* Make sure the model name has a **`+`** (plus) sign (NRF24L01+). The older non-plus version lacks the required scanning speed features.
+3. **The Face (Screen):** **`0.96 inch OLED Display (I2C)`**
+   - *Description:* A tiny screen with 4 pins at the top or bottom labeled `GND`, `VCC`, `SCL`, `SDA`.
+   - *Search Links:* [AliExpress](https://www.aliexpress.com/wholesale?SearchText=0.96+OLED+I2C+SSD1306) | [Amazon](https://www.amazon.com/s?k=0.96+OLED+I2C+SSD1306)
+   - *⚠️ Common Pitfall:* Ensure it has exactly **4 pins**. Do **NOT** buy the 7-pin SPI version.
+4. **The Wires:** **`Dupont Jumper Wires (Female-to-Female)`**
+   - *Description:* A ribbon of wires that can be peeled apart, with plastic rectangular holes on both ends to snap onto pins without soldering.
+   - *Search Links:* [AliExpress](https://www.aliexpress.com/wholesale?SearchText=dupont+wire+female+to+female) | [Amazon](https://www.amazon.com/s?k=dupont+wire+female+to+female)
 
 ---
 
@@ -108,7 +119,7 @@ You have the hardware assembled, but it's empty. You need to pour the program in
 5. A black window will appear and automatically find your board. Press the number **1** (for Starter Tier) and hit Enter.
 6. You will see percentages scrolling by for about 1 minute. **You are done!** The text "SkySweep32" should light up on the screen of your device.
 
-*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.4.0.bin` file from the `releases` folder, and click Program).*
+*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.5.0.bin` file from the `releases` folder, and click Program).*
 
 ## 📱 Step 4: How to use the Radar (Web Dashboard)
 

@@ -114,10 +114,10 @@
 #define GPS_UPDATE_INTERVAL 1000
 
 // --- LoRa SX1276 ---
-#define PIN_LORA_CS         14    // Changed from 26
+#define PIN_LORA_CS         14    // Changed from 26 (Conflicts with I2S BCLK if both are enabled)
 #define PIN_LORA_DIO0       33
 #define PIN_LORA_DIO1       32
-#define PIN_LORA_RESET      12    // Changed from 25
+#define PIN_LORA_RESET      12    // Changed from 25 (Conflicts with I2S WS if both are enabled)
 
 // --- VCO DACs (Juggernaut) ---
 #define PIN_VCO_DAC_1       25
@@ -127,6 +127,8 @@
 #define PIN_SD_CS           27
 
 // --- I2S Microphone (Acoustic Detection) ---
+// Note: Shares GPIO 14 and 12 with LoRa. Do not enable both MODULE_LORA and MODULE_ACOUSTIC
+// at the same time unless you reassign one of them to other unused pins.
 #define PIN_I2S_BCLK        14
 #define PIN_I2S_WS          12
 #define PIN_I2S_DIN         35    // ADC1_CH7 (input only pin)
@@ -228,7 +230,7 @@
 // VERSION
 // ============================================================================
 
-#define SKYSWEEP_VERSION        "0.4.0"
+#define SKYSWEEP_VERSION        "0.5.0"
 #define SKYSWEEP_BUILD_DATE     __DATE__
 
 // ============================================================================

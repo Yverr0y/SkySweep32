@@ -115,19 +115,29 @@ ESP32 → OLED:
 |-----------|--------|------|
 | MEMS-микрофон | ICS-43434 (I2S) | ~500₽ |
 
+**Подключение**:
+```
+ESP32 → ICS-43434:
+  GPIO 14 (BCLK) → BCLK
+  GPIO 12 (WS)   → WS
+  GPIO 35 (DIN)  → DOUT
+```
+
 **Активация**: Добавьте `-DMODULE_ACOUSTIC` в `platformio.ini`
 
 ---
 
 ## 📍 Полная карта пинов
 
+> ⚠️ **Конфликт пинов**: Так как у ESP32 DevKit V1 ограничено количество контактов, модуль **LoRa** и опциональный **I2S микрофон** делят между собой пины GPIO 12 и GPIO 14. Если вы хотите использовать и `MODULE_LORA`, и `MODULE_ACOUSTIC` одновременно, вам потребуется переназначить один из них на свободные контакты в `config.h`.
+
 | Пин | Функция | Уровень |
 |-----|---------|---------|
 | GPIO 2 | NRF24L01+ CE | Base+ |
 | GPIO 5 | CC1101 CS | Standard+ |
-| GPIO 12 | LoRa RESET | Pro |
+| GPIO 12 | LoRa RESET / I2S WS (Acoustic) | Pro / Опц. (Конфликт) |
 | GPIO 13 | RX5808 CS | Standard+ |
-| GPIO 14 | LoRa CS | Pro |
+| GPIO 14 | LoRa CS / I2S BCLK (Acoustic) | Pro / Опц. (Конфликт) |
 | GPIO 15 | NRF24L01+ CS | Base+ |
 | GPIO 16 | GPS RX (UART2) | Pro |
 | GPIO 17 | GPS TX (UART2) | Pro |

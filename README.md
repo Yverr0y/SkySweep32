@@ -54,7 +54,7 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 | Display | OLED 128x64 (I2C) | - | Visual interface |
 | Microphone (optional) | ICS-43434 MEMS | I2S | Acoustic detection |
 
-### Pinout Configuration (v0.3.0 — Conflict-Free)
+### Pinout Configuration (v0.5.0 — Conflict-Free)
 
 #### SPI Bus (Shared)
 | Signal | ESP32 Pin |
@@ -195,7 +195,7 @@ SkySweep32 — продвинутая система пассивного обн
 | Дисплей | OLED 128x64 | - | Визуальный интерфейс |
 | Индикация | Passive Buzzer | - | Алерты и ошибки |
 
-### Распиновка (Бесконфликтная v0.4.0)
+### Распиновка (Бесконфликтная v0.5.0)
 
 #### Шина SPI (общая)
 | Сигнал | Пин ESP32 |

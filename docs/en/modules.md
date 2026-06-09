@@ -130,10 +130,10 @@ ESP32 → SX1276 LoRa:
   GPIO 23 (MOSI) → MOSI  (shared SPI)
   GPIO 19 (MISO) → MISO  (shared SPI)
   GPIO 18 (SCK)  → SCK   (shared SPI)
-  GPIO 26 (CS)   → NSS
+  GPIO 14 (CS)   → NSS
   GPIO 33 (DIO0) → DIO0
   GPIO 32 (DIO1) → DIO1
-  GPIO 25 (RST)  → RESET
+  GPIO 12 (RST)  → RESET
   3.3V           → VCC
   GND            → GND
 ```
@@ -195,13 +195,15 @@ build_flags = -DTIER_BASE -DMODULE_GPS
 
 ## 📍 Complete Pin Map (All Tiers)
 
+> ⚠️ **Pin Conflict Alert**: Since the ESP32 DevKit V1 has a limited number of pins, **LoRa** and the optional **Acoustic Detection microphone** share GPIO 12 and GPIO 14. If you enable both `MODULE_LORA` and `MODULE_ACOUSTIC` simultaneously, you must reassign one of them to other unused pins in `config.h`.
+
 | Pin | Function | Tier |
 |-----|----------|------|
 | GPIO 2 | NRF24L01+ CE | Base+ |
 | GPIO 5 | CC1101 CS | Standard+ |
-| GPIO 12 | I2S WS (Acoustic) | Optional |
+| GPIO 12 | LoRa RESET / I2S WS (Acoustic) | Pro / Optional (Conflict) |
 | GPIO 13 | RX5808 CS | Standard+ |
-| GPIO 14 | I2S BCLK (Acoustic) | Optional |
+| GPIO 14 | LoRa CS / I2S BCLK (Acoustic) | Pro / Optional (Conflict) |
 | GPIO 15 | NRF24L01+ CS | Base+ |
 | GPIO 16 | GPS RX (UART2) | Pro |
 | GPIO 17 | GPS TX (UART2) | Pro |
@@ -210,8 +212,8 @@ build_flags = -DTIER_BASE -DMODULE_GPS
 | GPIO 21 | I2C SDA (OLED) | Base+ |
 | GPIO 22 | I2C SCL (OLED) | Base+ |
 | GPIO 23 | SPI MOSI | Base+ |
-| GPIO 25 | LoRa RESET | Pro |
-| GPIO 26 | LoRa CS | Pro |
+| GPIO 25 | VCO DAC 1 Output | Juggernaut |
+| GPIO 26 | VCO DAC 2 Output | Juggernaut |
 | GPIO 27 | SD Card CS | Pro |
 | GPIO 32 | LoRa DIO1 | Pro |
 | GPIO 33 | LoRa DIO0 | Pro |

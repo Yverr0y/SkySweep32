@@ -91,7 +91,7 @@ SPI Devices:
 ├── CC1101    CS=GPIO 5   [Standard+]
 ├── NRF24L01+ CS=GPIO 15  [Base+]
 ├── RX5808    CS=GPIO 13  [Standard+]
-├── LoRa      CS=GPIO 26  [Pro]
+├── LoRa      CS=GPIO 14  [Pro] (Changed in v0.4.0)
 └── SD Card   CS=GPIO 27  [Pro]
 ```
 

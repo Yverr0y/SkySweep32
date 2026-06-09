@@ -4,22 +4,22 @@
 
 ### Основные РЧ-модули обнаружения
 
-| Компонент | Количество | Характеристики | Примерная стоимость |
-|-----------|------------|----------------|---------------------|
-| ESP32 DevKit | 1 | 240МГц dual-core, WiFi/BT, 520KB RAM | $5-10 |
-| Модуль CC1101 | 1 | Трансивер 300-928МГц | $3-5 |
-| Модуль NRF24L01+ | 1 | Трансивер 2.4ГГц с PA+LNA | $2-4 |
-| Модуль RX5808 | 1 | Видеоприемник 5.8ГГц | $3-5 |
-| OLED-дисплей | 1 | 128x64 I2C SSD1306 | $3-5 |
+| Компонент | Характеристики | Ссылки для поиска и покупки | Частые ошибки и примечания | Примерная стоимость |
+|-----------|----------------|-----------------------------|----------------------------|---------------------|
+| **ESP32 DevKit V1** | 240МГц dual-core, WiFi/BT, 520KB RAM | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=ESP32+DevKit+V1+30P) / [Amazon](https://www.amazon.com/s?k=ESP32+DevKit+V1+30pin) | ⚠️ **НЕ** покупайте **ESP8266** или **ESP32-S2/S3/C3** (если не уверены), у них другая распиновка. | $5-10 |
+| **Модуль CC1101** (8-pin SPI) | Трансивер 300-928МГц | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=CC1101+8pin+915mhz) / [Amazon](https://www.amazon.com/s?k=CC1101+915mhz+8pin) | Убедитесь, что это стандартная **8-пиновая SPI-плата**. Покупайте частоту для своего региона (например, 868МГц для Европы, 915МГц для UA/RU/US). | $3-5 |
+| **Модуль NRF24L01+** (PA+LNA) | Трансивер 2.4ГГц | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=NRF24L01%2B+PA+LNA) / [Amazon](https://www.amazon.com/s?k=NRF24L01%2B+PA+LNA) | Должен иметь **`+`** (плюс) в названии. Берите версию с внешней антенной и металлическим экраном для лучшей дальности. | $2-4 |
+| **Модуль RX5808** (5.8ГГц) | Видеоприемник 5.8ГГц | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=RX5808+module) / [Amazon](https://www.amazon.com/s?k=RX5808+receiver+module) | Обычный FPV приемник. Примечание: на некоторых модулях нужно запаять/замкнуть контакты для включения SPI-режима. | $3-5 |
+| **OLED-дисплей** (SSD1306) | 128x64 I2C SSD1306 | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=0.96+OLED+I2C+SSD1306) / [Amazon](https://www.amazon.com/s?k=0.96+OLED+I2C+SSD1306) | Убедитесь, что экран имеет **4 контакта** (VCC, GND, SCL, SDA). Не берите 7-контактный SPI дисплей. | $3-5 |
 
 ### Новые модули (6 улучшений)
 
-| Компонент | Количество | Характеристики | Назначение | Примерная стоимость |
-|-----------|------------|----------------|------------|---------------------|
-| GPS-модуль NEO-6M/7M | 1 | UART, обновление 1-10Гц | Геолокация | $8-12 |
-| LoRa модуль SX1276 | 1 | 915МГц, модуляция LoRa | Meshtastic mesh | $6-10 |
-| Модуль MicroSD | 1 | Интерфейс SPI, до 32ГБ | Логирование данных | $2-4 |
-| Карта MicroSD | 1 | 8-32ГБ Class 10 | Хранилище логов | $5-10 |
+| Компонент | Характеристики | Ссылки для поиска и покупки | Частые ошибки и примечания | Назначение | Примерная стоимость |
+|-----------|----------------|-----------------------------|----------------------------|------------|---------------------|
+| **GPS-модуль** (NEO-6M/7M) | UART, обновление 1-10Гц | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=NEO-6M+GPS+module) / [Amazon](https://www.amazon.com/s?k=NEO-6M+GPS+module) | Должен идти в комплекте с керамической патч-антенной. | Геолокация | $8-12 |
+| **LoRa модуль SX1276** | 915МГц (UA/RU) или 868МГц (EU) SPI | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=SX1276+LoRa+module+915mhz) / [Amazon](https://www.amazon.com/s?k=SX1276+LoRa+module+915mhz) | Покупайте правильную частоту для региона. Интерфейс должен быть именно SPI. | Meshtastic mesh | $6-10 |
+| **Модуль MicroSD** | Интерфейс SPI, до 32ГБ | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=MicroSD+card+module+SPI) / [Amazon](https://www.amazon.com/s?k=MicroSD+card+module+SPI) | Выбирайте модуль с интерфейсом SPI, а не SDIO. | Логирование данных | $2-4 |
+| **Карта MicroSD** | 8-32ГБ Class 10 | [AliExpress](https://www.aliexpress.com/wholesale?SearchText=micro+sd+card+16gb) / [Amazon](https://www.amazon.com/s?k=micro+sd+card+16gb) | Перед использованием должна быть отформатирована в FAT32. | Хранилище логов | $5-10 |
 
 ### Вспомогательные компоненты
 
@@ -69,7 +69,7 @@
 | NRF24L01+ | GPIO 15 | CSN | Base+ |
 | CC1101 | GPIO 5 | CSN/SS | Standard+ |
 | RX5808 | GPIO 13 | CS | Standard+ |
-| LoRa SX1276 | GPIO 26 | NSS | Pro |
+| LoRa SX1276 | GPIO 14 | NSS | Pro |
 | SD Card | GPIO 27 | CS | Pro |
 
 ### 4. Пин CE для NRF24L01+
@@ -122,12 +122,14 @@
 | GPIO 23 | MOSI |
 | GPIO 19 | MISO |
 | GPIO 18 | SCK |
-| GPIO 26 | NSS/CS |
+| GPIO 14 | NSS/CS |
 | GPIO 33 | DIO0 |
 | GPIO 32 | DIO1 |
-| GPIO 25 | RST |
+| GPIO 12 | RST |
 | 3.3V | VCC |
 | GND | GND |
+
+**Примечание**: Пины LoRa CS (GPIO 14) и RESET (GPIO 12) делят ресурсы со входами опционального I2S-микрофона (BCLK и WS). Не используйте LoRa и акустическое обнаружение одновременно на одной плате без переназначения пинов в `config.h`.
 
 ### 10. Дополнительная периферия (Оповещения и Питание)
 

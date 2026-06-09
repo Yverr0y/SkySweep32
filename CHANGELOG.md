@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-09
+
+### Added
+- **SD Card Logs Web UI**: Added dynamic card in web dashboard allowing users to list and download raw forensic logs directly from their browser (requires active SD card module).
+- **LoRa Mesh Triangulation Math**: Implemented RSSI-based trilateration solver inside `MeshtasticClient` to calculate and log the approximate geographic position of a detected operator/drone using reports from multiple nodes.
+
+### Fixed
+- **Pro Tier Compile Bug**: Fixed missing `<SD.h>` include in `src/web_server.cpp` when compiling with `MODULE_SD_CARD` enabled.
+- **License Alignment**: Corrected landing page license references from MIT to GNU General Public License v3.0 to match the repository's license.
+- **GitHub Pages Jekyll Errors**: Added `.nojekyll` bypass to prevent Jekyll from causing compilation failures on index.html assets.
+
 ## [0.5.0] - 2026-03-28
 
 ### Added

@@ -6,7 +6,6 @@
 
 #ifdef MODULE_ML
 #include <EloquentTinyML.h>
-#include <eloquent_tinyml/tensorflow.h>
 #include "model_data.h"
 
 enum DroneClassification {

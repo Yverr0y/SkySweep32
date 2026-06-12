@@ -8,6 +8,7 @@
 #include "spi_manager.h"
 #include "countermeasures.h"
 #include "alert_manager.h"
+#include "signal_database.h"
 #include "espnow_mesh.h"
 #ifdef MODULE_ATAK
 #include "atak_client.h"

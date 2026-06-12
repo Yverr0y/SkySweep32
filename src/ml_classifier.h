@@ -5,6 +5,9 @@
 #include "config.h"
 
 #ifdef MODULE_ML
+#include <EloquentTinyML.h>
+#include <eloquent_tinyml/tensorflow.h>
+#include "model_data.h"
 
 enum DroneClassification {
     CLASS_UNKNOWN = 0,
@@ -47,6 +50,8 @@ private:
     bool modelLoaded;
     float inputBuffer[ML_INPUT_SIZE];
     float outputBuffer[ML_OUTPUT_SIZE];
+    
+    Eloquent::TinyML::TfLite<ML_INPUT_SIZE, ML_OUTPUT_SIZE, 8 * 1024> ml;
     
     // Rule-based classification
     ClassificationResult classifyRuleBased(const RFFeatures& features);

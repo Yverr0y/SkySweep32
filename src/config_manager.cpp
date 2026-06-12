@@ -39,6 +39,9 @@ void ConfigManager::setDefaults() {
     
     // Countermeasures
     cfg.countermeasuresArmed = false;
+    
+    // Stealth
+    cfg.stealthMode = false;
 }
 
 bool ConfigManager::begin() {
@@ -117,6 +120,9 @@ bool ConfigManager::load() {
     // Countermeasures
     if (doc.containsKey("cmArmed")) cfg.countermeasuresArmed = doc["cmArmed"];
     
+    // Stealth
+    if (doc.containsKey("stealthMode")) cfg.stealthMode = doc["stealthMode"];
+    
     return true;
 }
 
@@ -162,6 +168,9 @@ bool ConfigManager::save() {
     
     // Countermeasures
     doc["cmArmed"] = cfg.countermeasuresArmed;
+    
+    // Stealth
+    doc["stealthMode"] = cfg.stealthMode;
     
     size_t written = serializeJsonPretty(doc, file);
     file.close();
@@ -222,6 +231,8 @@ String ConfigManager::toJSON() const {
     
     doc["logLevel"] = cfg.logLevel;
     
+    doc["stealthMode"] = cfg.stealthMode;
+    
     String output;
     serializeJson(doc, output);
     return output;
@@ -245,6 +256,7 @@ bool ConfigManager::fromJSON(const char* json) {
     
     if (doc.containsKey("rfScanMs")) cfg.rfScanIntervalMs = doc["rfScanMs"];
     if (doc.containsKey("logLevel")) cfg.logLevel = doc["logLevel"];
+    if (doc.containsKey("stealthMode")) cfg.stealthMode = doc["stealthMode"];
     
     return save();
 }
@@ -258,4 +270,5 @@ void ConfigManager::printConfig() const {
     Serial.printf("RF Scan: %lu ms\n", cfg.rfScanIntervalMs);
     Serial.printf("LoRa: %.1f MHz @ %d dBm\n", cfg.loraFrequency, cfg.loraTxPower);
     Serial.printf("Log Level: %d\n", cfg.logLevel);
+    Serial.printf("Stealth Mode: %s\n", cfg.stealthMode ? "ON" : "OFF");
 }

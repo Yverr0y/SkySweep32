@@ -1,4 +1,5 @@
 #include "alert_manager.h"
+#include "config_manager.h"
 
 AlertManager alertManager;
 
@@ -24,6 +25,11 @@ void AlertManager::begin(bool enableBuzzer, bool enableLed) {
         Serial.printf("[ALERT] LED enabled on GPIO%d\n", PIN_ALERT_LED);
     }
     
+#ifdef PIN_VIBRATION
+    pinMode(PIN_VIBRATION, OUTPUT);
+    digitalWrite(PIN_VIBRATION, LOW);
+#endif
+    
     // Startup chirp
     if (buzzerEnabled && !isMuted) {
         playTone(1000, 50);
@@ -40,6 +46,9 @@ void AlertManager::update() {
         if (toneEndTime > 0 && now >= toneEndTime) {
             // Tone just ended
             noTone(PIN_BUZZER);
+#ifdef PIN_VIBRATION
+            digitalWrite(PIN_VIBRATION, LOW);
+#endif
             toneEndTime = 0;
             
             beepsRemaining--;
@@ -49,7 +58,11 @@ void AlertManager::update() {
             }
         } else if (toneEndTime == 0 && now - lastToggle >= beepGapMs) {
             // Gap ended, play next beep
-            if (buzzerEnabled && !isMuted) {
+            if (configManager.get().stealthMode) {
+#ifdef PIN_VIBRATION
+                digitalWrite(PIN_VIBRATION, HIGH);
+#endif
+            } else if (buzzerEnabled && !isMuted) {
                 tone(PIN_BUZZER, beepFreq, beepDurationMs);
             }
             toneEndTime = now + beepDurationMs;
@@ -57,7 +70,7 @@ void AlertManager::update() {
     }
     
     // Handle LED patterns
-    if (ledEnabled && currentAlert != ALERT_NONE) {
+    if (ledEnabled && !configManager.get().stealthMode && currentAlert != ALERT_NONE) {
         uint32_t now = millis();
         uint16_t blinkRate;
         
@@ -121,6 +134,9 @@ void AlertManager::clearAlert() {
     if (buzzerEnabled) {
         noTone(PIN_BUZZER);
     }
+#ifdef PIN_VIBRATION
+    digitalWrite(PIN_VIBRATION, LOW);
+#endif
     if (ledEnabled) {
         digitalWrite(PIN_ALERT_LED, LOW);
         ledState = false;
@@ -138,11 +154,33 @@ void AlertManager::startPattern(uint16_t freq, uint8_t count, uint16_t durMs, ui
 }
 
 void AlertManager::playTone(uint16_t freq, uint16_t durationMs) {
+    if (configManager.get().stealthMode) {
+#ifdef PIN_VIBRATION
+        digitalWrite(PIN_VIBRATION, HIGH);
+        delay(durationMs);
+        digitalWrite(PIN_VIBRATION, LOW);
+#endif
+        return;
+    }
     if (!buzzerEnabled || isMuted) return;
     tone(PIN_BUZZER, freq, durationMs);
 }
 
 void AlertManager::beep(uint8_t count, uint16_t freq) {
+    if (configManager.get().stealthMode) {
+        for (uint8_t i = 0; i < count; i++) {
+#ifdef PIN_VIBRATION
+            digitalWrite(PIN_VIBRATION, HIGH);
+#endif
+            delay(80);
+#ifdef PIN_VIBRATION
+            digitalWrite(PIN_VIBRATION, LOW);
+#endif
+            if (i < count - 1) delay(120);
+        }
+        return;
+    }
+    
     if (!buzzerEnabled || isMuted) return;
     
     for (uint8_t i = 0; i < count; i++) {

@@ -41,6 +41,9 @@ struct RuntimeConfig {
     
     // Countermeasures
     bool countermeasuresArmed;
+    
+    // Stealth
+    bool stealthMode;
 };
 
 class ConfigManager {

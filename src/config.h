@@ -133,6 +133,9 @@
 #define PIN_I2S_WS          12
 #define PIN_I2S_DIN         35    // ADC1_CH7 (input only pin)
 
+// --- Stealth Mode ---
+#define PIN_VIBRATION       4
+
 // ============================================================================
 // WIFI CONFIGURATION
 // ============================================================================

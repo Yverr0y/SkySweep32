@@ -10,14 +10,12 @@ MLClassifier::MLClassifier() : modelLoaded(false) {
 }
 
 bool MLClassifier::begin() {
-    Serial.println("[ML] Initializing drone classifier (rule-based)...");
+    Serial.println("[ML] Initializing TinyML drone classifier...");
     
-    // Rule-based classifier is always ready
-    // TFLite model can be loaded later from SD card for upgrade
-    modelLoaded = false;  // No TFLite model loaded by default
+    ml.begin((unsigned char*)model_data);
+    modelLoaded = true;
     
-    Serial.println("[ML] Rule-based classifier ready");
-    Serial.println("[ML] Load TFLite model from SD for AI classification");
+    Serial.println("[ML] TinyML classifier ready");
     return true;
 }
 
@@ -163,9 +161,32 @@ ClassificationResult MLClassifier::classify(const RFFeatures& features) {
     
     // Use TFLite if available, otherwise fall back to rules
     if (modelLoaded) {
-        // TODO: TFLite inference path
-        // For now, use rule-based
-        result = classifyRuleBased(features);
+        // Prepare input buffer
+        for (int i = 0; i < ML_INPUT_SIZE; i++) {
+            if (i < RSSI_HISTORY_SIZE) {
+                inputBuffer[i] = features.rssiHistory[i] / -120.0f; // Normalize
+            } else {
+                inputBuffer[i] = 0.0f;
+            }
+        }
+        
+        // Add flags to input if space allows
+        if (ML_INPUT_SIZE >= RSSI_HISTORY_SIZE + 5) {
+            inputBuffer[RSSI_HISTORY_SIZE] = features.mavlinkDetected ? 1.0f : 0.0f;
+            inputBuffer[RSSI_HISTORY_SIZE+1] = features.crsfDetected ? 1.0f : 0.0f;
+            inputBuffer[RSSI_HISTORY_SIZE+2] = features.band900Active ? 1.0f : 0.0f;
+            inputBuffer[RSSI_HISTORY_SIZE+3] = features.band2400Active ? 1.0f : 0.0f;
+            inputBuffer[RSSI_HISTORY_SIZE+4] = features.band5800Active ? 1.0f : 0.0f;
+        }
+
+        // Run inference
+        ml.predict(inputBuffer, outputBuffer);
+        
+        // Find best class
+        DroneClassification bestClass = argmax(outputBuffer, ML_OUTPUT_SIZE);
+        result.droneClass = bestClass;
+        result.confidence = outputBuffer[bestClass];
+        result.isValid = (result.confidence >= ML_INFERENCE_THRESHOLD);
     } else {
         result = classifyRuleBased(features);
     }

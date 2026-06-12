@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-12
+
+### Added
+- **ATAK Integration (Cursor on Target)**: Added `#ifdef MODULE_ATAK`. Sends CoT UDP packets for drone targets directly to Android Team Awareness Kit on port 6969.
+- **Stealth Mode (Dark Mode)**: Added `stealthMode` config to instantly silence buzzers and switch to vibration motor (`PIN_VIBRATION`), disabling OLED to prevent visual signature at night.
+- **Hardware Compass Direction Finding**: Integrated QMC5883L I2C compass (`#ifdef MODULE_COMPASS`). Displays azimuth on OLED and sends vector data (course) to ATAK CoT packets for precise triangulation.
+- **TinyML AI Classification**: Replaced rule-based engine with TensorFlow Lite Micro via `EloquentTinyML` (`#ifdef MODULE_ML`). Predicts drone class based on RSSI variance and multi-band spectral data tensor.
+- **Optional Feature Flags**: Added `-DMODULE_COMPASS`, `-DMODULE_ML`, and `-DMODULE_ATAK` to `platformio.ini` to keep base footprint small.
+
 ## [0.5.1] - 2026-06-09
 
 ### Added

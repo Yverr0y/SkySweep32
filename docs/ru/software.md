@@ -54,7 +54,7 @@ curl http://192.168.4.1/api/config
 # Обновить настройки (частичное обновление)
 curl -X POST http://192.168.4.1/api/config \
   -H "Content-Type: application/json" \
-  -d '{"thresholds":{"low":50},"rfScanMs":200}'
+  -d '{"thresholds":{"low":50},"rfScanMs":200,"stealthMode":true}'
 
 # Сброс к дефолтам
 curl -X POST http://192.168.4.1/api/config/reset
@@ -74,6 +74,7 @@ curl -X POST http://192.168.4.1/api/config/reset
 | `rfScanMs` | 100 | Интервал опроса РЧ (мс) |
 | `lora.freq` | 915.0 | Частота LoRa (МГц) |
 | `logLevel` | 1 | 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR |
+| `stealthMode` | false | Полное гашение экрана и звука (вибро-only) |
 
 ---
 
@@ -116,3 +117,6 @@ curl -X POST http://192.168.4.1/api/ota \
 | `-DTIER_PRO` | Профессиональный уровень |
 | `-DMODULE_ACOUSTIC` | Акустическое обнаружение |
 | `-DENABLE_COUNTERMEASURES` | Активные контрмеры ⚠️ |
+| `-DMODULE_COMPASS` | I2C Магнитометр (QMC5883L) |
+| `-DMODULE_ML` | Нейросетевая классификация (TinyML) |
+| `-DMODULE_ATAK` | Интеграция с Android Team Awareness Kit (CoT) |

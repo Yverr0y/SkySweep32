@@ -9,7 +9,9 @@
 #include "countermeasures.h"
 #include "alert_manager.h"
 #include "espnow_mesh.h"
-#include "signal_database.h"
+#ifdef MODULE_ATAK
+#include "atak_client.h"
+#endif
 #include <esp_task_wdt.h>
 
 // --- Conditionally include modules ---
@@ -44,6 +46,9 @@
 #endif
 #ifdef MODULE_ML
 #include "ml_classifier.h"
+#endif
+#ifdef MODULE_COMPASS
+#include "compass_module.h"
 #endif
 
 // ============================================================================
@@ -127,6 +132,9 @@ TaskHandle_t taskHandleDisplay = NULL;
 TaskHandle_t taskHandleWeb = NULL;
 TaskHandle_t taskHandleRemoteID = NULL;
 TaskHandle_t taskHandleGPS = NULL;
+#ifdef MODULE_ATAK
+TaskHandle_t taskHandleATAK = NULL;
+#endif
 
 // ============================================================================
 // RF SCANNING TASK (Core 0)
@@ -261,6 +269,38 @@ void taskRFScanning(void* parameter) {
                                            0.0, 0.0);
             }
             
+            // ATAK Broadcast
+            #ifdef MODULE_ATAK
+            if (threat >= THREAT_LOW) {
+                float lat = 0.0, lon = 0.0, alt = 0.0;
+                float course = 0.0;
+                #ifdef MODULE_GPS
+                if (gpsModule.isFixValid()) {
+                    GPSData g = gpsModule.getData();
+                    lat = g.latitude;
+                    lon = g.longitude;
+                    alt = g.altitude;
+                }
+                #endif
+                
+                #ifdef MODULE_COMPASS
+                if (compassModule.isValid()) {
+                    course = (float)compassModule.getAzimuth();
+                }
+                #endif
+                
+                char threatId[32];
+                snprintf(threatId, sizeof(threatId), "Threat-%s", rfModules[i].moduleName);
+                
+                const char* type = "a-u-A"; // unknown aerial
+                if (rfModules[i].protocolMAVLink || rfModules[i].protocolCRSF || threat >= THREAT_HIGH) {
+                    type = "a-h-A"; // hostile aerial
+                }
+                
+                atakClient.sendThreat(threatId, lat, lon, alt, type, rfModules[i].moduleName, course);
+            }
+            #endif
+            
             // ML classification on high threat (optional, kept from previous)
             #ifdef MODULE_ML
             if (threat >= THREAT_HIGH) {
@@ -383,6 +423,30 @@ void taskDisplayUpdate(void* parameter) {
     
     for (;;) {
         #ifdef MODULE_OLED
+        static bool lastStealthState = false;
+        bool currentStealth = configManager.get().stealthMode;
+        
+        #ifdef MODULE_COMPASS
+        compassModule.update();
+        #endif
+
+        
+        if (currentStealth != lastStealthState) {
+            if (currentStealth) {
+                display.clearBuffer();
+                display.sendBuffer();
+                display.setPowerSave(1);
+            } else {
+                display.setPowerSave(0);
+            }
+            lastStealthState = currentStealth;
+        }
+        
+        if (currentStealth) {
+            vTaskDelay(pdMS_TO_TICKS(DISPLAY_UPDATE_INTERVAL_MS));
+            continue;
+        }
+        
         display.clearBuffer();
         
         // Header
@@ -396,6 +460,14 @@ void taskDisplayUpdate(void* parameter) {
         display.drawStr(68, 10, "[STD]");
         #elif defined(TIER_PRO)
         display.drawStr(68, 10, "[PRO]");
+        #endif
+        
+        #ifdef MODULE_COMPASS
+        if (compassModule.isValid()) {
+            char compBuf[16];
+            snprintf(compBuf, sizeof(compBuf), "%d\260", compassModule.getAzimuth());
+            display.drawStr(100, 10, compBuf);
+        }
         #endif
         
         display.drawLine(0, 12, 128, 12);
@@ -532,6 +604,38 @@ void taskLoRaMesh(void* parameter) {
 #endif
 
 // ============================================================================
+// ATAK TASK (Core 1)
+// ============================================================================
+
+#ifdef MODULE_ATAK
+void taskATAK(void* parameter) {
+    Serial.println("[TASK] ATAK started (Core 1)");
+    for (;;) {
+        float lat = 0.0, lon = 0.0, alt = 0.0;
+        float course = 0.0;
+        #ifdef MODULE_GPS
+        if (gpsModule.isFixValid()) {
+            GPSData g = gpsModule.getData();
+            lat = g.latitude;
+            lon = g.longitude;
+            alt = g.altitude;
+        }
+        #endif
+        
+        #ifdef MODULE_COMPASS
+        if (compassModule.isValid()) {
+            course = (float)compassModule.getAzimuth();
+        }
+        #endif
+        
+        atakClient.sendHeartbeat(lat, lon, alt, course);
+        
+        vTaskDelay(pdMS_TO_TICKS(10000)); // Every 10 seconds
+    }
+}
+#endif
+
+// ============================================================================
 // ACOUSTIC DETECTION TASK (Core 0)
 // ============================================================================
 
@@ -644,6 +748,17 @@ void setup() {
     }
     #endif
     
+    // --- Initialize Compass Client ---
+    #ifdef MODULE_COMPASS
+    compassModule.begin();
+    #endif
+    
+    // --- Initialize ATAK Client ---
+    #ifdef MODULE_ATAK
+    Serial.println("[INIT] ATAK Client...");
+    atakClient.begin();
+    #endif
+    
     // --- Initialize ESP-NOW Mesh ---
     Serial.println("[INIT] ESP-NOW Mesh...");
     if (!espNowMesh.begin()) {
@@ -740,6 +855,12 @@ void setup() {
     #ifdef MODULE_LORA
     xTaskCreatePinnedToCore(taskLoRaMesh, "LoRa", TASK_STACK_MESH, 
                             NULL, TASK_PRIORITY_MESH, NULL, 0);
+    #endif
+    
+    // ATAK — Core 1
+    #ifdef MODULE_ATAK
+    xTaskCreatePinnedToCore(taskATAK, "ATAK", 4096, 
+                            NULL, 1, &taskHandleATAK, 1);
     #endif
     
     // Acoustic — Core 0

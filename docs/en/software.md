@@ -83,6 +83,7 @@ curl -X POST http://192.168.4.1/api/config/reset
 | `lora.freq` | 915.0 | LoRa frequency (MHz) |
 | `lora.txPower` | 20 | LoRa transmit power (dBm) |
 | `logLevel` | 1 | 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR |
+| `stealthMode` | false | Disable OLED & Buzzer, enable vibration only |
 
 ---
 
@@ -186,6 +187,9 @@ The serial monitor (`115200 baud`) provides real-time logging:
 | `-DTIER_PRO` | Pro tier (+ GPS + SD + LoRa) |
 | `-DMODULE_ACOUSTIC` | Enable acoustic detection |
 | `-DENABLE_COUNTERMEASURES` | Enable active countermeasures ⚠️ |
+| `-DMODULE_COMPASS` | I2C Magnetometer (QMC5883L) |
+| `-DMODULE_ML` | TinyML AI classification |
+| `-DMODULE_ATAK` | Cursor on Target (ATAK) Integration |
 
 ---
 

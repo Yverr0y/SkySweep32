@@ -38,6 +38,10 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 - **ESP-NOW Mesh**: Free, autonomous node-to-node network sharing threat alerts, heartbeats, and GPS telemetry across massive areas without extra hardware.
 - **Power Management**: 4 dynamic power states (Full, Balanced, Low, Deep Sleep) with battery ADC monitoring and runtime estimates.
 - **Countermeasures (Juggernaut)**: Optional VCO signal injection covering DJI, Walksnail, OpenIPC, ELRS, and GPS Denial.
+- **ATAK Integration (Cursor on Target)**: Native UDP broadcast of CoT packets to the Android Team Awareness Kit, showing drone targets and operator heading on tactical maps.
+- **Hardware Compass (QMC5883L)**: Direction finding via I2C magnetometer, calculating the vector of incoming drone signals.
+- **TinyML AI Classification**: TensorFlow Lite for Microcontrollers engine for predicting drone classes (DJI, FPV, etc.) based on RSSI variance and multi-band tensors.
+- **Stealth Mode (Dark Mode)**: Hardware/Software toggle to instantly disable OLED and buzzers, transferring all alerts to a covert vibration motor.
 - **Auto-Calibration Tool**: Integrated baseline noise calibration directly from the Web-UI.
 - **Alert System**: Non-blocking intelligent Buzzer and LED patterns scaling with Threat Levels (Info → Critical).
 - **Remote ID**: FAA ANSI/CTA-2063 compliant BLE drone identification natively on the ESP32.

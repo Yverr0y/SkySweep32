@@ -54,4 +54,15 @@
 3. **Метизы**: Используйте латунные резьбовые втулки M3 (heat-set inserts), вплавляемые паяльником. Не закручивайте винты напрямую в пластик — это ненадежно при сборке-разборке.
 4. **Допуски (Tolerance)**: Оставляйте допуск ~0.2 мм между половинками/переходными частями корпуса для плотной, но размыкаемой стыковки.
 
-*(Примечание: Как только STL файлы будут разработаны и протестированы коммьюнити, они будут добавлены в директорию `hardware/enclosures/`.)*
+## ✅ Официальные Файлы
+
+STL файлы корпуса Pro Tier (Sentinel) и проект печатной платы теперь доступны:
+
+| Файл | Описание |
+|------|-------------|
+| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Нижняя часть — стойки M3, вырез USB, вентиляция |
+| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Крышка — окно OLED, отверстия SMA, порт GPS антенны |
+| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Плата Pro Tier (KiCad 6) |
+
+Смотрите [hardware/enclosures/README.md](../../hardware/enclosures/README.md) для полных настроек печати и инструкций по сборке.  
+Смотрите [docs/ru/pcb_assembly.md](pcb_assembly.md) для списка компонентов (BOM), порядка пайки и руководства по заказу.

@@ -54,4 +54,15 @@ The Sentinel is a fixed installation intended for rooftops, perimeter fences, or
 3. **Inserts**: Use M3 brass heat-set inserts for joining the enclosure halves, rather than threading directly into plastic.
 4. **Tolerance**: Ensure a 0.2mm tolerance gap between interlocking case parts to guarantee a snug but removable fit.
 
-*(Note: Official STL files, once finalized by the community, will be placed in the `hardware/enclosures/` directory.)*
+## ✅ Official Files
+
+The Pro Tier (Sentinel) enclosure STL files and carrier PCB are now available:
+
+| File | Description |
+|------|-------------|
+| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Bottom shell — M3 standoffs, USB cutout, ventilation |
+| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Top lid — OLED window, SMA holes, GPS antenna port |
+| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Pro Tier carrier PCB (KiCad 6) |
+
+See [hardware/enclosures/README.md](../../hardware/enclosures/README.md) for full print settings and assembly instructions.  
+See [docs/en/pcb_assembly.md](pcb_assembly.md) for BOM, soldering order, and ordering guide.

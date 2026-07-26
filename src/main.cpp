@@ -141,6 +141,34 @@ TaskHandle_t taskHandleATAK = NULL;
 // RF SCANNING TASK (Core 0)
 // ============================================================================
 
+// Returns true if the RF module at the given index (0=CC1101, 1=NRF24L01+,
+// 2=RX5808) is compiled into this build. Centralizes the per-tier module
+// gating so the task loops don't repeat #ifndef blocks.
+static inline bool rfModuleEnabled(uint8_t moduleIndex) {
+    switch (moduleIndex) {
+        case 0:
+            #ifdef MODULE_CC1101
+            return true;
+            #else
+            return false;
+            #endif
+        case 1:
+            #ifdef MODULE_NRF24
+            return true;
+            #else
+            return false;
+            #endif
+        case 2:
+            #ifdef MODULE_RX5808
+            return true;
+            #else
+            return false;
+            #endif
+        default:
+            return false;
+    }
+}
+
 int readModuleRSSI(uint8_t moduleIndex) {
     int rssiValue = 0;
     
@@ -176,17 +204,9 @@ void taskRFScanning(void* parameter) {
     for (;;) {
         // Scan each active RF module
         for (uint8_t i = 0; i < 3; i++) {
-            // Check if module is enabled
-            #ifndef MODULE_CC1101
-            if (i == 0) continue;
-            #endif
-            #ifndef MODULE_NRF24
-            if (i == 1) continue;
-            #endif
-            #ifndef MODULE_RX5808
-            if (i == 2) continue;
-            #endif
-            
+            // Skip modules not compiled into this build
+            if (!rfModuleEnabled(i)) continue;
+
             // Read RSSI
             rfModules[i].rssiValue = readModuleRSSI(i);
             rfModules[i].isActive = (rfModules[i].rssiValue > 40);
@@ -478,17 +498,9 @@ void taskDisplayUpdate(void* parameter) {
         int yPos = 24;
         
         for (int i = 0; i < 3; i++) {
-            // Skip disabled modules
-            #ifndef MODULE_CC1101
-            if (i == 0) continue;
-            #endif
-            #ifndef MODULE_NRF24
-            if (i == 1) continue;
-            #endif
-            #ifndef MODULE_RX5808
-            if (i == 2) continue;
-            #endif
-            
+            // Skip modules not compiled into this build
+            if (!rfModuleEnabled(i)) continue;
+
             char buf[32];
             snprintf(buf, sizeof(buf), "%s:%d", rfModules[i].moduleName, rfModules[i].rssiValue);
             display.drawStr(0, yPos, buf);

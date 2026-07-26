@@ -2,6 +2,7 @@
 
 **Multi-band passive drone detector | Мультидиапазонный пассивный детектор дронов**
 
+[![CI](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![Build: PlatformIO](https://img.shields.io/badge/Build-PlatformIO-orange.svg)](https://platformio.org/)
@@ -62,7 +63,7 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 > See the [PCB Assembly Guide (Pro Tier)](docs/en/pcb_assembly.md) for full BOM, KiCad files, and soldering instructions.
 > Looking for a case? We have official FreeCAD/STL designs in the [Enclosures Guide](docs/en/enclosures.md).
 
-### Pinout Configuration (v0.5.0 — Conflict-Free)
+### Pinout Configuration (Conflict-Free)
 
 #### SPI Bus (Shared)
 | Signal | ESP32 Pin |
@@ -207,7 +208,7 @@ SkySweep32 — продвинутая система пассивного обн
 > Смотрите [Руководство по сборке платы (Pro Tier)](docs/ru/pcb_assembly.md) — там полный список деталей (BOM), KiCad проекты и инструкции по пайке.
 > Ищете корпус? Официальные 3D-модели (STL) и чертежи находятся в [Руководстве по корпусам](docs/ru/enclosures.md).
 
-### Распиновка (Бесконфликтная v0.5.0)
+### Распиновка (Бесконфликтная)
 
 #### Шина SPI (общая)
 | Сигнал | Пин ESP32 |

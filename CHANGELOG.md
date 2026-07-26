@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Runtime Thresholds Now Effective**: `CountermeasureSystem::assessThreat()` read the compile-time `RSSI_THRESHOLD_*` macros instead of the values in `ConfigManager`, so the `/api/calibrate` and `/api/config` endpoints saved new thresholds that never influenced threat detection. Threat assessment now uses the live runtime config.
+- **Broken Flash Instructions**: The "Start from Zero" guides (EN/RU) told users to flash `SkySweep32_Starter_v0.5.0.bin`, which does not exist in `releases/`. Corrected to the shipped `v0.5.1` binary.
+- **Version Drift**: Unified the firmware version reported in serial/web (`SKYSWEEP_VERSION`) and `TODO.md` to `0.6.0` to match the changelog.
+
+### Changed
+- **Reproducible Builds**: Pinned the PlatformIO platform to `espressif32 @ ^6.9.0`. This firmware depends on IDF 4.4 APIs (legacy `driver/adc.h`, `esp_task_wdt_init(timeout, panic)`) that changed in `espressif32` 7.x, so the pin prevents an accidental incompatible-major upgrade.
+- **Simpler RF Task Loops**: Replaced the repeated `#ifndef MODULE_*` guard blocks in the RF-scan and display tasks with a single `rfModuleEnabled()` helper (behavior unchanged).
+
+### Added
+- **CI Coverage for Optional Modules**: New `esp32dev_full` PlatformIO env plus a CI step compiles the ATAK / Compass / Acoustic / GPS code paths that no release tier enables, so they no longer rot undetected.
+- **CI Maintenance**: Bumped GitHub Actions (`checkout@v4`, `setup-python@v5`, `cache@v4`, `action-gh-release@v2`) and added a `workflow_dispatch` trigger for manual runs.
+- **Build Status Badge**: Added the GitHub Actions CI badge to the README.
+
 ## [0.6.0] - 2026-06-12
 
 ### Added

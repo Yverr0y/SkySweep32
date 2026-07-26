@@ -7,6 +7,7 @@ on:
       - 'v*'
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,12 +15,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
     - name: Cache PlatformIO
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.platformio
@@ -27,23 +28,28 @@ jobs:
         key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
         restore-keys: |
           ${{ runner.os }}-pio-
-    
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    
+
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
         pip install platformio
-    
-    - name: Build Tiers
+
+    - name: Build Release Tiers
       run: |
         pio run -e esp32dev_base
         pio run -e esp32dev_standard
         pio run -e esp32dev_pro
-    
+
+    - name: Compile-check Optional Modules
+      # Not shipped as a release binary — this only guards the ATAK / Compass /
+      # Acoustic / GPS code paths against bit-rot since no release tier enables them.
+      run: pio run -e esp32dev_full
+
     - name: Prepare Release Artifacts
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
@@ -51,10 +57,10 @@ jobs:
         cp .pio/build/esp32dev_base/firmware.bin build_artifacts/SkySweep32_Starter_${{ github.ref_name }}.bin
         cp .pio/build/esp32dev_standard/firmware.bin build_artifacts/SkySweep32_Hunter_${{ github.ref_name }}.bin
         cp .pio/build/esp32dev_pro/firmware.bin build_artifacts/SkySweep32_Sentinel_${{ github.ref_name }}.bin
-    
+
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           build_artifacts/SkySweep32_Starter_${{ github.ref_name }}.bin

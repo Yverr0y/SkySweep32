@@ -119,7 +119,7 @@ You have the hardware assembled, but it's empty. You need to pour the program in
 5. A black window will appear and automatically find your board. Press the number **1** (for Starter Tier) and hit Enter.
 6. You will see percentages scrolling by for about 1 minute. **You are done!** The text "SkySweep32" should light up on the screen of your device.
 
-*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.5.0.bin` file from the `releases` folder, and click Program).*
+*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.5.1.bin` file from the `releases` folder, and click Program).*
 
 ## 📱 Step 4: How to use the Radar (Web Dashboard)
 

@@ -119,7 +119,7 @@ graph LR
 5. Откроется черное окошко, которое само найдет вашу плату. Нажмите цифру **1** (уровень Starter) и нажмите Enter.
 6. Вы увидите, как за 1 минуту пробегут проценты прошивки. **Всё готово!** На экране устройства должна загореться надпись "SkySweep32".
 
-*(Если `flash.bat` не сработал: откройте браузер Chrome, зайдите на сайт [esptool-js](https://espressif.github.io/esptool-js/), установите `Baudrate: 460800`, нажмите Connect, выберите файл `SkySweep32_Starter_v0.5.0.bin` из папки `releases` и нажмите Program).*
+*(Если `flash.bat` не сработал: откройте браузер Chrome, зайдите на сайт [esptool-js](https://espressif.github.io/esptool-js/), установите `Baudrate: 460800`, нажмите Connect, выберите файл `SkySweep32_Starter_v0.5.1.bin` из папки `releases` и нажмите Program).*
 
 ## 📱 Шаг 4: Как пользоваться радаром (Web-Интерфейс)
 

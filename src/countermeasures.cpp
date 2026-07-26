@@ -1,4 +1,5 @@
 #include "countermeasures.h"
+#include "config_manager.h"
 
 // Countermeasure-specific constants (not in config.h)
 #define JAMMING_DURATION_MS       2000
@@ -38,14 +39,19 @@ void CountermeasureSystem::armSystem(bool armed) {
 
 ThreatLevel CountermeasureSystem::assessThreat(uint8_t moduleIndex, int rssiValue) {
     ThreatLevel level = THREAT_NONE;
-    
-    if (rssiValue >= RSSI_THRESHOLD_CRITICAL) {
+
+    // Use runtime thresholds from ConfigManager so that web calibration
+    // (/api/calibrate) and config changes (/api/config) actually take effect.
+    // These default to the RSSI_THRESHOLD_* values from config.h.
+    const RuntimeConfig& cfg = configManager.get();
+
+    if (rssiValue >= cfg.rssiThresholdCritical) {
         level = THREAT_CRITICAL;
-    } else if (rssiValue >= RSSI_THRESHOLD_HIGH) {
+    } else if (rssiValue >= cfg.rssiThresholdHigh) {
         level = THREAT_HIGH;
-    } else if (rssiValue >= RSSI_THRESHOLD_MEDIUM) {
+    } else if (rssiValue >= cfg.rssiThresholdMedium) {
         level = THREAT_MEDIUM;
-    } else if (rssiValue >= RSSI_THRESHOLD_LOW) {
+    } else if (rssiValue >= cfg.rssiThresholdLow) {
         level = THREAT_LOW;
     }
     

@@ -9,6 +9,11 @@
 *.elf
 *.hex
 *.map
+build_artifacts/
+
+# Python (hardware/enclosure/model scripts)
+__pycache__/
+*.pyc
 
 # C/C++
 *.o

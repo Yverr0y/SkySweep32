@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
 """
-SkySweep32 Pro Tier - KiCad 6 PCB Generator
-Generates a complete .kicad_pcb file with proper footprints, nets, and layout.
-Board: 120mm x 80mm, 2-layer (F.Cu + B.Cu)
-Tier: PRO — ESP32 + NRF24 + CC1101 + RX5808 + OLED + GPS + LoRa + SD
+SkySweep32 Pro Tier — KiCad 6 PCB Generator
+============================================
+
+Generates a complete ``.kicad_pcb`` file with proper footprints, nets and layout.
+
+  Board : 120 mm x 80 mm, 2-layer (F.Cu + B.Cu), 1.6 mm FR4
+  Tier  : PRO — ESP32 + NRF24 + CC1101 + RX5808 + OLED + GPS + LoRa + SD
+
+Usage
+-----
+    python3 build_kicad.py                 # writes ./skysweep32_pro.kicad_pcb
+    python3 build_kicad.py -o board.kicad_pcb
+    python3 build_kicad.py --stdout        # print to stdout instead of a file
+
+The output path defaults to a file *next to this script*, so the generator is
+portable across machines (previously it was hardcoded to a single Windows path).
 """
 
+import argparse
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 # ─── NETS ──────────────────────────────────────────────────────────────────────
-# Net index → net name
+# Net index → net name. Indices are referenced by the footprint net-maps below.
 NETS = {
     0:  "",
     1:  "GND",
@@ -38,56 +52,96 @@ NETS = {
     23: "BAT_VRAW",      # Raw battery voltage (before divider)
 }
 
+# Convenience reverse lookup (name → index) for readable call sites.
+NET = {name: idx for idx, name in NETS.items() if name}
+
+
 def uid():
     return str(uuid.uuid4())
 
+
 def net_str(idx):
+    """Render a ``(net ...)`` clause, or an empty string for net 0."""
     if idx == 0:
         return ""
     return f'(net {idx} "{NETS[idx]}")'
 
-# ─── PRIMITIVE HELPERS ─────────────────────────────────────────────────────────
 
-def line(x1, y1, x2, y2, layer, width=0.1):
+# ─── PRIMITIVE EMIT HELPERS ────────────────────────────────────────────────────
+# Small builders shared by every footprint so the S-expression formatting lives
+# in exactly one place.
+
+def _effects(size, thick):
+    return f'(effects (font (size {size} {size}) (thickness {thick})))'
+
+
+def gr_line(x1, y1, x2, y2, layer, width=0.1):
     return f'  (gr_line (start {x1} {y1}) (end {x2} {y2}) (layer "{layer}") (width {width}) (tstamp {uid()}))'
 
-def arc(cx, cy, sx, sy, angle, layer, width=0.1):
+
+def gr_arc(cx, cy, sx, sy, angle, layer, width=0.1):
     return f'  (gr_arc (start {cx} {cy}) (end {sx} {sy}) (angle {angle}) (layer "{layer}") (width {width}) (tstamp {uid()}))'
 
-def text(t, x, y, layer, size=1.0, thickness=0.15):
+
+def gr_text(t, x, y, layer, size=1.0, thick=0.15, extra=""):
+    """Board-level text. ``extra`` allows e.g. ``(justify mirror)`` inside effects."""
+    eff = f'(effects (font (size {size} {size}) (thickness {thick})){extra})'
     return f'''  (gr_text "{t}" (at {x} {y}) (layer "{layer}")
-    (effects (font (size {size} {size}) (thickness {thickness})))
-    (tstamp {uid()}))'''
+    {eff} (tstamp {uid()}))'''
+
+
+def fp_ref(ref, x, y, layer, size=1, thick=0.15):
+    return (f'    (fp_text reference "{ref}" (at {x} {y}) (layer "{layer}")\n'
+            f'      {_effects(size, thick)} (tstamp {uid()}))')
+
+
+def fp_val(value, x, y, layer, size=1, thick=0.15):
+    return (f'    (fp_text value "{value}" (at {x} {y}) (layer "{layer}")\n'
+            f'      {_effects(size, thick)} (tstamp {uid()}))')
+
+
+def fp_rect(x1, y1, x2, y2, layer, width):
+    return f'    (fp_rect (start {x1} {y1}) (end {x2} {y2}) (layer "{layer}") (width {width}) (tstamp {uid()}))'
+
+
+def fp_circle(cx, cy, ex, ey, layer, width):
+    return f'    (fp_circle (center {cx} {cy}) (end {ex} {ey}) (layer "{layer}") (width {width}) (tstamp {uid()}))'
+
+
+def fp_line(x1, y1, x2, y2, layer, width):
+    return f'    (fp_line (start {x1} {y1}) (end {x2} {y2}) (layer "{layer}") (width {width}) (tstamp {uid()}))'
+
 
 # ─── BOARD OUTLINE (120×80mm with rounded corners r=3mm) ──────────────────────
 
 def board_outline(w=120, h=80, r=3):
-    lines = []
-    # Straight edges
-    lines.append(line(r, 0,   w-r, 0,   "Edge.Cuts", 0.1))
-    lines.append(line(w, r,   w,   h-r, "Edge.Cuts", 0.1))
-    lines.append(line(r, h,   w-r, h,   "Edge.Cuts", 0.1))
-    lines.append(line(0, r,   0,   h-r, "Edge.Cuts", 0.1))
-    # Corner arcs
-    lines.append(arc(r,   r,   r,   0,   -90, "Edge.Cuts", 0.1))
-    lines.append(arc(w-r, r,   w-r, 0,    90, "Edge.Cuts", 0.1))
-    lines.append(arc(w-r, h-r, w,   h-r, -90, "Edge.Cuts", 0.1))
-    lines.append(arc(r,   h-r, r,   h,    90, "Edge.Cuts", 0.1))
+    lines = [
+        # Straight edges
+        gr_line(r, 0,   w-r, 0,   "Edge.Cuts", 0.1),
+        gr_line(w, r,   w,   h-r, "Edge.Cuts", 0.1),
+        gr_line(r, h,   w-r, h,   "Edge.Cuts", 0.1),
+        gr_line(0, r,   0,   h-r, "Edge.Cuts", 0.1),
+        # Corner arcs
+        gr_arc(r,   r,   r,   0,   -90, "Edge.Cuts", 0.1),
+        gr_arc(w-r, r,   w-r, 0,    90, "Edge.Cuts", 0.1),
+        gr_arc(w-r, h-r, w,   h-r, -90, "Edge.Cuts", 0.1),
+        gr_arc(r,   h-r, r,   h,    90, "Edge.Cuts", 0.1),
+    ]
     return "\n".join(lines)
+
 
 # ─── MOUNTING HOLE M3 ──────────────────────────────────────────────────────────
 
 def mounting_hole(x, y, ref):
     return f'''  (footprint "MountingHole:MountingHole_3.2mm_M3" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "{ref}" (at 0 -2.5) (layer "F.Fab")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_text value "MH_M3" (at 0 2.5) (layer "F.Fab")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 2.2 0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 1.6 0) (layer "Edge.Cuts") (width 0.1) (tstamp {uid()}))
+{fp_ref(ref, 0, -2.5, "F.Fab")}
+{fp_val("MH_M3", 0, 2.5, "F.Fab")}
+{fp_circle(0, 0, 2.2, 0, "F.Courtyard", 0.05)}
+{fp_circle(0, 0, 1.6, 0, "Edge.Cuts", 0.1)}
     (pad "" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers *.Cu *.Mask) (tstamp {uid()}))
   )'''
+
 
 # ─── GENERIC PIN HEADER 1×N ───────────────────────────────────────────────────
 
@@ -101,17 +155,14 @@ def header_1xN(ref, value, x, y, n, net_map=None, angle=0):
     pitch = 2.54
     pad_size = 1.7
     drill = 1.0
-    courtyard_h = n * pitch + 1.0
     courtyard_w = 2.54 + 1.0
 
     fp = f'''  (footprint "Connector_PinHeader_2.54mm:PinHeader_1x{n:02d}_P2.54mm_Vertical" (layer "F.Cu")
     (at {x} {y} {angle})
-    (fp_text reference "{ref}" (at 0 {-(n*pitch/2 + 1.5)}) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "{value}" (at 0 {n*pitch/2 + 1.5}) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_rect (start {-courtyard_w/2} {-pitch/2-0.5}) (end {courtyard_w/2} {(n-1)*pitch+pitch/2+0.5}) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_rect (start {-1.0} {-pitch/2-0.3}) (end {1.0} {(n-1)*pitch+pitch/2+0.3}) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
+{fp_ref(ref, 0, -(n*pitch/2 + 1.5), "F.Silkscreen", 0.8, 0.12)}
+{fp_val(value, 0, n*pitch/2 + 1.5, "F.Fab", 0.8, 0.12)}
+{fp_rect(-courtyard_w/2, -pitch/2-0.5, courtyard_w/2, (n-1)*pitch+pitch/2+0.5, "F.Courtyard", 0.05)}
+{fp_rect(-1.0, -pitch/2-0.3, 1.0, (n-1)*pitch+pitch/2+0.3, "F.Fab", 0.1)}
 '''
     for i in range(1, n+1):
         net_idx = net_map.get(i, 0)
@@ -121,6 +172,7 @@ def header_1xN(ref, value, x, y, n, net_map=None, angle=0):
         fp += f'    (pad "{i}" thru_hole {shape} (at 0 {py}) (size {pad_size} {pad_size}) (drill {drill}) (layers "*.Cu" "*.Mask"){net_clause} (tstamp {uid()}))\n'
     fp += '  )'
     return fp
+
 
 # ─── GENERIC PIN HEADER 2×N ───────────────────────────────────────────────────
 
@@ -139,11 +191,9 @@ def header_2xN(ref, value, x, y, n, net_map=None, angle=0):
 
     fp = f'''  (footprint "Connector_PinHeader_2.54mm:PinHeader_2x{n:02d}_P2.54mm_Vertical" (layer "F.Cu")
     (at {x} {y} {angle})
-    (fp_text reference "{ref}" (at 0 {-(n*pitch/2 + 1.5)}) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "{value}" (at 0 {n*pitch/2 + 1.5}) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_rect (start {-pitch-0.5} {-pitch/2-0.5}) (end {pitch+0.5} {(n-1)*pitch+pitch/2+0.5}) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref(ref, 0, -(n*pitch/2 + 1.5), "F.Silkscreen", 0.8, 0.12)}
+{fp_val(value, 0, n*pitch/2 + 1.5, "F.Fab", 0.8, 0.12)}
+{fp_rect(-pitch-0.5, -pitch/2-0.5, pitch+0.5, (n-1)*pitch+pitch/2+0.5, "F.Courtyard", 0.05)}
 '''
     for row in range(n):
         # Left column: pin 2*row+1, at (-1.27, row*pitch)
@@ -157,6 +207,7 @@ def header_2xN(ref, value, x, y, n, net_map=None, angle=0):
             fp += f'    (pad "{pin_num}" thru_hole {shape} (at {px_off} {py}) (size {pad_size} {pad_size}) (drill {drill}) (layers "*.Cu" "*.Mask"){net_clause} (tstamp {uid()}))\n'
     fp += '  )'
     return fp
+
 
 # ─── ESP32 DevKit V1 30-pin socket (2×15) ─────────────────────────────────────
 # Left row (L, col A, pin 1-15 top→bottom):
@@ -174,7 +225,6 @@ def esp32_socket(x, y):
     Two separate 1×15 headers side by side (standard DevKit V1 socket approach).
     Row spacing: 25.4mm (1 inch) between columns.
     """
-    pitch = 2.54
     # Left header net map (pin 1-15)
     left_nets = {
         1:  3,   # 3V3 → VCC_3V3
@@ -213,21 +263,12 @@ def esp32_socket(x, y):
     }
 
     # Left header at (x, y), Right header at (x + 25.4, y)
-    parts = []
-    parts.append(header_1xN("J_ESP32_L", "ESP32 Left", x, y, 15, left_nets))
-    parts.append(header_1xN("J_ESP32_R", "ESP32 Right", x + 25.4, y, 15, right_nets))
-
-    # Pin 1 marker line in silkscreen
-    # Silkscreen labels for key pins
-    labels = [
-        # (label_text, lx, ly) — near the pads
-        ("3V3",  x - 4,  y,         "F.Silkscreen"),
-        ("GND",  x - 4,  y + 13*2.54, "F.Silkscreen"),
-        ("GPIO13", x - 7, y + 14*2.54, "F.Silkscreen"),
-        ("VIN",  x + 25.4 + 4, y,  "F.Silkscreen"),
+    parts = [
+        header_1xN("J_ESP32_L", "ESP32 Left", x, y, 15, left_nets),
+        header_1xN("J_ESP32_R", "ESP32 Right", x + 25.4, y, 15, right_nets),
     ]
-
     return "\n".join(parts)
+
 
 # ─── AMS1117-3.3V LDO (SOT-223) ───────────────────────────────────────────────
 
@@ -236,78 +277,78 @@ def ams1117(x, y):
     # We use it as fixed 3.3V: pin1=GND, pin2/tab=3V3 out, pin3=5V in
     return f'''  (footprint "Package_TO_SOT_SMD:SOT-223-3_TabPin2" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "U1" (at 0 -4.5) (layer "F.Silkscreen")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_text value "AMS1117-3.3" (at 0 4.5) (layer "F.Fab")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_rect (start -4 -2.5) (end 4 4.5) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_rect (start -2.3 -1.5) (end 2.3 1.5) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
-    (fp_line (start -2.3 -1.5) (end -2.3 1.5) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
+{fp_ref("U1", 0, -4.5, "F.Silkscreen")}
+{fp_val("AMS1117-3.3", 0, 4.5, "F.Fab")}
+{fp_rect(-4, -2.5, 4, 4.5, "F.Courtyard", 0.05)}
+{fp_rect(-2.3, -1.5, 2.3, 1.5, "F.Fab", 0.1)}
+{fp_line(-2.3, -1.5, -2.3, 1.5, "F.Fab", 0.1)}
     (pad "1" smd rect (at -2.3 1.8) (size 1.5 2.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(1)} (tstamp {uid()}))
     (pad "2" smd rect (at 0 1.8) (size 1.5 2.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(3)} (tstamp {uid()}))
     (pad "3" smd rect (at 2.3 1.8) (size 1.5 2.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(2)} (tstamp {uid()}))
     (pad "4" smd rect (at 0 -1.5) (size 3.6 2.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(3)} (tstamp {uid()}))
   )'''
 
+
 # ─── CAPACITOR SMD 0805 ────────────────────────────────────────────────────────
 
 _cap_count = [0]
+
 
 def cap_smd(x, y, value, net_a, net_b, ref=None):
     _cap_count[0] += 1
     r = ref or f"C{_cap_count[0]}"
     return f'''  (footprint "Capacitor_SMD:C_0805_2012Metric" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "{r}" (at 0 -1.5) (layer "F.Silkscreen")
-      (effects (font (size 0.6 0.6) (thickness 0.09))) (tstamp {uid()}))
-    (fp_text value "{value}" (at 0 1.5) (layer "F.Fab")
-      (effects (font (size 0.6 0.6) (thickness 0.09))) (tstamp {uid()}))
-    (fp_rect (start -1.8 -1.0) (end 1.8 1.0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref(r, 0, -1.5, "F.Silkscreen", 0.6, 0.09)}
+{fp_val(value, 0, 1.5, "F.Fab", 0.6, 0.09)}
+{fp_rect(-1.8, -1.0, 1.8, 1.0, "F.Courtyard", 0.05)}
     (pad "1" smd rect (at -1.5 0) (size 1.0 1.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(net_a)} (tstamp {uid()}))
     (pad "2" smd rect (at  1.5 0) (size 1.0 1.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(net_b)} (tstamp {uid()}))
   )'''
 
+
 # ─── ELECTROLYTIC CAPACITOR TH ────────────────────────────────────────────────
 
 _ecap_count = [0]
+
 
 def cap_electrolytic_th(x, y, value, net_pos, net_neg, ref=None):
     _ecap_count[0] += 1
     r = ref or f"CE{_ecap_count[0]}"
     return f'''  (footprint "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "{r}" (at 0 -4.5) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "{value}" (at 0 4.5) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 3.8 0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 3.15 0) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
-    (fp_line (start -1 -3.15) (end 1 -3.15) (layer "F.Fab") (width 0.3) (tstamp {uid()}))
+{fp_ref(r, 0, -4.5, "F.Silkscreen", 0.8, 0.12)}
+{fp_val(value, 0, 4.5, "F.Fab", 0.8, 0.12)}
+{fp_circle(0, 0, 3.8, 0, "F.Courtyard", 0.05)}
+{fp_circle(0, 0, 3.15, 0, "F.Fab", 0.1)}
+{fp_line(-1, -3.15, 1, -3.15, "F.Fab", 0.3)}
     (pad "1" thru_hole circle (at -1.25 0) (size 1.8 1.8) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(net_pos)} (tstamp {uid()}))
     (pad "2" thru_hole oval (at  1.25 0) (size 1.8 1.8) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(net_neg)} (tstamp {uid()}))
   )'''
 
+
 # ─── RESISTOR SMD 0805 ────────────────────────────────────────────────────────
 
 _res_count = [0]
+
 
 def res_smd(x, y, value, net_a, net_b, ref=None):
     _res_count[0] += 1
     r = ref or f"R{_res_count[0]}"
     return f'''  (footprint "Resistor_SMD:R_0805_2012Metric" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "{r}" (at 0 -1.5) (layer "F.Silkscreen")
-      (effects (font (size 0.6 0.6) (thickness 0.09))) (tstamp {uid()}))
-    (fp_text value "{value}" (at 0 1.5) (layer "F.Fab")
-      (effects (font (size 0.6 0.6) (thickness 0.09))) (tstamp {uid()}))
-    (fp_rect (start -1.8 -1.0) (end 1.8 1.0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref(r, 0, -1.5, "F.Silkscreen", 0.6, 0.09)}
+{fp_val(value, 0, 1.5, "F.Fab", 0.6, 0.09)}
+{fp_rect(-1.8, -1.0, 1.8, 1.0, "F.Courtyard", 0.05)}
     (pad "1" smd rect (at -1.5 0) (size 1.0 1.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(net_a)} (tstamp {uid()}))
     (pad "2" smd rect (at  1.5 0) (size 1.0 1.2) (layers "F.Cu" "F.Mask" "F.Paste") {net_str(net_b)} (tstamp {uid()}))
   )'''
 
+
 # ─── EDGE-MOUNT SMA CONNECTOR ─────────────────────────────────────────────────
 
 _sma_count = [0]
+
 
 def sma_edge(x, y, ref_label):
     _sma_count[0] += 1
@@ -315,31 +356,29 @@ def sma_edge(x, y, ref_label):
     # Simplified SMA edge mount footprint
     return f'''  (footprint "Connector_Coaxial:SMA_Amphenol_132289_EdgeMount" (layer "F.Cu")
     (at {x} {y} 90)
-    (fp_text reference "{r}" (at 0 -5) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "{ref_label}" (at 0 5) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_rect (start -4 -3) (end 4 7) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_rect (start -2.3 -1.5) (end 2.3 5) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
+{fp_ref(r, 0, -5, "F.Silkscreen", 0.8, 0.12)}
+{fp_val(ref_label, 0, 5, "F.Fab", 0.8, 0.12)}
+{fp_rect(-4, -3, 4, 7, "F.Courtyard", 0.05)}
+{fp_rect(-2.3, -1.5, 2.3, 5, "F.Fab", 0.1)}
     (pad "1" thru_hole circle (at 0 0) (size 2.0 2.0) (drill 1.3) (layers "*.Cu" "*.Mask") (tstamp {uid()}))
     (pad "2" thru_hole oval (at -2.54 3.0) (size 2.0 2.0) (drill 1.3) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
     (pad "3" thru_hole oval (at  2.54 3.0) (size 2.0 2.0) (drill 1.3) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
   )'''
+
 
 # ─── DC BARREL JACK (5V INPUT) ────────────────────────────────────────────────
 
 def power_jack(x, y):
     return f'''  (footprint "Connector_BarrelJack:BarrelJack_CUI_PJ-102A_Horizontal" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "J_PWR" (at 0 -6) (layer "F.Silkscreen")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_text value "5V DC IN" (at 0 6) (layer "F.Fab")
-      (effects (font (size 1 1) (thickness 0.15))) (tstamp {uid()}))
-    (fp_rect (start -5.5 -3.5) (end 5.5 6) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref("J_PWR", 0, -6, "F.Silkscreen")}
+{fp_val("5V DC IN", 0, 6, "F.Fab")}
+{fp_rect(-5.5, -3.5, 5.5, 6, "F.Courtyard", 0.05)}
     (pad "1" thru_hole circle (at 0 0) (size 2.4 2.4) (drill 1.5) (layers "*.Cu" "*.Mask") {net_str(2)} (tstamp {uid()}))
     (pad "2" thru_hole oval (at -3.5 0) (size 2.4 2.4) (drill 1.5) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
     (pad "3" thru_hole oval (at  3.5 0) (size 2.4 2.4) (drill 1.5) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
   )'''
+
 
 # ─── LED + RESISTOR 0805 ──────────────────────────────────────────────────────
 
@@ -348,63 +387,69 @@ def led_indicator(x, y):
     # Resistor 330Ω between GPIO2 and LED anode
     parts.append(res_smd(x, y, "330R", 8, 0, "R_LED"))  # NRF_CE net (GPIO2)
     # LED
-    _led_ref = "LED1"
     parts.append(f'''  (footprint "LED_THT:LED_D3.0mm" (layer "F.Cu")
     (at {x+5} {y})
-    (fp_text reference "{_led_ref}" (at 0 -3) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "LED_RED" (at 0 3) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 2.5 0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref("LED1", 0, -3, "F.Silkscreen", 0.8, 0.12)}
+{fp_val("LED_RED", 0, 3, "F.Fab", 0.8, 0.12)}
+{fp_circle(0, 0, 2.5, 0, "F.Courtyard", 0.05)}
     (pad "1" thru_hole circle (at -1.27 0) (size 1.7 1.7) (drill 0.8) (layers "*.Cu" "*.Mask") (tstamp {uid()}))
     (pad "2" thru_hole oval (at  1.27 0) (size 1.7 1.7) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
   )''')
     return "\n".join(parts)
+
 
 # ─── PASSIVE BUZZER ───────────────────────────────────────────────────────────
 
 def buzzer(x, y):
     return f'''  (footprint "Buzzer_Beeper:BZ_12x9.5mm" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "BZ1" (at 0 -7) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "BUZZER" (at 0 7) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 7 0) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
-    (fp_circle (center 0 0) (end 6 0) (layer "F.Fab") (width 0.1) (tstamp {uid()}))
+{fp_ref("BZ1", 0, -7, "F.Silkscreen", 0.8, 0.12)}
+{fp_val("BUZZER", 0, 7, "F.Fab", 0.8, 0.12)}
+{fp_circle(0, 0, 7, 0, "F.Courtyard", 0.05)}
+{fp_circle(0, 0, 6, 0, "F.Fab", 0.1)}
     (pad "1" thru_hole circle (at  2.54 0) (size 1.8 1.8) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(21)} (tstamp {uid()}))
     (pad "2" thru_hole oval  (at -2.54 0) (size 1.8 1.8) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
   )'''
+
 
 # ─── BATTERY CONNECTOR (JST-PH 2-pin) ────────────────────────────────────────
 
 def bat_connector(x, y):
     return f'''  (footprint "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical" (layer "F.Cu")
     (at {x} {y})
-    (fp_text reference "J_BAT" (at 0 -4) (layer "F.Silkscreen")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_text value "LIPO IN" (at 0 4) (layer "F.Fab")
-      (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-    (fp_rect (start -2 -2) (end 2 3.5) (layer "F.Courtyard") (width 0.05) (tstamp {uid()}))
+{fp_ref("J_BAT", 0, -4, "F.Silkscreen", 0.8, 0.12)}
+{fp_val("LIPO IN", 0, 4, "F.Fab", 0.8, 0.12)}
+{fp_rect(-2, -2, 2, 3.5, "F.Courtyard", 0.05)}
     (pad "1" thru_hole rect (at -1.0 0) (size 1.5 1.5) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(23)} (tstamp {uid()}))
     (pad "2" thru_hole oval (at  1.0 0) (size 1.5 1.5) (drill 0.8) (layers "*.Cu" "*.Mask") {net_str(1)} (tstamp {uid()}))
   )'''
+
 
 # ─── BOARD TITLE BLOCK ────────────────────────────────────────────────────────
 
 def title_block():
     now = datetime.now().strftime("%Y-%m-%d")
-    return f'''  (gr_text "SkySweep32 — Pro Tier Carrier PCB" (at 60 2) (layer "F.Silkscreen")
-    (effects (font (size 1.2 1.2) (thickness 0.18))) (tstamp {uid()}))
-  (gr_text "v1.0  {now}  GPL-3.0" (at 60 4.5) (layer "F.Silkscreen")
-    (effects (font (size 0.8 0.8) (thickness 0.12))) (tstamp {uid()}))
-  (gr_text "github.com/bobberdolle1/SkySweep32" (at 60 78) (layer "B.Silkscreen")
-    (effects (font (size 0.8 0.8) (thickness 0.12)) (justify mirror)) (tstamp {uid()}))'''
+    return "\n".join([
+        gr_text("SkySweep32 — Pro Tier Carrier PCB", 60, 2, "F.Silkscreen", 1.2, 0.18),
+        gr_text(f"v1.0  {now}  GPL-3.0", 60, 4.5, "F.Silkscreen", 0.8, 0.12),
+        gr_text("github.com/bobberdolle1/SkySweep32", 60, 78, "B.Silkscreen", 0.8, 0.12,
+                extra=" (justify mirror)"),
+    ])
+
 
 # ─── MASTER PCB ASSEMBLY ──────────────────────────────────────────────────────
 
-def generate_pcb():
+def _reset_ref_counters():
+    """Reset the auto-numbering counters so repeated builds are deterministic."""
+    _cap_count[0] = 0
+    _ecap_count[0] = 0
+    _res_count[0] = 0
+    _sma_count[0] = 0
 
+
+def build_components():
+    """Return the ordered list of footprint / graphic S-expressions."""
+    _reset_ref_counters()
     components = []
 
     # ── Power Section (top-left) ──────────────────────────────────────────────
@@ -445,7 +490,7 @@ def generate_pcb():
     # ── NRF24L01+ 2×4 Header ─────────────────────────────────────────────────
     # Standard pinout (2×4 right-angle or vertical):
     # Pin 1=GND, 2=VCC, 3=CE, 4=CSN, 5=SCK, 6=MOSI, 7=MISO, 8=IRQ(NC)
-    nrf_nets = {1:1, 2:3, 3:8, 4:7, 5:6, 6:4, 7:5, 8:0}
+    nrf_nets = {1: 1, 2: 3, 3: 8, 4: 7, 5: 6, 6: 4, 7: 5, 8: 0}
     components.append(header_2xN("J_NRF24", "NRF24L01+", 75, 10, 4, nrf_nets))
     # 10µF decoupling cap (NRF24 is known to be sensitive)
     components.append(cap_electrolytic_th(68, 15, "10uF/10V", 3, 1, "C_NRF24_BIG"))
@@ -453,14 +498,14 @@ def generate_pcb():
 
     # ── CC1101 2×4 Header ─────────────────────────────────────────────────────
     # Pin 1=VCC, 2=GND, 3=MOSI, 4=SCK, 5=MISO, 6=GDO2(NC), 7=GDO0(NC), 8=CS
-    cc_nets = {1:3, 2:1, 3:4, 4:6, 5:5, 6:0, 7:0, 8:9}
+    cc_nets = {1: 3, 2: 1, 3: 4, 4: 6, 5: 5, 6: 0, 7: 0, 8: 9}
     components.append(header_2xN("J_CC1101", "CC1101 900MHz", 75, 28, 4, cc_nets))
     components.append(cap_smd(68, 30, "100nF", 3, 1, "C_CC1101"))
 
     # ── RX5808 1×5 Header ─────────────────────────────────────────────────────
     # Pin 1=5V, 2=GND, 3=RSSI(analog), 4=SPI_DATA(MOSI), 5=SPI_CLK(SCK), 6=CS(SPI_SEL)
     # Note: RX5808 needs 5V!
-    rx_nets = {1:2, 2:1, 3:11, 4:4, 5:6, 6:10}
+    rx_nets = {1: 2, 2: 1, 3: 11, 4: 4, 5: 6, 6: 10}
     components.append(header_1xN("J_RX5808", "RX5808 5.8GHz", 75, 46, 6, rx_nets))
     # RX5808 needs a 100µF cap on its 5V line
     components.append(cap_electrolytic_th(68, 48, "100uF/10V", 2, 1, "C_RX5808"))
@@ -468,20 +513,20 @@ def generate_pcb():
     # ── GPS NEO-6M 1×4 Header ────────────────────────────────────────────────
     # Pin 1=VCC, 2=RX(GPS), 3=TX(GPS), 4=GND
     # GPS TX → ESP GPIO16 (GPS_RX net), GPS RX ← ESP GPIO17 (GPS_TX net)
-    gps_nets = {1:3, 2:15, 3:14, 4:1}
+    gps_nets = {1: 3, 2: 15, 3: 14, 4: 1}
     components.append(header_1xN("J_GPS", "GPS NEO-6M", 25, 62, 4, gps_nets))
     components.append(cap_smd(25, 58, "100nF", 3, 1, "C_GPS"))
 
     # ── LoRa SX1276 2×5 Header ───────────────────────────────────────────────
     # Common SX1276 module pinout (2×5):
     # 1=GND, 2=GND, 3=VCC, 4=MISO, 5=MOSI, 6=SCK, 7=NSS(CS), 8=DIO0, 9=DIO1, 10=RST
-    lora_nets = {1:1, 2:1, 3:3, 4:5, 5:4, 6:6, 7:16, 8:17, 9:18, 10:19}
+    lora_nets = {1: 1, 2: 1, 3: 3, 4: 5, 5: 4, 6: 6, 7: 16, 8: 17, 9: 18, 10: 19}
     components.append(header_2xN("J_LORA", "LoRa SX1276", 42, 62, 5, lora_nets))
     components.append(cap_smd(42, 58, "100nF", 3, 1, "C_LORA"))
 
     # ── MicroSD Module 1×6 Header ────────────────────────────────────────────
     # Pin 1=VCC(3.3V), 2=GND, 3=CS, 4=MOSI, 5=SCK, 6=MISO
-    sd_nets = {1:3, 2:1, 3:20, 4:4, 5:6, 6:5}
+    sd_nets = {1: 3, 2: 1, 3: 20, 4: 4, 5: 6, 6: 5}
     components.append(header_1xN("J_SD", "MicroSD SPI", 62, 62, 6, sd_nets))
     components.append(cap_smd(62, 58, "100nF", 3, 1, "C_SD"))
 
@@ -506,6 +551,13 @@ def generate_pcb():
 
     # ── Title text ────────────────────────────────────────────────────────────
     components.append(title_block())
+
+    return components
+
+
+def build_pcb():
+    """Assemble and return the full ``.kicad_pcb`` file contents as a string."""
+    components = build_components()
 
     # ── Net declarations ──────────────────────────────────────────────────────
     net_decls = "\n".join(f'  (net {k} "{v}")' for k, v in NETS.items())
@@ -604,13 +656,33 @@ def generate_pcb():
 
 )
 """
-    out_path = "f:/Projects/skysweep32/hardware/skysweep32_pro.kicad_pcb"
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(pcb)
-    print(f"[OK] Written: {out_path}")
-    print(f"     Components placed: {len([c for c in components if 'footprint' in c])}")
+    return pcb, len(components)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Generate the SkySweep32 Pro Tier KiCad PCB.")
+    default_out = Path(__file__).resolve().parent / "skysweep32_pro.kicad_pcb"
+    parser.add_argument("-o", "--output", type=Path, default=default_out,
+                        help=f"output .kicad_pcb path (default: {default_out.name} next to this script)")
+    parser.add_argument("--stdout", action="store_true",
+                        help="write the PCB to stdout instead of a file")
+    args = parser.parse_args(argv)
+
+    pcb, n_components = build_pcb()
+
+    if args.stdout:
+        print(pcb, end="")
+        return
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(pcb, encoding="utf-8")
+
+    n_footprints = sum(1 for c in build_components() if "footprint" in c)
+    print(f"[OK] Written: {args.output}")
+    print(f"     Components placed: {n_footprints}")
     print(f"     Nets defined: {len(NETS)}")
     print(f"     Board: 120mm x 80mm, 2-layer FR4 1.6mm")
 
+
 if __name__ == "__main__":
-    generate_pcb()
+    main()

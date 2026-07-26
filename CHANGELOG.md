@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Reproducible Builds**: Pinned the PlatformIO platform to `espressif32 @ ^6.9.0`. This firmware depends on IDF 4.4 APIs (legacy `driver/adc.h`, `esp_task_wdt_init(timeout, panic)`) that changed in `espressif32` 7.x, so the pin prevents an accidental incompatible-major upgrade.
 - **Simpler RF Task Loops**: Replaced the repeated `#ifndef MODULE_*` guard blocks in the RF-scan and display tasks with a single `rfModuleEnabled()` helper (behavior unchanged).
+- **Portable hardware generators (large refactor)**: `build_kicad.py`, `render_pcb.py` and `enclosures/build_case.py` no longer hardcode a single Windows output path — each derives its output from the script location and accepts CLI overrides.
+  - `build_kicad.py`: split into `build_pcb()` / `main()` with `argparse`, shared S-expression emit-helpers (`fp_ref`/`fp_val`/`fp_rect`/…) collapsing the per-footprint boilerplate, a `NET` name→index lookup, and dead code removed. Output is **byte-identical** to before (verified by a UUID/date-normalized diff).
+  - `render_pcb.py`: restructured from a flat script into `draw()`/`render()`/`main()` with the axes passed explicitly; dropped unused imports and dead math; fixed the matplotlib `color`/`edgecolor` warnings.
+  - `enclosures/build_case.py`: now **headless-capable** — STL export works via `freecadcmd` without a GUI (all `ViewObject`/render calls are guarded on `FreeCAD.GuiUp`); dimensions hoisted to named constants; dead code (`sma_h`, stray `sys.exit`) removed.
 
 ### Added
 - **CI Coverage for Optional Modules**: New `esp32dev_full` PlatformIO env plus a CI step compiles the ATAK / Compass / Acoustic / GPS code paths that no release tier enables, so they no longer rot undetected.
@@ -45,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refreshed the README software-architecture tree (EN + RU) to list every current module (it previously showed only 4 of ~20) and added a **Testing** section.
 - Documented the `/api/calibrate` endpoint in the EN + RU API references (it was implemented but undocumented).
 - Added a "Running tests locally" guide (host tests + cppcheck) to `CONTRIBUTING.md`.
+- **GitHub Pages**: added a *Hardened & Field-Tested* capability card (EN + RU) reflecting the parser hardening, fuzzing and CI static analysis.
+- Added `hardware/README.md` (index + how to regenerate the PCB/preview) and updated the enclosure regeneration guide for the portable, headless scripts.
 
 ## [0.6.0] - 2026-06-12
 

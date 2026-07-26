@@ -207,6 +207,11 @@ void taskRFScanning(void* parameter) {
             // Skip modules not compiled into this build
             if (!rfModuleEnabled(i)) continue;
 
+            // Clear per-cycle protocol detection so it reflects the current scan
+            // instead of latching true forever after the first frame is seen.
+            rfModules[i].protocolMAVLink = false;
+            rfModules[i].protocolCRSF = false;
+
             // Read RSSI
             rfModules[i].rssiValue = readModuleRSSI(i);
             rfModules[i].isActive = (rfModules[i].rssiValue > 40);

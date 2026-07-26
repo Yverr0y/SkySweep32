@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Runtime Thresholds Now Effective**: `CountermeasureSystem::assessThreat()` read the compile-time `RSSI_THRESHOLD_*` macros instead of the values in `ConfigManager`, so the `/api/calibrate` and `/api/config` endpoints saved new thresholds that never influenced threat detection. Threat assessment now uses the live runtime config.
 - **Broken Flash Instructions**: The "Start from Zero" guides (EN/RU) told users to flash `SkySweep32_Starter_v0.5.0.bin`, which does not exist in `releases/`. Corrected to the shipped `v0.5.1` binary.
 - **Version Drift**: Unified the firmware version reported in serial/web (`SKYSWEEP_VERSION`) and `TODO.md` to `0.6.0` to match the changelog.
+- **CC1101 `receiveData` OOB**: Returned the raw on-air length byte (up to 255) while only copying `maxLength` bytes, so callers read past their 64-byte buffer. It now returns the number of bytes actually copied.
+- **CC1101 band/spectrum scans** left the radio tuned to the last-scanned frequency; they now save and restore the real pre-scan frequency.
+- **CC1101 `writeRegister`** had an unbounded busy-wait on a hardcoded pin; it now waits on `PIN_SPI_MISO` with a 10 ms timeout so an absent/faulty chip can't hang the task.
+- **MAVLink length truncation**: `expectedLength` was `uint8_t`, so payloads of 248–255 bytes wrapped and parsed garbage; widened to `uint16_t`. `parseHeartbeat()` now zero-initializes its result on short payloads.
+- **Signal DB scoring**: partial RSSI-match distance was `int8_t` and could overflow (0–100 scale vs negative-dBm bounds), corrupting the score; widened to `int`.
+- **Deep-sleep duration**: `sleepDurationUs` was `uint32_t`, truncating sleeps over ~71 minutes; widened to `uint64_t`.
+- **GPS geofence name**: `strncpy` could leave the name non-NUL-terminated; now explicitly terminated.
+- **Cosmetic/log**: NRF24 spectrum log printed MHz as "GHz"; Meshtastic triangulation log passed `size_t` to `%d`; corrected `power_manager` comments (GPIO36/ADC1_CH0, 12 dB attenuation).
+
+### Security
+- **CRSF parser buffer overflow (critical)**: an attacker-controlled length byte of `0xFE`/`0xFF` wrapped `uint8_t expectedLength` to 0/1, then `memcpy`'d up to ~252 bytes into the 60-byte payload buffer. The length is now range-validated and `expectedLength` widened; the CRC is also read at the correct in-frame offset.
+- **Remote ID BLE OOB read**: the BLE Remote ID parsers read fixed offsets (up to byte 22) from variable-length, attacker-controlled service data after only a `length < 2` check. Added per-message-type minimum-length guards.
+- **ESP-NOW OOB read**: the receive callback only checked `len >= 4` before dereferencing union payloads at offset 8+. It now validates the full header plus the per-type payload length before handling.
+- **Web `/api/logs/download` path traversal**: the `file` parameter was concatenated into a path with no validation; now rejects `..`, path separators, and CR/LF.
+- **Web OTA false success**: the endpoint reported success and rebooted even when no firmware was written (`Update.hasError()` is false in that case too); success is now tracked from the upload and gated on a verified write.
+- **Web `/api/config` POST**: wrote one byte past the framework buffer (`data[len]=0`) and only handled single-chunk bodies; now accumulates chunks into a bounded `String`.
+- **WebSocket handler**: removed a similar one-past-end write; the message is now printed length-bounded.
 
 ### Changed
 - **Reproducible Builds**: Pinned the PlatformIO platform to `espressif32 @ ^6.9.0`. This firmware depends on IDF 4.4 APIs (legacy `driver/adc.h`, `esp_task_wdt_init(timeout, panic)`) that changed in `espressif32` 7.x, so the pin prevents an accidental incompatible-major upgrade.

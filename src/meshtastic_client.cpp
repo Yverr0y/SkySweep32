@@ -213,7 +213,7 @@ bool MeshtasticClient::triangulateThreat(const char* droneID, double& outLat, do
     }
 
     if (reports.size() < 3) {
-        Serial.printf("[LoRa] Triangulation failed: only %d reports found for %s\n", reports.size(), droneID);
+        Serial.printf("[LoRa] Triangulation failed: only %d reports found for %s\n", (int)reports.size(), droneID);
         return false;
     }
 

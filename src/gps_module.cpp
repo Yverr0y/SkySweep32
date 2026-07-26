@@ -63,7 +63,8 @@ void GPSModule::addGeofence(const char* name, double lat, double lon, float radi
     zone.alertOnEntry = alertOnEntry;
     zone.isActive = true;
     strncpy(zone.name, name, sizeof(zone.name) - 1);
-    
+    zone.name[sizeof(zone.name) - 1] = '\0';  // strncpy may not NUL-terminate
+
     geofences.push_back(zone);
     Serial.printf("[GPS] Geofence added: %s (%.6f, %.6f, %.0fm)\n", name, lat, lon, radius);
 }

@@ -506,6 +506,12 @@ SkySweepWebServer::~SkySweepWebServer() {
     stop();
 }
 
+// Tracks whether the most recent OTA upload actually wrote & verified firmware,
+// so the POST response never reports success (and reboots) on an empty/failed
+// upload. Update.hasError() alone is false in both the success and never-started
+// cases, so a dedicated flag set during the upload is required.
+static bool s_otaSuccess = false;
+
 bool SkySweepWebServer::begin(bool accessPointMode) {
     config.apMode = accessPointMode;
     
@@ -593,6 +599,13 @@ bool SkySweepWebServer::begin(bool accessPointMode) {
     httpServer->on("/api/logs/download", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (request->hasParam("file")) {
             String filename = request->getParam("file")->value();
+            // Reject path-traversal / separator characters before building the path.
+            if (filename.indexOf("..") >= 0 || filename.indexOf('/') >= 0 ||
+                filename.indexOf('\\') >= 0 || filename.indexOf('\r') >= 0 ||
+                filename.indexOf('\n') >= 0) {
+                request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid filename\"}");
+                return;
+            }
             String filepath = "/logs/" + filename;
             if (SD.exists(filepath)) {
                 AsyncWebServerResponse *response = request->beginResponse(SD, filepath, "text/plain");
@@ -615,10 +628,10 @@ bool SkySweepWebServer::begin(bool accessPointMode) {
     httpServer->on("/api/ota", HTTP_POST, 
         // Response handler (after upload)
         [](AsyncWebServerRequest* request) {
-            bool success = !Update.hasError();
+            bool success = s_otaSuccess;  // only true when firmware was actually written & verified
             AsyncWebServerResponse* response = request->beginResponse(
                 success ? 200 : 500, "application/json",
-                success ? "{\"status\":\"ok\",\"msg\":\"Rebooting...\"}" 
+                success ? "{\"status\":\"ok\",\"msg\":\"Rebooting...\"}"
                         : "{\"status\":\"error\",\"msg\":\"Update failed\"}"
             );
             response->addHeader("Connection", "close");
@@ -631,18 +644,23 @@ bool SkySweepWebServer::begin(bool accessPointMode) {
         // Upload handler (chunk by chunk)
         [](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final) {
             if (index == 0) {
+                s_otaSuccess = false;
                 Serial.printf("[OTA] Starting update: %s (%u bytes)\n", filename.c_str(), request->contentLength());
                 if (!Update.begin(request->contentLength(), U_FLASH)) {
                     Update.printError(Serial);
+                    return;
                 }
             }
             if (Update.isRunning()) {
                 if (Update.write(data, len) != len) {
                     Update.printError(Serial);
+                    Update.abort();
+                    return;
                 }
             }
             if (final) {
                 if (Update.end(true)) {
+                    s_otaSuccess = true;
                     Serial.printf("[OTA] Update success: %u bytes\n", index + len);
                 } else {
                     Update.printError(Serial);
@@ -656,14 +674,19 @@ bool SkySweepWebServer::begin(bool accessPointMode) {
         [](AsyncWebServerRequest* request) {},  // body handler below
         nullptr,
         [](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
-            if (index == 0 && len == total) {
-                data[len] = 0;
-                if (configManager.fromJSON((const char*)data)) {
+            // Accumulate the body across chunks instead of writing one byte past the
+            // framework buffer (data[len]=0) and instead of assuming a single chunk.
+            static String body;
+            if (index == 0) body = "";
+            if (total <= 8192) body.concat((const char*)data, len);
+            if (index + len == total) {
+                if (configManager.fromJSON(body.c_str())) {
                     request->send(200, "application/json", "{\"status\":\"ok\"}");
                     Serial.println("[CONFIG] Updated via web API");
                 } else {
                     request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid JSON\"}");
                 }
+                body = "";
             }
         }
     );
@@ -838,8 +861,8 @@ void SkySweepWebServer::onWebSocketEvent(AsyncWebSocket* server, AsyncWebSocketC
             // Handle incoming commands from dashboard
             AwsFrameInfo* info = (AwsFrameInfo*)arg;
             if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-                data[len] = 0;
-                Serial.printf("[WEB] WS message: %s\n", (char*)data);
+                // Print length-bounded rather than NUL-terminating one byte past the frame buffer.
+                Serial.printf("[WEB] WS message: %.*s\n", (int)len, (const char*)data);
             }
             break;
         }

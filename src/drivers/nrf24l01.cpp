@@ -295,9 +295,9 @@ NRF24L01Driver::ChannelScanResult NRF24L01Driver::scanSpectrum(uint8_t passes, u
     setChannel(savedChannel);
     startListening();
     
-    Serial.printf("[NRF24] Spectrum: %d active channels, peak ch%d (%d.%03d GHz)\n",
+    Serial.printf("[NRF24] Spectrum: %d active channels, peak ch%d (%d MHz)\n",
                   result.activeChannels, result.peakChannel,
-                  2400 + result.peakChannel, 0);
+                  2400 + result.peakChannel);
     
     return result;
 }

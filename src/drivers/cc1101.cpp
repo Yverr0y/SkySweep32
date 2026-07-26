@@ -73,7 +73,12 @@ void CC1101Driver::reset() {
 
 void CC1101Driver::writeRegister(uint8_t address, uint8_t value) {
     digitalWrite(chipSelectPin, LOW);
-    while(digitalRead(19)); // Wait for MISO to go low
+    // Wait for MISO (chip-ready) to go low, but never hang forever if the chip
+    // is absent or faulty (previously an unbounded busy-wait on a hardcoded pin).
+    uint32_t t0 = millis();
+    while (digitalRead(PIN_SPI_MISO)) {
+        if (millis() - t0 > 10) break;
+    }
     spiInstance->transfer(address);
     spiInstance->transfer(value);
     digitalWrite(chipSelectPin, HIGH);
@@ -225,8 +230,10 @@ uint8_t CC1101Driver::receiveData(uint8_t* buffer, uint8_t maxLength) {
         buffer[i] = spiInstance->transfer(0x00);
     }
     digitalWrite(chipSelectPin, HIGH);
-    
-    return length;
+
+    // Return only what was actually copied — the on-air length byte is
+    // attacker-controlled and returning it raw makes the caller read past its buffer.
+    return (length < maxLength) ? length : maxLength;
 }
 
 void CC1101Driver::flushRxFIFO() {
@@ -272,7 +279,8 @@ void CC1101Driver::setBand(FreqBand band) {
 
 CC1101Driver::BandScanResult CC1101Driver::scanAllBands(uint16_t dwellMs) {
     BandScanResult result;
-    
+    uint32_t saved = currentFrequency;  // setFrequency() in the loop overwrites currentFrequency
+
     for (uint8_t b = 0; b < BAND_COUNT; b++) {
         setIdleMode();
         setFrequency(BAND_FREQUENCIES[b]);
@@ -285,8 +293,8 @@ CC1101Driver::BandScanResult CC1101Driver::scanAllBands(uint16_t dwellMs) {
         result.activity[b] = (result.rssi[b] > -75);  // Activity threshold
     }
     
-    // Restore to primary band (915 MHz default)
-    setFrequency(currentFrequency);
+    // Restore the pre-scan frequency (the loop's setFrequency calls overwrote currentFrequency)
+    setFrequency(saved);
     sendStrobe(CC1101_SCAL);
     delayMicroseconds(800);
     setRxMode();
@@ -297,6 +305,7 @@ CC1101Driver::BandScanResult CC1101Driver::scanAllBands(uint16_t dwellMs) {
 void CC1101Driver::spectrumScan(uint32_t startHz, uint32_t endHz, uint32_t stepHz,
                                  int8_t* rssiOut, uint16_t maxPoints, uint16_t dwellMs) {
     uint16_t idx = 0;
+    uint32_t saved = currentFrequency;  // setFrequency() in the loop overwrites currentFrequency
     
     for (uint32_t freq = startHz; freq <= endHz && idx < maxPoints; freq += stepHz, idx++) {
         setIdleMode();
@@ -310,7 +319,7 @@ void CC1101Driver::spectrumScan(uint32_t startHz, uint32_t endHz, uint32_t stepH
     }
     
     // Restore original frequency
-    setFrequency(currentFrequency);
+    setFrequency(saved);
     sendStrobe(CC1101_SCAL);
     delayMicroseconds(800);
     setRxMode();

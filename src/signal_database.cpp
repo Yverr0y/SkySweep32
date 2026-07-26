@@ -209,8 +209,9 @@ float SignalDatabase::calculateMatchScore(const DroneSignature& sig,
     if (rssi >= sig.typicalRssiMin && rssi <= sig.typicalRssiMax) {
         score += 20.0f;
     } else {
-        // Partial score for close misses
-        int8_t dist = 0;
+        // Partial score for close misses. Use int, not int8_t: rssi (0-100) minus a
+        // negative-dBm bound can exceed 127 and overflow, corrupting the score.
+        int dist = 0;
         if (rssi < sig.typicalRssiMin) dist = sig.typicalRssiMin - rssi;
         if (rssi > sig.typicalRssiMax) dist = rssi - sig.typicalRssiMax;
         if (dist < 20) score += 20.0f * (1.0f - (float)dist / 20.0f);

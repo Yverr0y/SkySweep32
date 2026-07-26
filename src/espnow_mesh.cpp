@@ -1,5 +1,6 @@
 #include "espnow_mesh.h"
 #include "power_manager.h"
+#include <cstddef>  // offsetof
 
 ESPNowMesh espNowMesh;
 ESPNowMesh* ESPNowMesh::instance = nullptr;
@@ -14,9 +15,21 @@ ESPNowMesh::ESPNowMesh()
 // --- Static callbacks (ESP-NOW requires C-style function pointers) ---
 
 void ESPNowMesh::onReceiveCB(const uint8_t* mac, const uint8_t* data, int len) {
-    if (instance && len >= sizeof(uint8_t) * 4) {  // Minimum header size
-        instance->handleMessage(mac, (const ESPNowMessage*)data);
+    if (!instance) return;
+    // Validate the frame is large enough for the fixed header, then for the
+    // specific payload variant handleMessage() will dereference — the sender is
+    // untrusted, so a short frame must not be read past its end.
+    size_t need = offsetof(ESPNowMessage, payload);
+    if (len < (int)need) return;
+    const ESPNowMessage* msg = (const ESPNowMessage*)data;
+    switch (msg->type) {
+        case MSG_HEARTBEAT:    need += sizeof(msg->payload.heartbeat); break;
+        case MSG_THREAT_ALERT: need += sizeof(msg->payload.threat);    break;
+        case MSG_GPS_POS:      need += sizeof(msg->payload.gps);       break;
+        default: break;
     }
+    if ((size_t)len < need) return;
+    instance->handleMessage(mac, msg);
 }
 
 void ESPNowMesh::onSendCB(const uint8_t* mac, esp_now_send_status_t status) {

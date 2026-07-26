@@ -62,17 +62,23 @@ void RemoteIDDetector::onResult(BLEAdvertisedDevice advertisedDevice) {
     drone.lastSeen = millis();
     drone.isValid = false;
     
+    // Service data is attacker-controlled and variable-length; enforce the minimum
+    // size each parser reads before dispatching to avoid out-of-bounds reads.
     switch (messageType) {
         case BASIC_ID:
+            if (payloadLength < 23) return;   // reads payload[3..22]
             parseBasicIDMessage(payload, drone);
             break;
         case LOCATION:
+            if (payloadLength < 17) return;   // reads payload[2..16]
             parseLocationMessage(payload, drone);
             break;
         case SYSTEM:
+            if (payloadLength < 13) return;   // reads payload[2..12]
             parseSystemMessage(payload, drone);
             break;
         case OPERATOR_ID:
+            if (payloadLength < 22) return;   // reads payload[2..21]
             parseOperatorIDMessage(payload, drone);
             break;
         default:

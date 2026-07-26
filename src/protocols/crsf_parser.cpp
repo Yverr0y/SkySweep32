@@ -39,16 +39,24 @@ bool CRSFParser::parseByte(uint8_t byte) {
         rxBuffer[rxIndex++] = byte;
         
         if (rxIndex >= 3) {
-            uint8_t expectedLength = rxBuffer[1] + 2; // Address + Length + Payload + CRC
-            
+            // rxBuffer[1] (frame length) is attacker-controlled over the air.
+            // Reject out-of-range values before they overflow the fixed 60-byte
+            // payload buffer, and widen expectedLength so 0xFE/0xFF cannot wrap to 0/1.
+            if (rxBuffer[1] < 2 || (rxBuffer[1] - 2) > CRSF_PAYLOAD_SIZE_MAX) {
+                rxIndex = 0;
+                return false;
+            }
+            uint16_t expectedLength = rxBuffer[1] + 2; // Address + Length + Payload + CRC
+
             if (rxIndex >= expectedLength) {
                 currentPacket.address = rxBuffer[0];
                 currentPacket.length = rxBuffer[1];
                 currentPacket.type = rxBuffer[2];
-                
+
                 uint8_t payloadLength = currentPacket.length - 2;
                 memcpy(currentPacket.payload, &rxBuffer[3], payloadLength);
-                currentPacket.crc = rxBuffer[2 + currentPacket.length];
+                // CRC is the last byte of the frame, at index (1 + length), not (2 + length).
+                currentPacket.crc = rxBuffer[1 + currentPacket.length];
                 
                 currentPacket.valid = validateCRC(&currentPacket);
                 rxIndex = 0;
@@ -105,7 +113,7 @@ void CRSFParser::buildRCChannels(uint8_t* buffer, uint8_t* length, uint16_t* cha
 
 void CRSFParser::buildLinkStats(uint8_t* buffer, uint8_t* length, CRSFLinkStats* stats) {
     buffer[0] = CRSF_ADDRESS_FLIGHT_CTRL;
-    buffer[1] = 11; // Length
+    buffer[1] = 12; // Length (type + 10 payload bytes + CRC)
     buffer[2] = CRSF_FRAMETYPE_LINK_STATS;
     
     buffer[3] = stats->uplink_RSSI_1;

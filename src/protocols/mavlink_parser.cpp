@@ -61,7 +61,7 @@ bool MAVLinkParser::parseByte(uint8_t byte) {
         rxBuffer[rxIndex++] = byte;
         
         if (rxIndex >= 6) {
-            uint8_t expectedLength = 8 + rxBuffer[1]; // Header + payload + CRC
+            uint16_t expectedLength = 8 + rxBuffer[1]; // Header + payload + CRC (widened so len 248-255 doesn't wrap)
             
             if (rxIndex >= expectedLength) {
                 currentPacket.magic = rxBuffer[0];
@@ -171,6 +171,7 @@ bool MAVLinkParser::isRCChannels(MAVLinkPacket* packet) {
 
 MAVLinkHeartbeat MAVLinkParser::parseHeartbeat(MAVLinkPacket* packet) {
     MAVLinkHeartbeat hb;
+    memset(&hb, 0, sizeof(hb));
     if (packet->len >= 9) {
         hb.type = packet->payload[0];
         hb.autopilot = packet->payload[1];

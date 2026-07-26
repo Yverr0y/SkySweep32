@@ -30,7 +30,7 @@ private:
     uint32_t lastBatteryRead;
     
     // Deep sleep configuration
-    uint32_t sleepDurationUs;     // Microseconds between wake cycles
+    uint64_t sleepDurationUs;     // Microseconds between wake cycles (64-bit: >71 min would overflow uint32)
     uint8_t  wakeScansBeforeSleep; // Number of scans before going back to sleep
     
 public:

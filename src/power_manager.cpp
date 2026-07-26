@@ -19,7 +19,7 @@ void PowerManager::begin() {
         Serial.println("[PWR] Woke from deep sleep");
     }
     
-    // Configure ADC for battery measurement (pin 34)
+    // Configure ADC for battery measurement (ADC1_CHANNEL_0 = GPIO36)
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_12);
     batteryMonitoring = true;
@@ -99,7 +99,7 @@ float PowerManager::getBatteryVoltage() {
     uint32_t rawADC = sum / 16;
     
     // Convert ADC reading to voltage
-    // ESP32 ADC: 0-4095 maps to 0-3.3V (with 11dB attenuation)
+    // ESP32 ADC: 0-4095 maps to ~0-2.5V at the pin (with 12dB attenuation)
     float measuredVoltage = (rawADC / 4095.0f) * 3.3f;
     batteryVoltage = measuredVoltage * VBAT_DIVIDER_RATIO;
     
@@ -134,7 +134,7 @@ void PowerManager::configureSleep(uint32_t sleepSeconds, uint8_t scansPerWake) {
 }
 
 void PowerManager::enterDeepSleep() {
-    Serial.printf("[PWR] Entering deep sleep for %u seconds...\n", sleepDurationUs / 1000000);
+    Serial.printf("[PWR] Entering deep sleep for %llu seconds...\n", (unsigned long long)(sleepDurationUs / 1000000));
     Serial.flush();
     
     // Configure wake source: timer

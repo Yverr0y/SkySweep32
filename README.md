@@ -102,15 +102,34 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 
 ```
 src/
-├── main.cpp                    # Main application logic
-├── countermeasures.h/cpp       # Active countermeasure system
+├── main.cpp                    # FreeRTOS tasks & app orchestration
+├── config.h                    # Central config: tiers, pins, feature flags
+├── config_manager.h/cpp        # Runtime JSON config (SPIFFS)
+├── spi_manager.h/cpp           # Thread-safe shared-SPI bus (mutex)
+├── power_manager.h/cpp         # Power modes, battery ADC, deep sleep
+├── alert_manager.h/cpp         # Non-blocking buzzer/LED alert patterns
+├── countermeasures.h/cpp       # Threat assessment + optional EW (Juggernaut)
+├── signal_database.h/cpp       # Drone signal fingerprinting
+├── espnow_mesh.h/cpp           # ESP-NOW node-to-node mesh alerts
+├── web_server.h/cpp            # WiFi AP, dashboard, REST + WebSocket
+├── remote_id_detector.h/cpp    # BLE Remote ID scanner
+├── ml_classifier.h/cpp         # Drone classification (rules + TFLite)
+├── model_data.h                # TinyML model blob
+├── gps_module.h/cpp            # GPS (NEO-6M/7M)            [Pro]
+├── data_logger.h/cpp           # SD-card forensic logging   [Pro]
+├── meshtastic_client.h/cpp     # LoRa mesh + trilateration  [Pro]
+├── atak_client.h/cpp           # ATAK Cursor-on-Target UDP  [optional]
+├── compass_module.h/cpp        # QMC5883L direction finding [optional]
+├── acoustic_detector.h/cpp     # I2S MEMS acoustic detection[optional]
 ├── drivers/
-│   ├── cc1101.h/cpp           # CC1101 900MHz driver
-│   ├── nrf24l01.h/cpp         # NRF24L01+ 2.4GHz driver
-│   └── rx5808.h/cpp           # RX5808 5.8GHz driver
+│   ├── cc1101.h/cpp            # CC1101 900 MHz driver
+│   ├── nrf24l01.h/cpp          # NRF24L01+ 2.4 GHz driver
+│   └── rx5808.h/cpp            # RX5808 5.8 GHz driver
 └── protocols/
-    ├── mavlink_parser.h/cpp   # MAVLink protocol decoder
-    └── crsf_parser.h/cpp      # CRSF/ExpressLRS decoder
+    ├── mavlink_parser.h/cpp    # MAVLink protocol decoder
+    └── crsf_parser.h/cpp       # CRSF/ExpressLRS decoder
+
+test/host/                      # Desktop unit tests (g++ + ASan/UBSan)
 ```
 
 ### Build Instructions
@@ -129,6 +148,18 @@ pio run --target upload
 # Monitor serial output
 pio device monitor
 ```
+
+### Testing
+
+The protocol parsers (CRSF/MAVLink), which decode untrusted over-the-air input, have
+desktop unit tests that build with the host `g++` — no ESP32 toolchain required:
+
+```bash
+make -C test/host      # builds with AddressSanitizer/UBSan and runs the suite
+```
+
+These run in CI (`.github/workflows/host-tests.yml`) alongside a `cppcheck`
+static-analysis pass. See [`test/host/README.md`](test/host/README.md).
 
 ### Configuration
 
@@ -250,15 +281,34 @@ SkySweep32 — продвинутая система пассивного обн
 
 ```
 src/
-├── main.cpp                    # Основная логика приложения
-├── countermeasures.h/cpp       # Система активного противодействия
+├── main.cpp                    # Задачи FreeRTOS и оркестрация приложения
+├── config.h                    # Центральный конфиг: уровни, пины, флаги функций
+├── config_manager.h/cpp        # Runtime JSON-конфиг (SPIFFS)
+├── spi_manager.h/cpp           # Потокобезопасная общая шина SPI (мьютекс)
+├── power_manager.h/cpp         # Режимы питания, ADC батареи, глубокий сон
+├── alert_manager.h/cpp         # Неблокирующие паттерны зуммера/LED
+├── countermeasures.h/cpp       # Оценка угроз + опциональный РЭБ (Juggernaut)
+├── signal_database.h/cpp       # Сигнатурная база дронов
+├── espnow_mesh.h/cpp           # Mesh-оповещения ESP-NOW между узлами
+├── web_server.h/cpp            # WiFi AP, дашборд, REST + WebSocket
+├── remote_id_detector.h/cpp    # Сканер BLE Remote ID
+├── ml_classifier.h/cpp         # Классификация дронов (правила + TFLite)
+├── model_data.h                # Блоб модели TinyML
+├── gps_module.h/cpp            # GPS (NEO-6M/7M)             [Pro]
+├── data_logger.h/cpp           # Логирование на SD-карту     [Pro]
+├── meshtastic_client.h/cpp     # LoRa mesh + трилатерация    [Pro]
+├── atak_client.h/cpp           # ATAK Cursor-on-Target UDP   [опц.]
+├── compass_module.h/cpp        # QMC5883L пеленгация          [опц.]
+├── acoustic_detector.h/cpp     # Акустика I2S MEMS            [опц.]
 ├── drivers/
-│   ├── cc1101.h/cpp           # Драйвер CC1101 900МГц
-│   ├── nrf24l01.h/cpp         # Драйвер NRF24L01+ 2.4ГГц
-│   └── rx5808.h/cpp           # Драйвер RX5808 5.8ГГц
+│   ├── cc1101.h/cpp            # Драйвер CC1101 900 МГц
+│   ├── nrf24l01.h/cpp          # Драйвер NRF24L01+ 2.4 ГГц
+│   └── rx5808.h/cpp            # Драйвер RX5808 5.8 ГГц
 └── protocols/
-    ├── mavlink_parser.h/cpp   # Декодер протокола MAVLink
-    └── crsf_parser.h/cpp      # Декодер CRSF/ExpressLRS
+    ├── mavlink_parser.h/cpp    # Декодер протокола MAVLink
+    └── crsf_parser.h/cpp       # Декодер CRSF/ExpressLRS
+
+test/host/                      # Юнит-тесты на хосте (g++ + ASan/UBSan)
 ```
 
 ### Инструкции по сборке
@@ -277,6 +327,18 @@ pio run --target upload
 # Мониторинг Serial
 pio device monitor
 ```
+
+### Тестирование
+
+Парсеры протоколов (CRSF/MAVLink), разбирающие недоверенный ввод из эфира, покрыты
+юнит-тестами, которые собираются хостовым `g++` — тулчейн ESP32 не нужен:
+
+```bash
+make -C test/host      # сборка с AddressSanitizer/UBSan и запуск тестов
+```
+
+Они гоняются в CI (`.github/workflows/host-tests.yml`) вместе со статическим
+анализом `cppcheck`. Подробнее — [`test/host/README.md`](test/host/README.md).
 
 ### Конфигурация
 

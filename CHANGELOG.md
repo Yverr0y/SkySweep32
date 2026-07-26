@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Host Unit Tests for Parsers**: Added `test/host/` — desktop-compiled tests (system `g++`, no ESP32 toolchain/PlatformIO registry) that build the CRSF/MAVLink parsers against a minimal `Arduino.h` stub with AddressSanitizer/UBSan. They lock in the buffer-safety fixes (hostile length bytes rejected, valid frames round-trip), the CRSF RC-channel pack/unpack round-trip, the GPS/heartbeat `parse*` bounds guards, and a deterministic ~460k-frame fuzz pass over both parsers; run in CI via a new `host-tests.yml` workflow.
 - **Static Analysis (cppcheck)**: the host workflow (renamed *Host Tests & Static Analysis*) now also runs cppcheck warning-level checks over the full feature set — a system tool, so it needs no PlatformIO registry and gates on likely defects.
 
+### Documentation
+- Refreshed the README software-architecture tree (EN + RU) to list every current module (it previously showed only 4 of ~20) and added a **Testing** section.
+- Documented the `/api/calibrate` endpoint in the EN + RU API references (it was implemented but undocumented).
+- Added a "Running tests locally" guide (host tests + cppcheck) to `CONTRIBUTING.md`.
+
 ## [0.6.0] - 2026-06-12
 
 ### Added

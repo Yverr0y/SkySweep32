@@ -124,6 +124,7 @@ with open('.pio/build/esp32dev/firmware.bin', 'rb') as f:
 | `/api/config` | GET | Current runtime configuration |
 | `/api/config` | POST | Update configuration (JSON body) |
 | `/api/config/reset` | POST | Reset configuration to defaults |
+| `/api/calibrate` | POST | Recalibrate RSSI noise-floor thresholds |
 | `/api/ota` | POST | Upload firmware binary (multipart) |
 | `/api/power` | POST | Set power mode (`?mode=0-3`: Full/Balanced/Low/Sleep) |
 | `/api/logs` | GET | List SD card logs (JSON array of file objects) |

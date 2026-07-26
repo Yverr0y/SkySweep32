@@ -100,6 +100,7 @@ curl -X POST http://192.168.4.1/api/ota \
 | `/api/config` | GET | Текущая конфигурация |
 | `/api/config` | POST | Обновить конфигурацию |
 | `/api/config/reset` | POST | Сброс конфигурации |
+| `/api/calibrate` | POST | Перекалибровка порогов шумового пола RSSI |
 | `/api/ota` | POST | Загрузка прошивки |
 | `/api/power` | POST | Установка режима питания (`?mode=0-3`) |
 | `/api/logs` | GET | Получить список логов с SD-карты (JSON-массив) |

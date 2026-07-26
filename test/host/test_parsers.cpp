@@ -199,10 +199,95 @@ static void testMAVLink() {
     }
 }
 
+// Exercises the CRSF/MAVLink field-extraction helpers directly: correct decoding
+// on full-length payloads and safe zeroed output on short ones (bounds guards).
+static void testParseHelpers() {
+    printf("Parse helpers (bounds + extraction):\n");
+
+    // CRSF RC-channel round trip through build -> parse (11-bit pack/unpack + CRC).
+    {
+        uint16_t in[16];
+        for (int i = 0; i < 16; i++) in[i] = (uint16_t)(172 + i * 20);  // all < 2048
+
+        CRSFParser builder;
+        uint8_t buf[64];
+        uint8_t len = 0;
+        builder.buildRCChannels(buf, &len, in);
+        CHECK(len == 26, "buildRCChannels total length == 26");
+        CHECK(buf[1] == 24, "buildRCChannels frame-length byte == 24");
+
+        CRSFParser p;
+        bool v = false;
+        for (uint8_t i = 0; i < len; i++) if (p.parseByte(buf[i])) v = true;
+        CHECK(v, "built RC-channels frame parses & validates");
+
+        CRSFPacket pkt = p.getPacket();
+        CRSFRCChannels rc = p.parseRCChannels(&pkt);
+        bool allMatch = true;
+        for (int i = 0; i < 16; i++) if (rc.channels[i] != in[i]) allMatch = false;
+        CHECK(allMatch, "RC channels round-trip losslessly (11-bit pack/unpack)");
+    }
+
+    // CRSF GPS: extracts on length >= 17, zeroed on short length.
+    {
+        CRSFPacket pkt;
+        memset(&pkt, 0, sizeof(pkt));
+        pkt.length = 17;
+        pkt.payload[14] = 9;  // satellites
+        CRSFParser p;
+        CRSFGPS gps = p.parseGPS(&pkt);
+        CHECK(gps.satellites == 9, "CRSF parseGPS extracts satellites on full payload");
+
+        CRSFPacket shortPkt;
+        memset(&shortPkt, 0, sizeof(shortPkt));
+        shortPkt.length = 10;             // below 17
+        shortPkt.payload[14] = 9;
+        CRSFGPS g2 = p.parseGPS(&shortPkt);
+        CHECK(g2.satellites == 0 && g2.latitude == 0, "CRSF parseGPS zeroed on short payload");
+    }
+
+    // MAVLink GPS: extracts on len >= 30, zeroed on short len.
+    {
+        MAVLinkPacket pkt;
+        memset(&pkt, 0, sizeof(pkt));
+        pkt.len = 30;
+        pkt.payload[28] = 3;   // fix_type
+        pkt.payload[29] = 11;  // satellites_visible
+        MAVLinkParser p;
+        MAVLinkGPS gps = p.parseGPS(&pkt);
+        CHECK(gps.fix_type == 3 && gps.satellites_visible == 11,
+              "MAVLink parseGPS extracts fix/sats on full payload");
+
+        MAVLinkPacket shortPkt;
+        memset(&shortPkt, 0, sizeof(shortPkt));
+        shortPkt.len = 20;     // below 30
+        shortPkt.payload[29] = 11;
+        MAVLinkGPS g2 = p.parseGPS(&shortPkt);
+        CHECK(g2.satellites_visible == 0 && g2.lat == 0, "MAVLink parseGPS zeroed on short payload");
+    }
+
+    // MAVLink heartbeat extraction on a full payload.
+    {
+        MAVLinkPacket pkt;
+        memset(&pkt, 0, sizeof(pkt));
+        pkt.len = 9;
+        pkt.msgid = MAVLINK_MSG_ID_HEARTBEAT;
+        pkt.payload[0] = 2;   // type = quadrotor
+        pkt.payload[1] = 12;  // autopilot
+        pkt.payload[7] = 4;   // system_status
+        pkt.payload[8] = 3;   // mavlink_version
+        MAVLinkParser p;
+        MAVLinkHeartbeat hb = p.parseHeartbeat(&pkt);
+        CHECK(hb.type == 2 && hb.autopilot == 12 && hb.system_status == 4 && hb.mavlink_version == 3,
+              "MAVLink parseHeartbeat extracts fields on full payload");
+    }
+}
+
 int main() {
     printf("== SkySweep32 host parser tests ==\n");
     testCRSF();
     testMAVLink();
+    testParseHelpers();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

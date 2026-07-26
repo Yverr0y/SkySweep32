@@ -27,5 +27,8 @@ Coverage includes:
 - MAVLink: a valid heartbeat round-trips; a 250-byte-payload frame validates
   (verifying the widened `expectedLength`); a truncated frame is not accepted;
   `parseHeartbeat` zero-initializes on short payloads.
+- Field helpers: CRSF RC-channel build↔parse round-trip (11-bit pack/unpack),
+  and the CRSF/MAVLink GPS + heartbeat `parse*` helpers decode full payloads
+  correctly while returning zeroed structs on short (out-of-bounds) payloads.
 
 CI runs the same command via [`.github/workflows/host-tests.yml`](../../.github/workflows/host-tests.yml).

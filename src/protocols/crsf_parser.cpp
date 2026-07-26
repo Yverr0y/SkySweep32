@@ -2,6 +2,7 @@
 
 CRSFParser::CRSFParser() {
     rxIndex = 0;
+    memset(rxBuffer, 0, sizeof(rxBuffer));
     memset(&currentPacket, 0, sizeof(CRSFPacket));
 }
 

@@ -114,7 +114,7 @@ bool DataLogger::logDetection(const DetectionLogEntry& entry) {
     char logLine[256];
     snprintf(logLine, sizeof(logLine), 
              "[%lu] DETECTION | Module: %s | RSSI: %d dBm | Freq: %.2f MHz | Protocol: %s | GPS: %.6f,%.6f @ %.1fm\n",
-             entry.timestamp, entry.moduleName, entry.rssi, entry.frequency, entry.protocol,
+             (unsigned long)entry.timestamp, entry.moduleName, entry.rssi, entry.frequency, entry.protocol,
              entry.latitude, entry.longitude, entry.altitude);
     
     size_t written = logFile.print(logLine);

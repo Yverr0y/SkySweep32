@@ -10,6 +10,8 @@ AcousticDetector::AcousticDetector(uint8_t bclkPin, uint8_t wsPin, uint8_t dinPi
     emaRatio = 0.0f;
     sustainCounter = 0;
     alarmState = false;
+    memset(goertzelFilters, 0, sizeof(goertzelFilters));
+    memset(audioBuffer, 0, sizeof(audioBuffer));
     
     // I2S configuration
     i2sConfig = {

@@ -16,6 +16,7 @@ static const uint8_t MAVLINK_CRC_EXTRA[] = {
 
 MAVLinkParser::MAVLinkParser() {
     rxIndex = 0;
+    memset(rxBuffer, 0, sizeof(rxBuffer));
     memset(&currentPacket, 0, sizeof(MAVLinkPacket));
 }
 

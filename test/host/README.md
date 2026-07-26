@@ -30,5 +30,9 @@ Coverage includes:
 - Field helpers: CRSF RC-channel build↔parse round-trip (11-bit pack/unpack),
   and the CRSF/MAVLink GPS + heartbeat `parse*` helpers decode full payloads
   correctly while returning zeroed structs on short (out-of-bounds) payloads.
+- Fuzz: ~460k random and adversarial frames (valid sync + random length byte,
+  hitting every boundary incl. `0xFE`/`0xFF`) fed to both parsers — the
+  sanitizers turn any out-of-bounds access into a hard failure. Deterministic
+  (seeded xorshift), runs in well under a second.
 
 CI runs the same command via [`.github/workflows/host-tests.yml`](../../.github/workflows/host-tests.yml).

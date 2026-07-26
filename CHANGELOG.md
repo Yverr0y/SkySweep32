@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI Coverage for Optional Modules**: New `esp32dev_full` PlatformIO env plus a CI step compiles the ATAK / Compass / Acoustic / GPS code paths that no release tier enables, so they no longer rot undetected.
 - **CI Maintenance**: Bumped GitHub Actions (`checkout@v4`, `setup-python@v5`, `cache@v4`, `action-gh-release@v2`) and added a `workflow_dispatch` trigger for manual runs.
 - **Build Status Badge**: Added the GitHub Actions CI badge to the README.
-- **Host Unit Tests for Parsers**: Added `test/host/` — desktop-compiled tests (system `g++`, no ESP32 toolchain/PlatformIO registry) that build the CRSF/MAVLink parsers against a minimal `Arduino.h` stub with AddressSanitizer/UBSan. They lock in the buffer-safety fixes (hostile length bytes rejected, valid frames round-trip), the CRSF RC-channel pack/unpack round-trip, and the GPS/heartbeat `parse*` bounds guards; run in CI via a new `host-tests.yml` workflow.
+- **Host Unit Tests for Parsers**: Added `test/host/` — desktop-compiled tests (system `g++`, no ESP32 toolchain/PlatformIO registry) that build the CRSF/MAVLink parsers against a minimal `Arduino.h` stub with AddressSanitizer/UBSan. They lock in the buffer-safety fixes (hostile length bytes rejected, valid frames round-trip), the CRSF RC-channel pack/unpack round-trip, the GPS/heartbeat `parse*` bounds guards, and a deterministic ~460k-frame fuzz pass over both parsers; run in CI via a new `host-tests.yml` workflow.
 
 ## [0.6.0] - 2026-06-12
 

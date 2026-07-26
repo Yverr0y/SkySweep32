@@ -1,0 +1,21 @@
+name: Host Unit Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  parser-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # The protocol parsers are pure logic and compile against a tiny Arduino.h
+    # stub, so they can be unit-tested with the runner's system g++ — no ESP32
+    # toolchain or PlatformIO registry needed. Built with ASan/UBSan so any
+    # out-of-bounds access on a malformed frame fails the job.
+    - name: Build & run parser tests (ASan/UBSan)
+      run: make -C test/host

@@ -15,6 +15,9 @@ build_artifacts/
 __pycache__/
 *.pyc
 
+# Host unit-test binary
+test/host/test_parsers
+
 # C/C++
 *.o
 *.a

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deep-sleep duration**: `sleepDurationUs` was `uint32_t`, truncating sleeps over ~71 minutes; widened to `uint64_t`.
 - **GPS geofence name**: `strncpy` could leave the name non-NUL-terminated; now explicitly terminated.
 - **Cosmetic/log**: NRF24 spectrum log printed MHz as "GHz"; Meshtastic triangulation log passed `size_t` to `%d`; corrected `power_manager` comments (GPIO36/ADC1_CH0, 12 dB attenuation).
+- **cppcheck warnings**: `data_logger` logged a `uint32_t` timestamp with `%lu` (type mismatch); fully initialized the ATAK, CRSF, MAVLink, and Acoustic constructors; gave `GPSModule` deleted copy operations (it owns a raw `HardwareSerial*`).
 
 ### Security
 - **CRSF parser buffer overflow (critical)**: an attacker-controlled length byte of `0xFE`/`0xFF` wrapped `uint8_t expectedLength` to 0/1, then `memcpy`'d up to ~252 bytes into the 60-byte payload buffer. The length is now range-validated and `expectedLength` widened; the CRC is also read at the correct in-frame offset.
@@ -38,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI Maintenance**: Bumped GitHub Actions (`checkout@v4`, `setup-python@v5`, `cache@v4`, `action-gh-release@v2`) and added a `workflow_dispatch` trigger for manual runs.
 - **Build Status Badge**: Added the GitHub Actions CI badge to the README.
 - **Host Unit Tests for Parsers**: Added `test/host/` — desktop-compiled tests (system `g++`, no ESP32 toolchain/PlatformIO registry) that build the CRSF/MAVLink parsers against a minimal `Arduino.h` stub with AddressSanitizer/UBSan. They lock in the buffer-safety fixes (hostile length bytes rejected, valid frames round-trip), the CRSF RC-channel pack/unpack round-trip, the GPS/heartbeat `parse*` bounds guards, and a deterministic ~460k-frame fuzz pass over both parsers; run in CI via a new `host-tests.yml` workflow.
+- **Static Analysis (cppcheck)**: the host workflow (renamed *Host Tests & Static Analysis*) now also runs cppcheck warning-level checks over the full feature set — a system tool, so it needs no PlatformIO registry and gates on likely defects.
+
+### Documentation
+- Refreshed the README software-architecture tree (EN + RU) to list every current module (it previously showed only 4 of ~20) and added a **Testing** section.
+- Documented the `/api/calibrate` endpoint in the EN + RU API references (it was implemented but undocumented).
+- Added a "Running tests locally" guide (host tests + cppcheck) to `CONTRIBUTING.md`.
 
 ## [0.6.0] - 2026-06-12
 

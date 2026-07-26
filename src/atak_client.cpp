@@ -3,7 +3,7 @@
 
 ATAKClient atakClient;
 
-ATAKClient::ATAKClient() : isConnected(false) {}
+ATAKClient::ATAKClient() : multicastPort(0), isConnected(false) {}
 
 bool ATAKClient::begin(const char* ip, uint16_t port, const char* nodeCallsign) {
     multicastIP.fromString(ip);

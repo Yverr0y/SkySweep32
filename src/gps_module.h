@@ -45,7 +45,11 @@ private:
 
 public:
     GPSModule(uint8_t rxPin = PIN_GPS_RX, uint8_t txPin = PIN_GPS_TX);
-    
+
+    // Non-copyable: owns a raw HardwareSerial* (single global instance).
+    GPSModule(const GPSModule&) = delete;
+    GPSModule& operator=(const GPSModule&) = delete;
+
     bool begin(uint32_t baudRate = GPS_BAUD_RATE);
     void update();
     

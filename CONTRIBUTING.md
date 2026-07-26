@@ -15,8 +15,21 @@ Thank you for your interest in contributing! SkySweep32 is an open-source projec
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Make your changes following the conventions below
-4. Test on real hardware if possible
+4. Run the host tests and static analysis (see below); test on real hardware if possible
 5. Submit a Pull Request
+
+#### Running tests locally
+
+The pure-logic protocol parsers have host unit tests that need only a desktop
+compiler (no ESP32 toolchain):
+
+```bash
+make -C test/host        # g++ + AddressSanitizer/UBSan, runs the suite
+cppcheck --enable=warning --std=c++11 -I src -I src/drivers -I src/protocols src
+```
+
+Both also run in CI. When you add or change a protocol parser (or any pure-logic
+code that decodes external input), please add a case under `test/host/`.
 
 ### 3. Documentation
 

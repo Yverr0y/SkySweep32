@@ -283,11 +283,64 @@ static void testParseHelpers() {
     }
 }
 
+// Deterministic PRNG (xorshift32) so the fuzz run is reproducible — no time or
+// std::random seeding, same sequence every build.
+static uint32_t g_rng = 0x1a2b3c4du;
+static uint32_t xrand() {
+    g_rng ^= g_rng << 13;
+    g_rng ^= g_rng >> 17;
+    g_rng ^= g_rng << 5;
+    return g_rng;
+}
+
+// Feed random and adversarial byte streams through both parsers. The parsers
+// decode attacker-controlled RF, so the property under test is simply: no input
+// causes an out-of-bounds access. Built with AddressSanitizer, any OOB aborts
+// the process, so reaching the end == pass.
+static void testFuzz() {
+    printf("Fuzz (ASan/UBSan guard OOB on arbitrary input):\n");
+
+    // 1) Unstructured byte stream through long-lived parsers (they self-resync).
+    {
+        CRSFParser cp;
+        MAVLinkParser mp;
+        for (int i = 0; i < 300000; i++) {
+            uint8_t b = (uint8_t)(xrand() & 0xFF);
+            cp.parseByte(b);
+            mp.parseByte(b);
+        }
+    }
+
+    // 2) Structured frames: valid sync + random length byte (hits 0xFE/0xFF and
+    //    every boundary) + random payload, each into a fresh parser.
+    for (int iter = 0; iter < 80000; iter++) {
+        uint8_t frame[320];
+        int n = 2 + (int)(xrand() % 300);
+        frame[0] = CRSF_SYNC_BYTE;
+        frame[1] = (uint8_t)(xrand() & 0xFF);
+        for (int i = 2; i < n; i++) frame[i] = (uint8_t)(xrand() & 0xFF);
+        CRSFParser p;
+        for (int i = 0; i < n; i++) p.parseByte(frame[i]);
+    }
+    for (int iter = 0; iter < 80000; iter++) {
+        uint8_t frame[320];
+        int n = 2 + (int)(xrand() % 300);
+        frame[0] = MAVLINK_STX_V1;
+        frame[1] = (uint8_t)(xrand() & 0xFF);
+        for (int i = 2; i < n; i++) frame[i] = (uint8_t)(xrand() & 0xFF);
+        MAVLinkParser p;
+        for (int i = 0; i < n; i++) p.parseByte(frame[i]);
+    }
+
+    CHECK(true, "fuzz completed without a sanitizer abort");
+}
+
 int main() {
     printf("== SkySweep32 host parser tests ==\n");
     testCRSF();
     testMAVLink();
     testParseHelpers();
+    testFuzz();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

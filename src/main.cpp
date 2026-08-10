@@ -174,6 +174,14 @@ static inline bool rfModuleEnabled(uint8_t moduleIndex) {
     }
 }
 
+static inline bool cc1101BlankedByLocalLoRa() {
+    #if defined(MODULE_CC1101) && defined(MODULE_LORA)
+    return meshtasticClient.isTransmitRecoveryActive();
+    #else
+    return false;
+    #endif
+}
+
 int readModuleRSSI(uint8_t moduleIndex) {
     if (moduleIndex == 2) {
         #ifdef MODULE_RX5808
@@ -181,6 +189,10 @@ int readModuleRSSI(uint8_t moduleIndex) {
         #else
         return 0;
         #endif
+    }
+
+    if (moduleIndex == 0 && cc1101BlankedByLocalLoRa()) {
+        return 0;
     }
 
     int rssiValue = 0;
@@ -388,7 +400,10 @@ void taskRFScanning(void* parameter) {
                 alert.threatLevel = (uint8_t)threat;
                 alert.timestamp = millis();
                 snprintf(alert.droneID, sizeof(alert.droneID), "%s_THREAT", rfModules[i].moduleName);
-                meshtasticClient.broadcastDetectionAlert(alert);
+                if (spiManager.acquire(pdMS_TO_TICKS(2000))) {
+                    meshtasticClient.broadcastDetectionAlert(alert);
+                    spiManager.release();
+                }
             }
             #endif
             
@@ -410,7 +425,7 @@ void taskRFScanning(void* parameter) {
         }
 
         #ifdef MODULE_CC1101
-        if (sweepCounter == 0) {
+        if (sweepCounter == 0 && !cc1101BlankedByLocalLoRa()) {
             if (spiManager.acquire(pdMS_TO_TICKS(100))) {
                 CC1101Driver::BandScanResult bandResult = cc1101.scanAllBands(5);
                 spiManager.release();

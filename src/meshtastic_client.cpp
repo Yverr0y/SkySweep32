@@ -2,8 +2,12 @@
 
 #ifdef MODULE_LORA
 
-MeshtasticClient::MeshtasticClient() 
-    : isInitialized(false), lastTransmitTime(0), transmitInterval(LORA_TRANSMIT_INTERVAL), lora(nullptr) {
+MeshtasticClient::MeshtasticClient()
+    : isInitialized(false),
+      lastTransmitTime(0),
+      lastRfActivityTime(0),
+      transmitInterval(LORA_TRANSMIT_INTERVAL),
+      lora(nullptr) {
     localNodeID = generateNodeID();
 }
 
@@ -54,6 +58,9 @@ bool MeshtasticClient::sendRawPacket(const uint8_t* data, size_t length) {
     }
     
     int state = lora->transmit(const_cast<uint8_t*>(data), length);
+    // A failed RadioLib result can still follow an on-air transmission attempt;
+    // always blank the collocated CC1101 recovery window.
+    lastRfActivityTime = millis();
     
     if (state == RADIOLIB_ERR_NONE) {
         lastTransmitTime = millis();
@@ -170,6 +177,11 @@ uint32_t MeshtasticClient::getNodeID(uint8_t index) const {
 
 void MeshtasticClient::setTransmitInterval(uint32_t intervalMs) {
     transmitInterval = intervalMs;
+}
+
+bool MeshtasticClient::isTransmitRecoveryActive(uint32_t guardMs) const {
+    return lastRfActivityTime != 0 &&
+           static_cast<uint32_t>(millis() - lastRfActivityTime) < guardMs;
 }
 
 int16_t MeshtasticClient::getLastRSSI() const {

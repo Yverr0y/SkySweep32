@@ -14,7 +14,7 @@ hardware is excluded.
 | Web dashboard, ESP-NOW, BLE Remote ID | ESP32 Wi-Fi/BLE stack | MCU 2.4 GHz radio and antenna keepout | Integrated ESP32-S3-WROOM-1-N8; PCB antenna faces a plastic wall and has the Espressif carrier-board keepout |
 | OLED | U8g2 SSD1306 hardware I2C | 3V3, GND, SDA, SCL | Adafruit PID 326 on a short removable 4-wire harness at the front panel |
 | NRF24 scanning | `NRF24L01Driver`, SPI + CE | 3V3, GND, SCK, MOSI, MISO, CSN, CE; IRQ not used | Ebyte E01-ML01DP5; module-native SMA; IRQ routed only to a test pad |
-| CC1101 scanning | `CC1101Driver`, SPI | 3V3, GND, SCK, MOSI, MISO, CSN | Ebyte E07-M1101D-SMA; module-native SMA; GDO0/GDO2 to test pads |
+| CC1101 scanning | `CC1101Driver`, SPI | 3V3, GND, SCK, MOSI, MISO, CSN | Ebyte E07-900M10S, 855–925 MHz; module IPEX to panel SMA pigtail; GDO0/GDO2 to test pads |
 | 5.8 GHz RSSI scanning | `RX5808Driver` | 5V, GND, DATA, CLOCK, SELECT, analog RSSI | Qualified 2012-layout RX5808 module with documented SPI-enable modification; four independent MCU signals |
 | GPS | TinyGPS++ over UART NMEA | 3V3/5V, GND, GPS_TX→MCU_RX, GPS_RX←MCU_TX | Adafruit Ultimate GPS v3 PID 746; onboard patch antenna; optional PPS test point |
 | LoRa mesh | RadioLib SX1276 | 3V3, GND, SPI, CS, DIO0, DIO1, RESET | Adafruit RFM95W breakout PID 3072; U.FL to labelled panel SMA pigtail |
@@ -127,21 +127,21 @@ status remains UNVERIFIED.
 
 ## 6. RF self-interference policy
 
-* **ESP32 Wi-Fi/BLE versus NRF24:** they occupy the same 2.4 GHz band. Physical
-  separation reduces overload but cannot make local packets distinguishable.
-  NRF24 samples taken while Wi-Fi/BLE is active are tagged self-interference
-  possible. A user-selectable RF-quiet scan mode suspends local Wi-Fi/BLE before
-  declaring an external 2.4 GHz target. Normal dashboard mode must not classify
-  the configured AP channel as an independent target.
-* **LoRa TX versus CC1101:** LoRa transmit windows are explicit local events.
-  CC1101 samples are invalidated from before key-up through receiver recovery;
-  the CC1101 is returned to RX and re-sampled after the guard interval. LoRa
-  packets are never reported as CC1101 targets.
-* **ESP-NOW/Wi-Fi activity:** local channel and activity state are attached to
-  NRF24 scan records. Unqualified 2.4 GHz RSSI alone is not a drone identity.
-* **BLE Remote ID scanning:** scanner activity and locally generated BLE/Wi-Fi
-  traffic are documented limitations. RF-quiet mode and Remote ID scanning are
-  mutually exclusive during the quiet window.
+The complete port map, placement rules, firmware invalid windows and prototype
+test matrix are specified in
+[`RF_COEXISTENCE.md`](RF_COEXISTENCE.md). The release-critical rules are:
+
+* **ESP32 Wi-Fi/BLE versus NRF24:** physical separation reduces overload but
+  cannot make local packets distinguishable. Unqualified 2.4 GHz RSSI/RPD is
+  activity evidence, not drone identity. Normal dashboard operation must not
+  classify the configured AP channel as an independent target. A true RF-quiet
+  scan remains unimplemented and is not claimed.
+* **LoRa TX versus CC1101:** every local LoRa transmit holds the RF SPI mutex.
+  CC1101 samples are invalid through a 25 ms initial post-transmit guard. The
+  final guard comes from prototype recovery measurements.
+* **ESP-NOW/Wi-Fi and BLE:** configured channel and local feature state must
+  accompany validation records. BLE activity near NRF24 channel 76 is a known
+  limitation.
 * All three transmit-capable radios default to the minimum power needed by their
   communication role. NRF24 transmission is disabled in the passive Pro profile.
 
@@ -180,19 +180,30 @@ Required access without removing the PCB:
 * antenna wrench/nut and pigtail bend clearance;
 * lid removal without disconnecting soldered wires.
 
-## 9. Stackup target
+## 9. Power architecture
 
-Four-layer, 1.6 mm FR-4:
+The canonical input is 5 V from a USB-C source rated at least 2 A. A resettable
+2 A fuse, VBUS TVS and LM73100 integrated ideal diode provide input and backfeed
+protection. AP63203WU-7 generates 3V3_MAIN with its official 3.9 µH / 10 µF /
+2 × 22 µF / 100 nF component set. RF modules have independent filtered branches;
+microSD has local burst capacitance. The calculated simultaneous load is 1.115 A
+on 3V3_MAIN and 1.316 A at USB before source reserve. See the authoritative
+[`POWER_BUDGET.md`](POWER_BUDGET.md) for assumptions, arithmetic, locked parts
+and required bench evidence.
 
-1. L1: components and controlled short signals;
-2. L2: uninterrupted reference GND plane;
-3. L3: 5 V / 3V3 distribution and low-speed signals, with no split below fast L1 routes;
-4. L4: signals and GND pours tied to L2 with perimeter/module stitching.
+## 10. Stackup target
 
-The PCB fabricator's actual dielectric and copper data control any impedance
-number. No fixed 50 Ω width will be claimed until that stackup is selected.
+The selected preliminary fabrication target is the symmetric four-layer,
+1.6 mm JLC04161H-7628 stack: F.Cu signals, uninterrupted In1.GND, In2 power/GND
+and B.Cu signals. The authoritative layer dimensions, net classes, length limits,
+return-path rules, keepouts and DRC gates are in
+[`STACKUP_AND_CONSTRAINTS.md`](STACKUP_AND_CONSTRAINTS.md).
 
-## 10. Known uncertainties before layout release
+The fabricator's live dielectric and copper data control impedance. Rev B has no
+long carrier-board RF feed. Native USB is the only controlled pair and its
+preliminary width/gap must be recalculated before fabrication.
+
+## 11. Known uncertainties before layout release
 
 * RX5808 lacks a stable manufacturer part number. Rev B defines a photo/dimension/
   pin qualification gate and a reference envelope; a random clone is not accepted.

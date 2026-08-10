@@ -16,6 +16,9 @@ are documented in:
 
 * [`rev_b/HARDWARE_ARCHITECTURE.md`](rev_b/HARDWARE_ARCHITECTURE.md)
 * [`rev_b/BOM_LOCK.md`](rev_b/BOM_LOCK.md)
+* [`rev_b/POWER_BUDGET.md`](rev_b/POWER_BUDGET.md)
+* [`rev_b/RF_COEXISTENCE.md`](rev_b/RF_COEXISTENCE.md)
+* [`rev_b/STACKUP_AND_CONSTRAINTS.md`](rev_b/STACKUP_AND_CONSTRAINTS.md)
 * [`rev_b/hardware_manifest.yaml`](rev_b/hardware_manifest.yaml) — authoritative
   machine-readable module, rail, signal, GPIO and connector contract
 

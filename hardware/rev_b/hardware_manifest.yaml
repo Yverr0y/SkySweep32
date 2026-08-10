@@ -43,13 +43,17 @@
   "rails": {
     "VBUS_PROTECTED": {
       "nominal_v": 5.0,
-      "source": "USB-C through MF-MSMF200-2 fuse, reverse-current protection and TVS",
-      "design_limit_ma": 2000
+      "source": "USB4105-GF-A through MF-MSMF200-2, SMAJ5.0A and LM73100RPWR",
+      "design_limit_ma": 2000,
+      "calculated_peak_ma": 1316,
+      "peak_with_15pct_reserve_ma": 1513,
+      "required_source": "USB-C 5V 2A minimum; no USB-PD voltage above 5V"
     },
     "3V3_MAIN": {
       "nominal_v": 3.3,
-      "source": "AP63203WU-7 synchronous buck",
-      "design_limit_ma": 2000
+      "source": "AP63203WU-7 with SRN6028-3R9M and datasheet capacitor set",
+      "design_limit_ma": 2000,
+      "calculated_peak_ma": 1115
     }
   },
   "buses": {
@@ -125,7 +129,7 @@
       "part_number": "E01-ML01DP5",
       "rail": "3V3_MAIN",
       "design_current_ma": 130,
-      "connector": "2x4 2.54mm",
+      "connector": "1x8 through-hole row, 2.54mm",
       "module_pins": {"1": "GND", "2": "3V3_MAIN", "3": "NRF24_CE", "4": "NRF24_CSN", "5": "RF_SPI_SCK", "6": "RF_SPI_MOSI", "7": "RF_SPI_MISO", "8": "TP_NRF24_IRQ"},
       "antenna": "module_native_sma",
       "mechanical_mm": [18.0, 33.4]
@@ -133,13 +137,13 @@
     "RF2": {
       "function": "cc1101_scanner",
       "manufacturer": "Chengdu Ebyte Electronic Technology",
-      "part_number": "E07-M1101D-SMA",
+      "part_number": "E07-900M10S",
       "rail": "3V3_MAIN",
-      "design_current_ma": 110,
-      "connector": "2x4 2.54mm",
-      "module_pins": {"1": "GND", "2": "3V3_MAIN", "3": "TP_CC1101_GDO0", "4": "CC1101_CSN", "5": "RF_SPI_SCK", "6": "RF_SPI_MOSI", "7": "RF_SPI_MISO", "8": "TP_CC1101_GDO2"},
-      "antenna": "module_native_sma",
-      "mechanical_mm": [15.0, 30.0]
+      "design_current_ma": 50,
+      "connector": "22 castellated pads, 1.27mm",
+      "module_pins": {"1": "GND", "2": "GND", "3": "GND", "4": "GND", "5": "GND", "6": "NC", "7": "NC", "8": "NC", "9": "3V3_MAIN", "10": "NC", "11": "GND", "12": "GND", "13": "NC", "14": "TP_CC1101_GDO2", "15": "TP_CC1101_GDO0", "16": "RF_SPI_MISO", "17": "RF_SPI_MOSI", "18": "RF_SPI_SCK", "19": "CC1101_CSN", "20": "GND", "21": "NC", "22": "GND"},
+      "antenna": "module_native_ipex_to_rg178_panel_sma",
+      "mechanical_mm": [14.0, 20.0, 2.4]
     },
     "RF3": {
       "function": "rx5808_scanner",
@@ -167,7 +171,7 @@
       "manufacturer": "Adafruit Industries",
       "part_number": "PID 746 Ultimate GPS v3 MTK3339",
       "rail": "VBUS_PROTECTED",
-      "design_current_ma": 30,
+      "design_current_ma": 50,
       "module_pins": {"VIN": "VBUS_PROTECTED", "GND": "GND", "TX": "GPS_RX", "RX": "GPS_TX", "PPS": "GPS_PPS"},
       "antenna": "integrated_patch",
       "mechanical_mm": [25.5, 35.0, 6.5]

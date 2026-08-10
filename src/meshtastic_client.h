@@ -36,6 +36,7 @@ private:
     bool isInitialized;
     uint32_t localNodeID;
     uint32_t lastTransmitTime;
+    uint32_t lastRfActivityTime;
     uint32_t transmitInterval;
     
     std::vector<MeshPacket> receivedPackets;
@@ -62,6 +63,7 @@ public:
     uint32_t getNodeID(uint8_t index) const;
     
     void setTransmitInterval(uint32_t intervalMs);
+    bool isTransmitRecoveryActive(uint32_t guardMs = 25) const;
     int16_t getLastRSSI() const;
     float getLastSNR() const;
     bool triangulateThreat(const char* droneID, double& outLat, double& outLon);

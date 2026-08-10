@@ -25,6 +25,25 @@ python3 hardware/build_kicad.py -o board.kicad_pcb
 python3 hardware/build_kicad.py --stdout        # print instead of writing
 ```
 
+The generator intentionally emits the KiCad 6 file format (`version
+20211014`).  The title block uses `(comment 1 ...)` syntax and board arcs use
+`(mid ...)`, so the checked-in PCB can be opened by KiCad 6 and newer without
+manual repairs.  If a newer KiCad version upgrades the file on save, rerun the
+generator to restore the portable source format.
+
+After generation, validate the board with KiCad CLI (KiCad 8+ recommended for
+the check; the board itself remains KiCad 6-compatible):
+
+```bash
+kicad-cli pcb drc --refill-zones \
+  --output hardware/kicad-drc.txt hardware/skysweep32_pro.kicad_pcb
+```
+
+The current generated board routes all 94 required connections and reports no
+unconnected items in KiCad 10.  Inline footprints may still produce library
+configuration warnings because the generator deliberately embeds their
+geometry instead of requiring a local footprint library.
+
 Nets, footprints and placement live in `build_kicad.py`; net names have a
 readable `NET["SPI_MOSI"]`-style lookup and the layout is assembled in
 `build_components()`.

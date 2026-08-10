@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-08-09
+
 ### Fixed
 - **Runtime Thresholds Now Effective**: `CountermeasureSystem::assessThreat()` read the compile-time `RSSI_THRESHOLD_*` macros instead of the values in `ConfigManager`, so the `/api/calibrate` and `/api/config` endpoints saved new thresholds that never influenced threat detection. Threat assessment now uses the live runtime config.
-- **Broken Flash Instructions**: The "Start from Zero" guides (EN/RU) told users to flash `SkySweep32_Starter_v0.5.0.bin`, which does not exist in `releases/`. Corrected to the shipped `v0.5.1` binary.
-- **Version Drift**: Unified the firmware version reported in serial/web (`SKYSWEEP_VERSION`) and `TODO.md` to `0.6.0` to match the changelog.
+- **Broken Flash Instructions**: The "Start from Zero" guides (EN/RU) pointed at stale release names and Wi-Fi credentials. Updated them for the `v0.6.1` artifacts and the actual `SkySweep32` / `skysweep32` AP.
+- **Version Drift**: Unified the firmware version reported in serial/web (`SKYSWEEP_VERSION`), release builder, flash script, and `TODO.md` to `0.6.1`.
 - **CC1101 `receiveData` OOB**: Returned the raw on-air length byte (up to 255) while only copying `maxLength` bytes, so callers read past their 64-byte buffer. It now returns the number of bytes actually copied.
 - **CC1101 band/spectrum scans** left the radio tuned to the last-scanned frequency; they now save and restore the real pre-scan frequency.
 - **CC1101 `writeRegister`** had an unbounded busy-wait on a hardcoded pin; it now waits on `PIN_SPI_MISO` with a 10 ms timeout so an absent/faulty chip can't hang the task.
@@ -27,16 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ESP-NOW OOB read**: the receive callback only checked `len >= 4` before dereferencing union payloads at offset 8+. It now validates the full header plus the per-type payload length before handling.
 - **Web `/api/logs/download` path traversal**: the `file` parameter was concatenated into a path with no validation; now rejects `..`, path separators, and CR/LF.
 - **Web OTA false success**: the endpoint reported success and rebooted even when no firmware was written (`Update.hasError()` is false in that case too); success is now tracked from the upload and gated on a verified write.
-- **Web `/api/config` POST**: wrote one byte past the framework buffer (`data[len]=0`) and only handled single-chunk bodies; now accumulates chunks into a bounded `String`.
-- **WebSocket handler**: removed a similar one-past-end write; the message is now printed length-bounded.
+- **ESP-NOW and LoRa input validation**: Reject malformed callback frames, invalid LoRa lengths, null direct-message inputs, and unterminated triangulation identifiers before parsing.
 
 ### Changed
-- **Reproducible Builds**: Pinned the PlatformIO platform to `espressif32 @ ^6.9.0`. This firmware depends on IDF 4.4 APIs (legacy `driver/adc.h`, `esp_task_wdt_init(timeout, panic)`) that changed in `espressif32` 7.x, so the pin prevents an accidental incompatible-major upgrade.
+- **KiCad 6+ PCB compatibility**: Regenerated `hardware/skysweep32_pro.kicad_pcb` with valid `(comment N ...)` title-block forms and `gr_arc` `mid` geometry, and improved deterministic signal routing for the 120 × 80 mm Pro carrier.
 - **Simpler RF Task Loops**: Replaced the repeated `#ifndef MODULE_*` guard blocks in the RF-scan and display tasks with a single `rfModuleEnabled()` helper (behavior unchanged).
 - **Portable hardware generators (large refactor)**: `build_kicad.py`, `render_pcb.py` and `enclosures/build_case.py` no longer hardcode a single Windows output path — each derives its output from the script location and accepts CLI overrides.
-  - `build_kicad.py`: split into `build_pcb()` / `main()` with `argparse`, shared S-expression emit-helpers (`fp_ref`/`fp_val`/`fp_rect`/…) collapsing the per-footprint boilerplate, a `NET` name→index lookup, and dead code removed. Output is **byte-identical** to before (verified by a UUID/date-normalized diff).
+  - `build_kicad.py`: split into `build_pcb()` / `main()` with `argparse`, shared S-expression emit-helpers (`fp_ref`/`fp_val`/`fp_rect`/…) collapsing the per-footprint boilerplate, a `NET` name→index lookup, deterministic routing, and dead code removed.
   - `render_pcb.py`: restructured from a flat script into `draw()`/`render()`/`main()` with the axes passed explicitly; dropped unused imports and dead math; fixed the matplotlib `color`/`edgecolor` warnings.
-  - `enclosures/build_case.py`: now **headless-capable** — STL export works via `freecadcmd` without a GUI (all `ViewObject`/render calls are guarded on `FreeCAD.GuiUp`); dimensions hoisted to named constants; dead code (`sma_h`, stray `sys.exit`) removed.
+  - `enclosures/build_case.py`: now **headless-capable** — STL export works via `freecadcmd` without a GUI (all `ViewObject`/render calls are guarded on `FreeCAD.GuiUp`); dimensions hoisted to named constants; dead code (`sma_h`, stray `sys.exit`) removed; regenerated STL exports were verified with FreeCAD 1.1.3.
 
 ### Added
 - **CI Coverage for Optional Modules**: New `esp32dev_full` PlatformIO env plus a CI step compiles the ATAK / Compass / Acoustic / GPS code paths that no release tier enables, so they no longer rot undetected.
@@ -181,6 +182,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OLED display integration
 - PlatformIO build system
 
+[0.6.1]: https://github.com/bobberdolle1/SkySweep32/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/bobberdolle1/SkySweep32/compare/v0.5.1...v0.6.0
 [0.3.0]: https://github.com/bobberdolle1/SkySweep32/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/bobberdolle1/SkySweep32/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bobberdolle1/SkySweep32/releases/tag/v0.1.0

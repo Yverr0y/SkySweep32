@@ -9,6 +9,12 @@
 #include <SD.h>
 #endif
 
+// Host-side static analysis does not provide Arduino's PROGMEM macro.  The
+// fallback is a no-op on desktop builds and leaves the ESP32 definition intact.
+#ifndef PROGMEM
+#define PROGMEM
+#endif
+
 // ============================================================================
 // Dashboard HTML (stored in PROGMEM to save RAM)
 // ============================================================================

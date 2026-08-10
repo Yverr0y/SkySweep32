@@ -740,6 +740,45 @@
         grid-template-columns: 1fr;
       }
     }
+    @media (max-width: 640px) {
+      nav {
+        height: 60px;
+        padding: 0 16px;
+      }
+      .logo {
+        font-size: 18px;
+      }
+      .nav-links {
+        gap: 0;
+      }
+      .nav-links a {
+        display: none;
+      }
+      .hero {
+        padding: 120px 20px 72px;
+      }
+      .hero-glow {
+        width: 100vw;
+        height: 100vw;
+      }
+      .hero h1 {
+        font-size: 40px;
+      }
+      .hero p {
+        font-size: 16px;
+      }
+      .hero-ctas {
+        width: 100%;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hero-ctas .btn {
+        width: 100%;
+      }
+      .hardware-module {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -752,6 +791,8 @@
       <a href="#visualizer" data-i18n="navTiers">Tiers</a>
       <a href="#flasher" data-i18n="navFlasher">Flash Guide</a>
       <a href="https://github.com/bobberdolle1/SkySweep32" target="_blank">GitHub</a>
+      <a href="https://github.com/bobberdolle1/SkySweep32/blob/master/docs/en/pcb_assembly.md" target="_blank" data-i18n="navDocs">Hardware docs</a>
+      <a href="https://github.com/bobberdolle1/SkySweep32/blob/master/docs/en/enclosures.md" target="_blank" data-i18n="navCase">Enclosure</a>
       <select class="lang-switcher" onchange="switchLanguage(this.value)">
         <option value="en">EN</option>
         <option value="ru">RU</option>
@@ -764,6 +805,7 @@
     <div class="hero-glow"></div>
     <h1 id="hero-title" data-i18n="heroTitle">Passive Drone Detection on ESP32</h1>
     <p id="hero-subtitle" data-i18n="heroSubtitle">A modular, budget-friendly passive RF scanner covering 900MHz, 2.4GHz, and 5.8GHz bands. Detects FPV video signals, BLE Remote ID payloads, and protocol sweeps.</p>
+    <p data-i18n="releaseMeta" style="margin-top:14px;color:var(--neon-green);font-size:13px;font-weight:600;letter-spacing:.04em;">v0.6.1 · KiCad 6+ PCB · FreeCAD/STL enclosure</p>
     <div class="hero-ctas">
       <a href="#visualizer" class="btn btn-primary" data-i18n="ctaStart">Start Assembly</a>
       <a href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware" target="_blank" class="btn btn-secondary" data-i18n="ctaHardware">PCB & 3D Case Files</a>
@@ -1054,14 +1096,13 @@
           ==========================================================<br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SKY SWEEP 32 - AUTOMATED FLASHING UTILITY<br>
           ==========================================================<br>
-          [OK] Found ESP32 board on COM4.<br>
-          <br>
-          SELECT TIER TO FLASH:<br>
-          [1] Starter (OLED + NRF24)<br>
+          [INFO] Release builder: scripts/build_releases.ps1 -Version 0.6.1<br>
+          [INFO] Select the tier that matches your hardware:<br>
+          [1] Starter (ESP32 + OLED + NRF24)<br>
           [2] Hunter (Starter + CC1101 + RX5808)<br>
           [3] Sentinel (Hunter + GPS + SD + LoRa)<br>
-          <br>
-          Writing flash (100%). Done!
+          [OK] Flash the generated binary with flash.bat or esptool-js.<br>
+          [OK] Connect to Wi-Fi <strong>SkySweep32</strong> and open 192.168.4.1.
         </div>
       </div>
     </div>
@@ -1081,8 +1122,11 @@
         navFeatures: "Features",
         navTiers: "Tiers",
         navFlasher: "Flash Guide",
+        navDocs: "Hardware docs",
+        navCase: "Enclosure",
         heroTitle: "Passive Drone Detection on ESP32",
         heroSubtitle: "A modular, budget-friendly passive RF scanner covering 900MHz, 2.4GHz, and 5.8GHz bands. Detects FPV video signals, BLE Remote ID payloads, and protocol sweeps.",
+        releaseMeta: "v0.6.1 · KiCad 6+ PCB · FreeCAD/STL enclosure",
         ctaStart: "Start Assembly",
         ctaHardware: "PCB & 3D Case Files",
         ctaFirmware: "Download Firmware",
@@ -1129,8 +1173,11 @@
         navFeatures: "Функции",
         navTiers: "Уровни",
         navFlasher: "Прошивка",
+        navDocs: "Аппаратная часть",
+        navCase: "Корпус",
         heroTitle: "Пассивный радар обнаружения дронов на ESP32",
         heroSubtitle: "Бюджетный модульный пассивный РЧ-сканер частот 900 МГц, 2.4 ГГц и 5.8 ГГц. Детекция FPV видео, BLE Remote ID пакетов и сканирование протоколов.",
+        releaseMeta: "v0.6.1 · PCB KiCad 6+ · корпус FreeCAD/STL",
         ctaStart: "Начать сборку",
         ctaHardware: "Платы и 3D Корпуса",
         ctaFirmware: "Скачать прошивку",

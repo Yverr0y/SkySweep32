@@ -16,20 +16,25 @@ ESPNowMesh::ESPNowMesh()
 
 void ESPNowMesh::onReceiveCB(const uint8_t* mac, const uint8_t* data, int len) {
     if (!instance) return;
-    // Validate the frame is large enough for the fixed header, then for the
-    // specific payload variant handleMessage() will dereference — the sender is
-    // untrusted, so a short frame must not be read past its end.
-    size_t need = offsetof(ESPNowMessage, payload);
-    if (len < (int)need) return;
-    const ESPNowMessage* msg = (const ESPNowMessage*)data;
-    switch (msg->type) {
-        case MSG_HEARTBEAT:    need += sizeof(msg->payload.heartbeat); break;
-        case MSG_THREAT_ALERT: need += sizeof(msg->payload.threat);    break;
-        case MSG_GPS_POS:      need += sizeof(msg->payload.gps);       break;
+    // Validate the fixed header before inspecting the message type.  The
+    // callback receives untrusted bytes that may be unaligned.
+    const size_t headerSize = offsetof(ESPNowMessage, payload);
+    if (!mac || !data || len < 0 || static_cast<size_t>(len) < headerSize) return;
+
+    ESPNowMessage frame{};
+    size_t need = headerSize;
+    switch (data[0]) {
+        case MSG_HEARTBEAT:    need += sizeof(frame.payload.heartbeat); break;
+        case MSG_THREAT_ALERT: need += sizeof(frame.payload.threat);    break;
+        case MSG_GPS_POS:      need += sizeof(frame.payload.gps);       break;
         default: break;
     }
-    if ((size_t)len < need) return;
-    instance->handleMessage(mac, msg);
+    if (static_cast<size_t>(len) < need) return;
+
+    size_t copyLength = static_cast<size_t>(len);
+    if (copyLength > sizeof(frame)) copyLength = sizeof(frame);
+    memcpy(&frame, data, copyLength);
+    instance->handleMessage(mac, &frame);
 }
 
 void ESPNowMesh::onSendCB(const uint8_t* mac, esp_now_send_status_t status) {
@@ -213,14 +218,14 @@ bool ESPNowMesh::broadcast(const ESPNowMessage& msg) {
     if (!initialized) return false;
     
     uint8_t broadcastAddr[] = ESPNOW_BROADCAST_ADDR;
-    esp_err_t result = esp_now_send(broadcastAddr, (const uint8_t*)&msg, sizeof(ESPNowMessage));
+    esp_err_t result = esp_now_send(broadcastAddr, reinterpret_cast<const uint8_t*>(&msg), sizeof(ESPNowMessage));
     return (result == ESP_OK);
 }
 
 bool ESPNowMesh::sendTo(const uint8_t* mac, const ESPNowMessage& msg) {
-    if (!initialized) return false;
+    if (!initialized || !mac) return false;
     
-    esp_err_t result = esp_now_send(mac, (const uint8_t*)&msg, sizeof(ESPNowMessage));
+    esp_err_t result = esp_now_send(mac, reinterpret_cast<const uint8_t*>(&msg), sizeof(ESPNowMessage));
     return (result == ESP_OK);
 }
 

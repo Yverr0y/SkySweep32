@@ -8,7 +8,6 @@ This document outlines the recommended enclosure designs for the different tiers
 
 The Starter tier is aimed at infantry and field operators who need a compact, low-cost device. It should fit comfortably on MOLLE webbing, a plate carrier, or inside a tactical pouch.
 
-![Starter Concept](/C:/Users/Administrator/.gemini/antigravity/brain/2422b5e7-9a66-4ff2-8727-62beaa06c9a7/skysweep32_starter_1774706530748.png)
 
 ### Design Recommendations
 - **Form Factor**: Similar to a ruggedized smartphone or walkie-talkie.
@@ -36,7 +35,7 @@ The Hunter tier introduces wider spectrum monitoring (900MHz + 2.4GHz + 5.8GHz).
 
 The Sentinel is a fixed installation intended for rooftops, perimeter fences, or permanent command bases. It is ruggedized against the elements and requires maximum antenna separation.
 
-![Sentinel Concept](/C:/Users/Administrator/.gemini/antigravity/brain/2422b5e7-9a66-4ff2-8727-62beaa06c9a7/skysweep32_sentinel_1774706553771.png)
+![Sentinel enclosure preview](../../hardware/enclosures/preview_assembly_iso.png)
 
 ### Design Recommendations
 - **Form Factor**: A robust, industrial waterproof box (IP67 rating).

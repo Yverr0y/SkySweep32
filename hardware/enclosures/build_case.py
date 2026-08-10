@@ -69,6 +69,10 @@ FILLET_R = 4.0   # Corner fillet radius
 # (5,5),(115,5),(5,75),(115,75) of the 120×80mm board).
 MOUNT_HOLES = [(5, 5), (115, 5), (5, 75), (115, 75)]
 
+# Signal-pad Y coordinates of the four edge-mount SMA footprints on the PCB.
+# The enclosure coordinates add WALL because the board sits inside the shell.
+SMA_PCB_Y = (15.0, 30.0, 45.0, 60.0)
+
 # Lid/bottom corner boss inset from each outer corner.
 CORNER_INSET = 5.0
 
@@ -169,9 +173,10 @@ def build_bottom():
             break
         bottom = bottom.cut(box(slot_l, WALL + 2, slot_w, pos=(slot_start_x, OUTER_D - 1, sz)))
 
-    # SMA bulkhead holes (right wall), 4 connectors spread along Y
+    # SMA bulkhead holes (right wall), aligned with the PCB signal pads.
     sma_z = FLOOR + STANDOFF_H + PCB_T + 8
-    for sy in (WALL + 12, WALL + 30, WALL + 50, WALL + 68):
+    for pcb_y in SMA_PCB_Y:
+        sy = WALL + pcb_y
         sma_cyl = cylinder(3.25, WALL + 2, (OUTER_W - 1, sy, sma_z), axis_rot=rot_y(90))
         bottom = bottom.cut(sma_cyl)
 

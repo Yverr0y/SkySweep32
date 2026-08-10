@@ -119,12 +119,12 @@ You have the hardware assembled, but it's empty. You need to pour the program in
 5. A black window will appear and automatically find your board. Press the number **1** (for Starter Tier) and hit Enter.
 6. You will see percentages scrolling by for about 1 minute. **You are done!** The text "SkySweep32" should light up on the screen of your device.
 
-*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.5.1.bin` file from the `releases` folder, and click Program).*
+*(If `flash.bat` didn't work: open the Chrome browser, go to [esptool-js](https://espressif.github.io/esptool-js/), set `Baudrate: 460800`, click Connect, select the `SkySweep32_Starter_v0.6.1.bin` file from the `releases/v0.6.1` folder, and click Program).*
 
 ## 📱 Step 4: How to use the Radar (Web Dashboard)
 
 1. As soon as you flash the board, it will create a new Wi-Fi network.
-2. Take your phone, go to Wi-Fi settings, and look for the network called **SkySweep32_AP**.
-3. Password: `skysweep`
+2. Take your phone, go to Wi-Fi settings, and look for the network called **SkySweep32**.
+3. Password: `skysweep32`
 4. Open any browser (Chrome, Safari, Edge) and enter this address: `http://192.168.4.1`
 5. **Congratulations!** You are looking at the control panel. If a drone with a controller flies nearby, the phone screen will immediately light up with a warning!

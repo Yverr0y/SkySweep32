@@ -7,6 +7,8 @@
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![Build: PlatformIO](https://img.shields.io/badge/Build-PlatformIO-orange.svg)](https://platformio.org/)
 
+**Current release:** `v0.6.1` — the Pro PCB is stored in the KiCad 6 file format and opens in KiCad 6+.
+
 [English](#english) | [Русский](#russian)
 
 ---
@@ -62,6 +64,7 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 > 🛠️ **Ready to Build?**
 > See the [PCB Assembly Guide (Pro Tier)](docs/en/pcb_assembly.md) for full BOM, KiCad files, and soldering instructions.
 > Looking for a case? We have official FreeCAD/STL designs in the [Enclosures Guide](docs/en/enclosures.md).
+> The PCB and enclosure generators are portable: run `python3 hardware/build_kicad.py` and `freecadcmd hardware/enclosures/build_case.py` from any checkout. See [`hardware/README.md`](hardware/README.md) for regeneration and validation commands.
 
 ### Pinout Configuration (Conflict-Free)
 
@@ -148,6 +151,10 @@ pio run --target upload
 # Monitor serial output
 pio device monitor
 ```
+
+### Build release artifacts
+
+On Windows, run `powershell -ExecutionPolicy Bypass -File scripts/build_releases.ps1 -Version 0.6.1`. The three tier binaries are written to `releases/v0.6.1/`.
 
 ### Testing
 

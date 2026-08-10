@@ -45,8 +45,9 @@ void MeshtasticClient::update() {
     }
 }
 
+
 bool MeshtasticClient::sendRawPacket(const uint8_t* data, size_t length) {
-    if (!isInitialized) return false;
+    if (!isInitialized || !data || length == 0 || length > 255) return false;
     
     if (millis() - lastTransmitTime < transmitInterval) {
         return false;
@@ -65,9 +66,9 @@ bool MeshtasticClient::sendRawPacket(const uint8_t* data, size_t length) {
 }
 
 void MeshtasticClient::processReceivedPacket(const uint8_t* data, size_t length, int16_t rssi, float snr) {
-    if (length < 8) return;
+    if (!data || length <= 6 || length > 256) return;
     
-    MeshPacket packet;
+    MeshPacket packet{};
     memcpy(&packet.nodeID, data, 4);
     packet.hopLimit = data[4];
     packet.hopCount = data[5];
@@ -118,7 +119,7 @@ bool MeshtasticClient::broadcastDetectionAlert(const DetectionAlert& alert) {
 }
 
 bool MeshtasticClient::sendDirectMessage(uint32_t targetNodeID, const char* message) {
-    if (!isInitialized) return false;
+    if (!isInitialized || !message) return false;
     
     uint8_t packet[256];
     size_t offset = 0;
@@ -187,6 +188,7 @@ uint32_t MeshtasticClient::generateNodeID() {
 }
 
 bool MeshtasticClient::triangulateThreat(const char* droneID, double& outLat, double& outLon) {
+    if (!droneID || !*droneID) return false;
     struct Report {
         double lat;
         double lon;
@@ -196,18 +198,22 @@ bool MeshtasticClient::triangulateThreat(const char* droneID, double& outLat, do
 
     for (const auto& p : receivedPackets) {
         if (p.timestamp == 0) continue;
-        
-        const DetectionAlert* alert = (const DetectionAlert*)p.payload;
-        if (strcmp(alert->droneID, droneID) == 0) {
+
+        // Payloads are raw bytes received over LoRa; copy into an aligned
+        // object instead of type-punning a char buffer.
+        DetectionAlert alert{};
+        memcpy(&alert, p.payload, sizeof(alert));
+        if (memchr(alert.droneID, '\0', sizeof(alert.droneID)) == nullptr) continue;
+        if (strcmp(alert.droneID, droneID) == 0) {
             bool duplicate = false;
             for (const auto& r : reports) {
-                if (abs(r.lat - alert->latitude) < 0.00001 && abs(r.lon - alert->longitude) < 0.00001) {
+                if (abs(r.lat - alert.latitude) < 0.00001 && abs(r.lon - alert.longitude) < 0.00001) {
                     duplicate = true;
                     break;
                 }
             }
             if (!duplicate) {
-                reports.push_back({alert->latitude, alert->longitude, alert->rssi});
+                reports.push_back({alert.latitude, alert.longitude, alert.rssi});
             }
         }
     }

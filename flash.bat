@@ -3,7 +3,7 @@ chcp 65001 >nul
 color 0a
 
 echo ==========================================================
-echo        SKY SWEEP 32 - АВТОМАТИЧЕСКАЯ УСТАНОВКА (v0.5.1)
+echo        SKY SWEEP 32 - АВТОМАТИЧЕСКАЯ УСТАНОВКА (v0.6.1)
 echo ==========================================================
 echo.
 echo Этот скрипт установит прошивку радара на вашу плату ESP32.
@@ -40,9 +40,9 @@ echo [3] Sentinel (Продвинутая версия: Стандарт + GPS +
 echo.
 set /p tier="Введите цифру (1, 2, или 3) и нажмите ENTER: "
 
-if "%tier%"=="1" set BINFILE=releases\v0.5.1\SkySweep32_Starter_v0.5.1.bin
-if "%tier%"=="2" set BINFILE=releases\v0.5.1\SkySweep32_Hunter_v0.5.1.bin
-if "%tier%"=="3" set BINFILE=releases\v0.5.1\SkySweep32_Sentinel_v0.5.1.bin
+if "%tier%"=="1" set BINFILE=releases\v0.6.1\SkySweep32_Starter_v0.6.1.bin
+if "%tier%"=="2" set BINFILE=releases\v0.6.1\SkySweep32_Hunter_v0.6.1.bin
+if "%tier%"=="3" set BINFILE=releases\v0.6.1\SkySweep32_Sentinel_v0.6.1.bin
 
 if not exist "%BINFILE%" (
     color 0e
@@ -80,7 +80,7 @@ if %ERRORLEVEL% equ 0 (
 echo.
 echo ==========================================================
 echo ГОТОВО!
-echo Откройте на телефоне WiFi сеть SkySweep32_AP (пароль: skysweep)
+echo Откройте на телефоне WiFi сеть SkySweep32 (пароль: skysweep32)
 echo и зайдите по адресу: http://192.168.4.1
 echo ==========================================================
 pause

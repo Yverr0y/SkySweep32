@@ -34,6 +34,7 @@
 | R_LED | Resistor | 330Ω | SMD 0805 | 1 | LED current limiter |
 | LED1 | LED | Red, 3mm | THT | 1 | Threat indicator |
 | BZ1 | Passive Buzzer | 5V passive | 12mm THT | 1 | GPIO4 PWM alert |
+| J_VIB | Vibration Driver Header | 2-pin buffered output | 1×2 2.54mm | 1 | Optional motor driver on GPIO0; do not drive a motor directly |
 | H1–H4 | Mounting Holes | M3 NPTH | 3.2mm drill | 4 | For brass heat-set inserts |
 
 **Estimated BOM cost**: ~$60–80 USD (all components)
@@ -44,6 +45,7 @@
 
 | ESP32 GPIO | Signal | Connected To |
 |------------|--------|--------------|
+| GPIO 0 | VIBRATION | Optional motor-driver input (boot-strap pin; hold high-impedance during reset) |
 | GPIO 2 | NRF_CE | NRF24L01+ CE pin |
 | GPIO 4 | BUZZER | Passive buzzer + |
 | GPIO 5 | CC_CS | CC1101 CSN |
@@ -65,6 +67,10 @@
 | GPIO 36 | BAT_ADC | Battery voltage divider midpoint (ADC) |
 
 > ⚠️ **Conflict**: GPIO 12/14 are shared between LoRa SX1276 and the optional I2S Microphone (Acoustic module). Do **not** enable both simultaneously.
+
+> **GPIO0 warning**: `J_VIB` is an optional buffered output. Keep the driver
+> input high-impedance while the ESP32 resets, or the boot strap can select the
+> wrong boot mode.
 
 ---
 

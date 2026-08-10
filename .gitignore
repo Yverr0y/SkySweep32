@@ -36,3 +36,5 @@ Thumbs.db
 # IDE
 *.code-workspace
 .idea/
+
+*.kicad_prl

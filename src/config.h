@@ -134,7 +134,9 @@
 #define PIN_I2S_DIN         35    // ADC1_CH7 (input only pin)
 
 // --- Stealth Mode ---
-#define PIN_VIBRATION       4
+// GPIO0 is a boot-strap pin; keep the motor driver high-impedance during reset.
+// Drive the motor through a transistor; never connect it directly to the GPIO.
+#define PIN_VIBRATION       0
 
 // ============================================================================
 // WIFI CONFIGURATION
@@ -233,7 +235,7 @@
 // VERSION
 // ============================================================================
 
-#define SKYSWEEP_VERSION        "0.6.0"
+#define SKYSWEEP_VERSION        "0.6.1"
 #define SKYSWEEP_BUILD_DATE     __DATE__
 
 // ============================================================================

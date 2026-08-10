@@ -17,6 +17,7 @@ hardcoded to a single Windows path).
 """
 
 import argparse
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -25,6 +26,16 @@ import matplotlib.patheffects as pe
 
 # Board dimensions (mm) — must match build_kicad.py.
 W, H = 120, 80
+
+_NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+_SEGMENT_RE = re.compile(
+    rf'\(segment\s+\(start\s+({_NUMBER})\s+({_NUMBER})\)\s+'
+    rf'\(end\s+({_NUMBER})\s+({_NUMBER})\).*?'
+    rf'\(layer\s+"(F\.Cu|B\.Cu)"\).*?\(net\s+(\d+)\)'
+)
+_VIA_RE = re.compile(
+    rf'\(via\s+\(at\s+({_NUMBER})\s+({_NUMBER})\).*?\(net\s+(\d+)\)'
+)
 
 _STROKE_DARK = [pe.withStroke(linewidth=1.5, foreground='black')]
 _STROKE_SILK = [pe.withStroke(linewidth=1, foreground='#0a2a0a')]
@@ -136,15 +147,51 @@ def _small_cap(ax, x, y, label='100n'):
     ax.text(x, y + 1.5, label, color='#ffff88', ha='center', va='bottom', fontsize=3.5)
 
 
+def _read_board_routes(pcb_path):
+    """Read actual copper segments and vias from a generated KiCad PCB."""
+    if pcb_path is None or not pcb_path.exists():
+        return [], []
+
+    segments = []
+    vias = []
+    for line in pcb_path.read_text(encoding='utf-8', errors='replace').splitlines():
+        segment = _SEGMENT_RE.search(line)
+        if segment:
+            x1, y1, x2, y2, layer, net = segment.groups()
+            segments.append((float(x1), float(y1), float(x2), float(y2), layer, int(net)))
+            continue
+        via = _VIA_RE.search(line)
+        if via:
+            x, y, net = via.groups()
+            vias.append((float(x), float(y), int(net)))
+    return segments, vias
+
+
+def _draw_board_routes(ax, pcb_path):
+    """Overlay generated PCB routing so the preview matches the source board."""
+    segments, vias = _read_board_routes(pcb_path)
+    for x1, y1, x2, y2, layer, net in segments:
+        color = '#ffbf4a' if layer == 'F.Cu' else '#4d9cff'
+        alpha = 0.28 if net == 1 else 0.62
+        ax.plot([x1, x2], [y1, y2], color=color, linewidth=0.45,
+                alpha=alpha, zorder=1, solid_capstyle='round')
+    for x, y, _ in vias:
+        ax.add_patch(patches.Circle(
+            (x, y), 0.45, facecolor='#d9e7ff', edgecolor='#4d9cff',
+            linewidth=0.3, alpha=0.85, zorder=2))
+    return len(segments), len(vias)
+
+
 # ── SCENE ────────────────────────────────────────────────────────────────────────
 
-def draw(ax):
-    """Draw the full board layout onto ``ax``."""
+def draw(ax, pcb_path=None):
+    """Draw the stylized board layout and actual generated copper routes."""
     # Board outline + edge highlight
     ax.add_patch(patches.FancyBboxPatch((0, 0), W, H, boxstyle="round,pad=0,rounding_size=3",
                                         linewidth=2, edgecolor='#ffd700', facecolor='#1e5c1e'))
     ax.add_patch(patches.FancyBboxPatch((0.5, 0.5), W - 1, H - 1, boxstyle="round,pad=0,rounding_size=2.5",
                                         linewidth=1, edgecolor='#2a7a2a', facecolor='none'))
+    _draw_board_routes(ax, pcb_path)
 
     # Mounting holes
     for mx, my in [(5, 5), (115, 5), (5, 75), (115, 75)]:
@@ -239,17 +286,10 @@ def draw(ax):
     # OLED header 1×4 (top)
     header_1xN(ax, 'J_OLED\n0.96" SSD1306 I2C', 20, 7, 4, color='#2a2a3a', horiz=True)
 
-    # Power & GND traces
-    power_trace(ax, 8, 14, 8, 24, '#ff4444', 1.5)     # 5V: jack → LDO in
-    power_trace(ax, 13, 27, 22, 27, '#ff8800', 1.5)   # 3.3V bus
-    power_trace(ax, 22, 27, 22, 9, '#ff8800', 1.5)    # up to ESP32
-    gnd_trace(ax, 3, 4, 117, 4, 1.5)                  # GND bus
-    spi_trace(ax, 52, 25, 70, 12)                     # MOSI → NRF24
-    spi_trace(ax, 52, 25, 70, 30)                     # MOSI → CC1101
-    spi_trace(ax, 52, 25, 70, 48)                     # MOSI → RX5808
+    # Copper routing is overlaid from the generated PCB near the board outline.
 
     # Title + credit
-    ax.text(60, 78.5, 'SkySweep32  —  Pro Tier Carrier PCB  |  120×80mm  |  2-Layer FR4  |  v1.0',
+    ax.text(60, 78.5, 'SkySweep32  —  Pro Tier Carrier PCB  |  120×80mm  |  2-Layer FR4  |  v1.1',
             color='#ccffcc', ha='center', va='bottom', fontsize=7, weight='bold',
             path_effects=[pe.withStroke(linewidth=2, foreground='#0a2a0a')])
     ax.text(60, 1.5, 'github.com/bobberdolle1/SkySweep32  |  GPL-3.0 Open Hardware',
@@ -283,14 +323,14 @@ def draw(ax):
         ax.text(-1, gy, f'{gy}', color='#4a8a4a', ha='right', va='center', fontsize=3.5)
 
 
-def render(out_path, dpi=180):
+def render(out_path, dpi=180, pcb_path=None):
     plt.rcParams['font.family'] = 'monospace'
     fig, ax = plt.subplots(figsize=(18, 12))
     fig.patch.set_facecolor('#1a1a1a')
     ax.set_facecolor('#1a4a1a')
     ax.set_aspect('equal')
 
-    draw(ax)
+    draw(ax, pcb_path=pcb_path)
 
     fig.tight_layout(pad=0.2)
     fig.savefig(out_path, dpi=dpi, bbox_inches='tight', facecolor='#1a1a1a', edgecolor='none')
@@ -301,11 +341,14 @@ def render(out_path, dpi=180):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Render the SkySweep32 Pro PCB layout preview.")
     default_out = Path(__file__).resolve().parent / "pcb_layout_preview.png"
+    default_pcb = Path(__file__).resolve().parent / "skysweep32_pro.kicad_pcb"
     parser.add_argument("-o", "--output", type=Path, default=default_out,
                         help=f"output PNG path (default: {default_out.name} next to this script)")
+    parser.add_argument("--pcb", type=Path, default=default_pcb,
+                        help=f"source PCB (default: {default_pcb.name})")
     parser.add_argument("--dpi", type=int, default=180, help="output resolution (default: 180)")
     args = parser.parse_args(argv)
-    render(args.output, dpi=args.dpi)
+    render(args.output, dpi=args.dpi, pcb_path=args.pcb)
 
 
 if __name__ == "__main__":

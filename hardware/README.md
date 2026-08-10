@@ -56,6 +56,8 @@ readable `NET["SPI_MOSI"]`-style lookup and the layout is assembled in
 python3 hardware/render_pcb.py                   # writes hardware/pcb_layout_preview.png
 python3 hardware/render_pcb.py -o preview.png --dpi 240
 ```
+The renderer reads the generated PCB by default and overlays its actual copper
+segments and vias.  Use `--pcb path/to/board.kicad_pcb` to preview another board.
 
 ## Enclosure
 

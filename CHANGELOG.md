@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- **PCB preview fidelity**: `render_pcb.py` now overlays the actual generated copper segments and vias from `skysweep32_pro.kicad_pcb` instead of showing only illustrative hardcoded traces; the preview revision is synchronized to PCB v1.1.
 
 ## [0.6.1] - 2026-08-09
 

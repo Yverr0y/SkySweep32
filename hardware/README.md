@@ -8,6 +8,20 @@
 > integrity, enclosure fit, connector access and assembled operation have not
 > been validated. See [`LEGACY_REV_A_STATUS.md`](LEGACY_REV_A_STATUS.md).
 
+## Rev B redesign
+
+Rev B starts from requirements rather than the Rev A layout. The selected
+architecture, GPIO allocation, RF coexistence policy and locked module variants
+are documented in:
+
+* [`rev_b/HARDWARE_ARCHITECTURE.md`](rev_b/HARDWARE_ARCHITECTURE.md)
+* [`rev_b/BOM_LOCK.md`](rev_b/BOM_LOCK.md)
+
+Rev B is still **DESIGN IN PROGRESS / UNVALIDATED IN PHYSICAL HARDWARE / DO NOT
+ORDER**. Its status changes only through committed validation evidence.
+
+## Legacy Rev A files
+
 This directory retains historical open-hardware concept files and generators for
 the Pro Tier carrier and enclosure. They are reproducible development artifacts,
 not released manufacturing data.

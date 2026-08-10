@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Legacy hardware status correction**: The Rev A generated PCB and enclosure are now explicitly marked `EXPERIMENTAL / UNVERIFIED / DO NOT ORDER`. KiCad syntax compatibility is distinguished from electrical, RF, mechanical, manufacturing and physical-prototype validation; ordering instructions were withdrawn pending the requirements-first Rev B redesign.
+- **Rev B architecture decision**: Selected the exact no-PSRAM `ESP32-S3-WROOM-1-N8` integrated module after comparing classic ESP32 DevKit, current ESP32-S3 DevKitC and integrated S3 options. Added a firmware-to-signal matrix, safe GPIO allocation, independent RX5808 control/ADC paths, RF coexistence policy and locked module variants.
 
 ## [0.6.1] - 2026-08-09
 

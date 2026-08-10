@@ -62,9 +62,9 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 | Microphone (optional) | ICS-43434 MEMS | I2S | Acoustic detection |
 
 > ⚠️ **Hardware status — EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
-> The checked-in PCB and enclosure are retained as the legacy Rev A concept. KiCad parser compatibility does not establish electrical, mechanical, RF or manufacturing validity. Read the [full Rev A status](hardware/LEGACY_REV_A_STATUS.md) before using any hardware file. A requirements-first Rev B redesign is in progress.
+> The checked-in PCB and enclosure are retained as the legacy Rev A concept. KiCad parser compatibility does not establish electrical, mechanical, RF or manufacturing validity. Read the [full Rev A status](hardware/LEGACY_REV_A_STATUS.md) before using any hardware file. The requirements-first Rev B [architecture](hardware/rev_b/HARDWARE_ARCHITECTURE.md) and [module lock](hardware/rev_b/BOM_LOCK.md) are design inputs, not released manufacturing data.
 
-### Pinout Configuration (Conflict-Free)
+### Legacy Rev A pinout (unverified)
 
 #### SPI Bus (Shared)
 | Signal | ESP32 Pin |
@@ -241,9 +241,9 @@ SkySweep32 — продвинутая система пассивного обн
 | Индикация | Passive Buzzer | - | Алерты и ошибки |
 
 > ⚠️ **Статус hardware — ЭКСПЕРИМЕНТАЛЬНО / НЕ ПРОВЕРЕНО / НЕ ЗАКАЗЫВАТЬ**
-> Текущие PCB и корпус сохранены как концепт legacy Rev A. Совместимость синтаксиса с KiCad не подтверждает электрическую схему, механику, РЧ-тракт или пригодность к производству. Перед использованием файлов прочитайте [полный статус Rev A](hardware/LEGACY_REV_A_STATUS.md). Ведётся разработка Rev B с нуля по требованиям.
+> Текущие PCB и корпус сохранены как концепт legacy Rev A. Совместимость синтаксиса с KiCad не подтверждает электрическую схему, механику, РЧ-тракт или пригодность к производству. Перед использованием файлов прочитайте [полный статус Rev A](hardware/LEGACY_REV_A_STATUS.md). [Архитектура](hardware/rev_b/HARDWARE_ARCHITECTURE.md) и [зафиксированные модули](hardware/rev_b/BOM_LOCK.md) Rev B — входные данные проектирования, а не выпущенные файлы производства.
 
-### Распиновка (Бесконфликтная)
+### Распиновка legacy Rev A (не проверена)
 
 #### Шина SPI (общая)
 | Сигнал | Пин ESP32 |

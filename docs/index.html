@@ -779,6 +779,17 @@
         width: 100%;
       }
     }
+    .hardware-status {
+      width: min(900px, 100%);
+      margin: 20px 0 28px;
+      padding: 16px 20px;
+      border: 1px solid rgba(251, 191, 36, 0.55);
+      border-radius: 10px;
+      background: rgba(120, 53, 15, 0.28);
+      color: #fde68a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -805,10 +816,11 @@
     <div class="hero-glow"></div>
     <h1 id="hero-title" data-i18n="heroTitle">Passive Drone Detection on ESP32</h1>
     <p id="hero-subtitle" data-i18n="heroSubtitle">A modular, budget-friendly passive RF scanner covering 900MHz, 2.4GHz, and 5.8GHz bands. Detects FPV video signals, BLE Remote ID payloads, and protocol sweeps.</p>
-    <p data-i18n="releaseMeta" style="margin-top:14px;color:var(--neon-green);font-size:13px;font-weight:600;letter-spacing:.04em;">v0.6.1 · KiCad 6+ PCB · FreeCAD/STL enclosure</p>
+    <p data-i18n="releaseMeta" style="margin-top:14px;color:var(--neon-amber);font-size:13px;font-weight:600;letter-spacing:.04em;">v0.6.1 · firmware release · legacy Rev A hardware unverified</p>
+    <div class="hardware-status" data-i18n="hardwareWarning">EXPERIMENTAL / UNVERIFIED / DO NOT ORDER: KiCad syntax compatibility does not validate the legacy Rev A circuit, RF paths, module fit or enclosure. Rev B is being redesigned from requirements.</div>
     <div class="hero-ctas">
-      <a href="#visualizer" class="btn btn-primary" data-i18n="ctaStart">Start Assembly</a>
-      <a href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware" target="_blank" class="btn btn-secondary" data-i18n="ctaHardware">PCB & 3D Case Files</a>
+      <a href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/LEGACY_REV_A_STATUS.md" class="btn btn-primary" data-i18n="ctaStart">Read Hardware Status</a>
+      <a href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware" target="_blank" class="btn btn-secondary" data-i18n="ctaHardware">Legacy Concept Files</a>
       <a href="https://github.com/bobberdolle1/SkySweep32/releases" target="_blank" class="btn btn-secondary" data-i18n="ctaFirmware">Download Firmware</a>
     </div>
   </section>
@@ -1126,9 +1138,10 @@
         navCase: "Enclosure",
         heroTitle: "Passive Drone Detection on ESP32",
         heroSubtitle: "A modular, budget-friendly passive RF scanner covering 900MHz, 2.4GHz, and 5.8GHz bands. Detects FPV video signals, BLE Remote ID payloads, and protocol sweeps.",
-        releaseMeta: "v0.6.1 · KiCad 6+ PCB · FreeCAD/STL enclosure",
-        ctaStart: "Start Assembly",
-        ctaHardware: "PCB & 3D Case Files",
+        releaseMeta: "v0.6.1 · firmware release · legacy Rev A hardware unverified",
+        hardwareWarning: "EXPERIMENTAL / UNVERIFIED / DO NOT ORDER: KiCad syntax compatibility does not validate the legacy Rev A circuit, RF paths, module fit or enclosure. Rev B is being redesigned from requirements.",
+        ctaStart: "Read Hardware Status",
+        ctaHardware: "Legacy Concept Files",
         ctaFirmware: "Download Firmware",
         featuresTitle: "Tactical Capabilities",
         featuresSubtitle: "Advanced passive spectrum scanner built for modularity and durability.",
@@ -1142,8 +1155,8 @@
         featCounterDesc: "Juggernaut tier signal sweep to block DJI, Walksnail, OpenIPC, ELRS control, and GPS denial. (Legal authorization required).",
         featAiTitle: "🧠 ATAK & TinyML AI",
         featAiDesc: "Native Cursor on Target (CoT) tactical maps integration + TFLite Micro neural network inference for accurate drone signature classification.",
-        featHardenedTitle: "🛡️ Hardened & Field-Tested",
-        featHardenedDesc: "Protocol parsers hardened against malformed RF/BLE input and fuzz-tested under AddressSanitizer, backed by CI static analysis — the attack surface is validated, not assumed.",
+        featHardenedTitle: "🛡️ Input-Hardened Software",
+        featHardenedDesc: "Protocol parsers are fuzz-tested under AddressSanitizer and backed by CI static analysis. This software validation does not validate the legacy hardware.",
         counterWarning: "LEGAL AUTH REQUIRED",
         configTitle: "Interactive Tier Configurator",
         configSubtitle: "Select a build tier to view its Bill of Materials (BOM) and interactive wiring connections.",
@@ -1177,9 +1190,10 @@
         navCase: "Корпус",
         heroTitle: "Пассивный радар обнаружения дронов на ESP32",
         heroSubtitle: "Бюджетный модульный пассивный РЧ-сканер частот 900 МГц, 2.4 ГГц и 5.8 ГГц. Детекция FPV видео, BLE Remote ID пакетов и сканирование протоколов.",
-        releaseMeta: "v0.6.1 · PCB KiCad 6+ · корпус FreeCAD/STL",
-        ctaStart: "Начать сборку",
-        ctaHardware: "Платы и 3D Корпуса",
+        releaseMeta: "v0.6.1 · релиз прошивки · hardware legacy Rev A не проверено",
+        hardwareWarning: "ЭКСПЕРИМЕНТАЛЬНО / НЕ ПРОВЕРЕНО / НЕ ЗАКАЗЫВАТЬ: совместимость синтаксиса KiCad не подтверждает схему Rev A, РЧ-тракты, посадку модулей или корпус. Rev B проектируется заново по требованиям.",
+        ctaStart: "Прочитать статус hardware",
+        ctaHardware: "Файлы legacy-концепта",
         ctaFirmware: "Скачать прошивку",
         featuresTitle: "Тактические возможности",
         featuresSubtitle: "Продвинутый пассивный спектроанализатор для модульной и автономной работы.",

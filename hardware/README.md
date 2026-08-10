@@ -1,9 +1,16 @@
 # SkySweep32 — Hardware
 
-Open-hardware design files and generators for the **Pro Tier** carrier board and
-its field enclosure. Everything here is scripted, so the artifacts can be
-regenerated on any machine — the scripts derive their output paths from their own
-location (no hardcoded paths) and take optional CLI arguments.
+> **EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
+>
+> These root-level PCB, generator, preview and enclosure files are the legacy
+> Rev A concept. KiCad 6 syntax compatibility is the only PCB claim established
+> by issue #10. Electrical design, exact module geometry, RF paths, power
+> integrity, enclosure fit, connector access and assembled operation have not
+> been validated. See [`LEGACY_REV_A_STATUS.md`](LEGACY_REV_A_STATUS.md).
+
+This directory retains historical open-hardware concept files and generators for
+the Pro Tier carrier and enclosure. They are reproducible development artifacts,
+not released manufacturing data.
 
 ## Contents
 
@@ -39,10 +46,10 @@ kicad-cli pcb drc --refill-zones \
   --output hardware/kicad-drc.txt hardware/skysweep32_pro.kicad_pcb
 ```
 
-The current generated board routes all 94 required connections and reports no
-unconnected items in KiCad 10.  Inline footprints may still produce library
-configuration warnings because the generator deliberately embeds their
-geometry instead of requiring a local footprint library.
+KiCad 10 reports no unconnected connectivity items in the generated file.
+This is a parser/connectivity result only; it does **not** validate the circuit,
+module pinouts, footprints, RF design, power integrity or manufacturability.
+Inline footprints also produce library and geometry warnings.
 
 Nets, footprints and placement live in `build_kicad.py`; net names have a
 readable `NET["SPI_MOSI"]`-style lookup and the layout is assembled in
@@ -56,8 +63,8 @@ readable `NET["SPI_MOSI"]`-style lookup and the layout is assembled in
 python3 hardware/render_pcb.py                   # writes hardware/pcb_layout_preview.png
 python3 hardware/render_pcb.py -o preview.png --dpi 240
 ```
-The renderer reads the generated PCB by default and overlays its actual copper
-segments and vias.  Use `--pcb path/to/board.kicad_pcb` to preview another board.
+The renderer is a diagnostic view of the legacy concept. It reads generated
+copper segments and vias, but it is not a CAD or manufacturing validation.
 
 ## Enclosure
 

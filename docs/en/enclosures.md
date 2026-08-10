@@ -1,5 +1,13 @@
 # SkySweep32 3D Enclosure Designs
 
+> **LEGACY REV A ENCLOSURE — EXPERIMENTAL / UNVERIFIED / DO NOT PRINT FOR ASSEMBLY**
+>
+> The referenced STL files are concept geometry, not a fit-checked product.
+> Their PCB/module clearances, OLED alignment, USB and microSD access, antenna
+> hardware, assembly sequence and environmental performance are unverified.
+> They are explicitly not IP-rated. See the
+> [legacy status](../../hardware/LEGACY_REV_A_STATUS.md).
+
 This document outlines the recommended enclosure designs for the different tiers of the SkySweep32 passive drone detector. We provide conceptual guidelines so that makers and field engineers can design and 3D print cases suited for their specific environment.
 
 ---
@@ -31,19 +39,12 @@ The Hunter tier introduces wider spectrum monitoring (900MHz + 2.4GHz + 5.8GHz).
 
 ---
 
-## 🔴 Sentinel / Pro Tier (Stationary Node)
+## 🔴 Sentinel / Pro Tier (legacy Rev A concept)
 
-The Sentinel is a fixed installation intended for rooftops, perimeter fences, or permanent command bases. It is ruggedized against the elements and requires maximum antenna separation.
-
-![Sentinel enclosure preview](../../hardware/enclosures/preview_assembly_iso.png)
-
-### Design Recommendations
-- **Form Factor**: A robust, industrial waterproof box (IP67 rating).
-- **Material**: ASA (Acrylic Styrene Acrylonitrile) for high UV resistance and structural integrity outdoors.
-- **Antennas**: Three distinct SMA/N-Type bulkheads spread far apart. Use gaskets or O-rings around the connectors.
-- **Mounting**: Heavy-duty wing brackets for pole mounts (U-bolts) or zip-ties.
-- **Cooling**: Gore-Tex breather vents to prevent condensation buildup inside the case while maintaining waterproofing.
-- **Power**: Optional solar panel input slot or an integrated step-down converter (12V-24V to 5V) for direct battery hookup.
+The existing Sentinel files illustrate an earlier stationary-node concept only.
+They do not establish a usable or weatherproof enclosure. Rev B will be designed
+from the checked PCB assembly and connector mating envelopes; no current Rev A
+dimension, vent, antenna hole or mounting feature is a Rev B constraint.
 
 ---
 
@@ -53,15 +54,13 @@ The Sentinel is a fixed installation intended for rooftops, perimeter fences, or
 3. **Inserts**: Use M3 brass heat-set inserts for joining the enclosure halves, rather than threading directly into plastic.
 4. **Tolerance**: Ensure a 0.2mm tolerance gap between interlocking case parts to guarantee a snug but removable fit.
 
-## ✅ Official Files
+## Legacy concept files
 
-The Pro Tier (Sentinel) enclosure STL files and carrier PCB are now available:
+The following files are retained for history and must not be treated as
+validated print/assembly files:
 
-| File | Description |
-|------|-------------|
-| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Bottom shell — M3 standoffs, USB cutout, ventilation |
-| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Top lid — OLED window, SMA holes, GPS antenna port |
-| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Pro Tier carrier PCB (KiCad 6) |
-
-See [hardware/enclosures/README.md](../../hardware/enclosures/README.md) for full print settings and assembly instructions.  
-See [docs/en/pcb_assembly.md](pcb_assembly.md) for BOM, soldering order, and ordering guide.
+| File | Status |
+|------|--------|
+| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Rev A concept; fit unverified |
+| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Rev A concept; openings/clearance unverified |
+| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Rev A concept; KiCad syntax compatible only |

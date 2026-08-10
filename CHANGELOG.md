@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **PCB preview fidelity**: `render_pcb.py` now overlays the actual generated copper segments and vias from `skysweep32_pro.kicad_pcb` instead of showing only illustrative hardcoded traces; the preview revision is synchronized to PCB v1.1.
 
+### Changed
+- **Legacy hardware status correction**: The Rev A generated PCB and enclosure are now explicitly marked `EXPERIMENTAL / UNVERIFIED / DO NOT ORDER`. KiCad syntax compatibility is distinguished from electrical, RF, mechanical, manufacturing and physical-prototype validation; ordering instructions were withdrawn pending the requirements-first Rev B redesign.
+
 ## [0.6.1] - 2026-08-09
 
 ### Fixed

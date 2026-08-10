@@ -7,7 +7,7 @@
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![Build: PlatformIO](https://img.shields.io/badge/Build-PlatformIO-orange.svg)](https://platformio.org/)
 
-**Current release:** `v0.6.1` — the Pro PCB is stored in the KiCad 6 file format and opens in KiCad 6+.
+**Current release:** `v0.6.1`. Its legacy Rev A Pro PCB is syntax-compatible with KiCad 6+, but the electrical design, module fit, RF paths, enclosure fit and assembled hardware are **UNVERIFIED**.
 
 [English](#english) | [Русский](#russian)
 
@@ -61,10 +61,8 @@ SkySweep32 is an advanced passive drone detection system based on the ESP32 micr
 | Display | OLED 128x64 (I2C) | - | Visual interface |
 | Microphone (optional) | ICS-43434 MEMS | I2S | Acoustic detection |
 
-> 🛠️ **Ready to Build?**
-> See the [PCB Assembly Guide (Pro Tier)](docs/en/pcb_assembly.md) for full BOM, KiCad files, and soldering instructions.
-> Looking for a case? We have official FreeCAD/STL designs in the [Enclosures Guide](docs/en/enclosures.md).
-> The PCB and enclosure generators are portable: run `python3 hardware/build_kicad.py` and `freecadcmd hardware/enclosures/build_case.py` from any checkout. See [`hardware/README.md`](hardware/README.md) for regeneration and validation commands.
+> ⚠️ **Hardware status — EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
+> The checked-in PCB and enclosure are retained as the legacy Rev A concept. KiCad parser compatibility does not establish electrical, mechanical, RF or manufacturing validity. Read the [full Rev A status](hardware/LEGACY_REV_A_STATUS.md) before using any hardware file. A requirements-first Rev B redesign is in progress.
 
 ### Pinout Configuration (Conflict-Free)
 
@@ -242,9 +240,8 @@ SkySweep32 — продвинутая система пассивного обн
 | Дисплей | OLED 128x64 | - | Визуальный интерфейс |
 | Индикация | Passive Buzzer | - | Алерты и ошибки |
 
-> 🛠️ **Готовы к сборке?**
-> Смотрите [Руководство по сборке платы (Pro Tier)](docs/ru/pcb_assembly.md) — там полный список деталей (BOM), KiCad проекты и инструкции по пайке.
-> Ищете корпус? Официальные 3D-модели (STL) и чертежи находятся в [Руководстве по корпусам](docs/ru/enclosures.md).
+> ⚠️ **Статус hardware — ЭКСПЕРИМЕНТАЛЬНО / НЕ ПРОВЕРЕНО / НЕ ЗАКАЗЫВАТЬ**
+> Текущие PCB и корпус сохранены как концепт legacy Rev A. Совместимость синтаксиса с KiCad не подтверждает электрическую схему, механику, РЧ-тракт или пригодность к производству. Перед использованием файлов прочитайте [полный статус Rev A](hardware/LEGACY_REV_A_STATUS.md). Ведётся разработка Rev B с нуля по требованиям.
 
 ### Распиновка (Бесконфликтная)
 

@@ -1,5 +1,12 @@
 # SkySweep32 Pro Tier — PCB Assembly Guide
 
+> **LEGACY REV A — EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
+>
+> This page documents a historical concept, not validated manufacturing data.
+> KiCad can parse the PCB, but its electrical design, generic module footprints,
+> RF paths, power integrity, enclosure fit and assembled operation have not been
+> validated. See [`hardware/LEGACY_REV_A_STATUS.md`](../../hardware/LEGACY_REV_A_STATUS.md).
+
 > **Tier**: 🔴 Pro (Sentinel) — Full build: ESP32 + NRF24 + CC1101 + RX5808 + OLED + GPS + LoRa + SD Card  
 > **PCB Size**: 120 × 80 mm, 2-layer FR4, 1.6 mm  
 > **Files**: `hardware/skysweep32_pro.kicad_pcb`, `hardware/enclosures/skysweep32_pro_case_*.stl`
@@ -126,18 +133,12 @@ LiPo (J_BAT, optional) ─── Voltage Divider (100k + 100k) ──── GPIO
 
 ---
 
-## Ordering PCBs
+## PCB ordering
 
-### JLCPCB (recommended, cheapest)
-1. Open `hardware/skysweep32_pro.kicad_pcb` in **KiCad 6+**
-2. Go to **File → Plot** → select Gerber format → click **Plot**
-3. Click **Generate Drill Files** → OK
-4. Upload the `gerber/` folder to [jlcpcb.com](https://jlcpcb.com)
-5. Settings: **2 layers**, **1.6mm**, **FR4**, **HASL or ENIG** finish, **Green** soldermask
-6. Price: ~$2 for 5 boards + shipping
-
-### PCBWay (alternative)
-Same Gerber files work on [pcbway.com](https://pcbway.com) — slightly higher quality options.
+**Do not order the legacy Rev A PCB.** Gerber ordering instructions are
+intentionally withdrawn until Rev B has a native schematic, locked module
+variants, acceptable ERC/DRC results, mechanical clearance checks and a
+fabricated prototype bring-up.
 
 ---
 

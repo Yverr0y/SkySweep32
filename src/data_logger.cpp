@@ -1,6 +1,9 @@
 #include "data_logger.h"
 
 #ifdef MODULE_SD_CARD
+#ifdef BOARD_SKYSWEEP32_REV_B
+static SPIClass revBsdSpi(HSPI);
+#endif
 
 DataLogger::DataLogger() 
     : sdCardAvailable(false), logRotationSize(MAX_LOG_SIZE_MB * 1024 * 1024), 
@@ -10,9 +13,17 @@ DataLogger::DataLogger()
 bool DataLogger::begin(uint8_t csPin) {
     Serial.printf("[DataLogger] Initializing SD card (CS: GPIO %d)...\n", csPin);
     
+#ifdef BOARD_SKYSWEEP32_REV_B
+    revBsdSpi.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, csPin);
+    if (!SD.begin(csPin, revBsdSpi)) {
+#else
     if (!SD.begin(csPin)) {
+#endif
         Serial.println("[DataLogger] SD card initialization failed");
         sdCardAvailable = false;
+#ifdef BOARD_SKYSWEEP32_REV_B
+        revBsdSpi.end();
+#endif
         return false;
     }
     
@@ -33,6 +44,9 @@ bool DataLogger::begin(uint8_t csPin) {
 
 void DataLogger::end() {
     SD.end();
+#ifdef BOARD_SKYSWEEP32_REV_B
+    revBsdSpi.end();
+#endif
     sdCardAvailable = false;
 }
 

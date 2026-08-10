@@ -53,7 +53,8 @@ pin-compatible with this layout.
 
 ## 3. Rev B GPIO map
 
-The manifest is authoritative; this table explains the intent.
+[`hardware_manifest.yaml`](hardware_manifest.yaml) is authoritative and generates
+the firmware header; this table explains the intent.
 
 | Signal | GPIO | Direction | Notes |
 |---|---:|---|---|

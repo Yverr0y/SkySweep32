@@ -45,6 +45,11 @@ jobs:
         pio run -e esp32dev_standard
         pio run -e esp32dev_pro
 
+
+    - name: Validate Rev B Hardware Contract
+      run: |
+        python scripts/generate_rev_b_pinmap.py --check
+        pio run -e esp32s3_rev_b_pro
     - name: Compile-check Optional Modules
       # Not shipped as a release binary — this only guards the ATAK / Compass /
       # Acoustic / GPS code paths against bit-rot since no release tier enables them.

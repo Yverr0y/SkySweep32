@@ -69,7 +69,12 @@ CC1101Driver cc1101(PIN_CC1101_CS);
 NRF24L01Driver nrf24(PIN_NRF24_CS, PIN_NRF24_CE);
 #endif
 #ifdef MODULE_RX5808
-RX5808Driver rx5808(PIN_RX5808_CS, PIN_RX5808_RSSI);
+#ifdef BOARD_SKYSWEEP32_REV_B
+RX5808Driver rx5808(PIN_RX5808_DATA, PIN_RX5808_CLOCK,
+                     PIN_RX5808_SELECT, PIN_RX5808_RSSI);
+#else
+RX5808Driver rx5808(PIN_RX5808_CONTROL, PIN_RX5808_RSSI);
+#endif
 #endif
 
 // Protocol Parsers
@@ -120,7 +125,7 @@ struct RFModuleData {
 volatile RFModuleData rfModules[3] = {
     {"CC1101",    PIN_CC1101_CS,   0, false, false, false},
     {"NRF24L01+", PIN_NRF24_CS,   0, false, false, false},
-    {"RX5808",    PIN_RX5808_CS,  0, false, false, false}
+    {"RX5808",    PIN_RX5808_CONTROL, 0, false, false, false}
 };
 
 // RSSI history for ML classifier
@@ -170,10 +175,17 @@ static inline bool rfModuleEnabled(uint8_t moduleIndex) {
 }
 
 int readModuleRSSI(uint8_t moduleIndex) {
+    if (moduleIndex == 2) {
+        #ifdef MODULE_RX5808
+        return constrain(rx5808.readRSSI(), 0, 100);
+        #else
+        return 0;
+        #endif
+    }
+
     int rssiValue = 0;
-    
     if (!spiManager.acquire(pdMS_TO_TICKS(100))) return 0;
-    
+
     switch(moduleIndex) {
         case 0:
             #ifdef MODULE_CC1101
@@ -187,13 +199,8 @@ int readModuleRSSI(uint8_t moduleIndex) {
             rssiValue = map(rssiValue, -90, -40, 0, 100);
             #endif
             break;
-        case 2:
-            #ifdef MODULE_RX5808
-            rssiValue = rx5808.readRSSI();
-            #endif
-            break;
     }
-    
+
     spiManager.release();
     return constrain(rssiValue, 0, 100);
 }
@@ -741,10 +748,7 @@ void setup() {
     
     #ifdef MODULE_RX5808
     Serial.println("[INIT] RX5808 (5.8 GHz)...");
-    if (spiManager.acquire(pdMS_TO_TICKS(1000))) {
-        if (!rx5808.begin()) Serial.println("[ERROR] RX5808 init failed");
-        spiManager.release();
-    }
+    if (!rx5808.begin()) Serial.println("[ERROR] RX5808 init failed");
     #endif
     
     // --- Initialize Countermeasures ---

@@ -84,59 +84,62 @@
 #endif
 
 // ============================================================================
-// PIN DEFINITIONS — Conflict-free pin map for ESP32 DevKit v1
+// PIN DEFINITIONS
 // ============================================================================
 
-// --- SPI Bus (shared by all SPI devices) ---
+#ifdef BOARD_SKYSWEEP32_REV_B
+
+// Generated from hardware/rev_b/hardware_manifest.yaml. The PlatformIO Rev B
+// environment rejects a stale generated header before compilation.
+#include "generated/hardware_rev_b.h"
+#define PIN_RX5808_CONTROL  PIN_RX5808_SELECT
+
+#else
+
+// Legacy Rev A / ESP32 DevKit pin map. Rev A hardware is unverified and retained
+// only for compatibility with the existing release targets.
 #define PIN_SPI_MOSI        23
 #define PIN_SPI_MISO        19
 #define PIN_SPI_SCK         18
 
-// --- CC1101 (900 MHz) ---
 #define PIN_CC1101_CS       5
 
-// --- NRF24L01+ (2.4 GHz) ---
 #define PIN_NRF24_CS        15
 #define PIN_NRF24_CE        2
 
-// --- RX5808 (5.8 GHz) ---
+// The legacy board exposed only one RX5808 control pin and cannot drive the
+// RTC6715 three-wire protocol. The corrected Rev B driver is board-gated.
 #define PIN_RX5808_CS       13
-#define PIN_RX5808_RSSI     34    // ADC1_CH6 (analog input)
+#define PIN_RX5808_RSSI     34
+#define PIN_RX5808_CONTROL  PIN_RX5808_CS
 
-// --- OLED Display (I2C) ---
 #define PIN_I2C_SDA         21
 #define PIN_I2C_SCL         22
 
-// --- GPS Module (UART2) ---
-#define PIN_GPS_RX          16    // ESP32 RX ← GPS TX
-#define PIN_GPS_TX          17    // ESP32 TX → GPS RX
+#define PIN_GPS_RX          16
+#define PIN_GPS_TX          17
 #define GPS_BAUD_RATE       9600
 #define GPS_UPDATE_INTERVAL 1000
 
-// --- LoRa SX1276 ---
-#define PIN_LORA_CS         14    // Changed from 26 (Conflicts with I2S BCLK if both are enabled)
+#define PIN_LORA_CS         14
 #define PIN_LORA_DIO0       33
 #define PIN_LORA_DIO1       32
-#define PIN_LORA_RESET      12    // Changed from 25 (Conflicts with I2S WS if both are enabled)
+#define PIN_LORA_RESET      12
 
-// --- VCO DACs (Juggernaut) ---
 #define PIN_VCO_DAC_1       25
 #define PIN_VCO_DAC_2       26
 
-// --- SD Card ---
 #define PIN_SD_CS           27
 
-// --- I2S Microphone (Acoustic Detection) ---
-// Note: Shares GPIO 14 and 12 with LoRa. Do not enable both MODULE_LORA and MODULE_ACOUSTIC
-// at the same time unless you reassign one of them to other unused pins.
+// Legacy optional acoustic mapping; mutually exclusive with LoRa.
 #define PIN_I2S_BCLK        14
 #define PIN_I2S_WS          12
-#define PIN_I2S_DIN         35    // ADC1_CH7 (input only pin)
+#define PIN_I2S_DIN         35
 
-// --- Stealth Mode ---
-// GPIO0 is a boot-strap pin; keep the motor driver high-impedance during reset.
-// Drive the motor through a transistor; never connect it directly to the GPIO.
+// Legacy boot-strap use. Do not copy this assignment into new hardware.
 #define PIN_VIBRATION       0
+
+#endif
 
 // ============================================================================
 // WIFI CONFIGURATION

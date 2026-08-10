@@ -1,17 +1,18 @@
-# Host-side unit tests for the protocol parsers.
+# Host-side unit tests for the protocol parsers and pure hardware protocols.
 #
-# These compile the real src/protocols/*.cpp sources against a minimal Arduino.h
-# stub (this directory) with a desktop compiler + AddressSanitizer. No ESP32
-# toolchain or PlatformIO registry is needed, so they run anywhere g++ is present.
+# These compile real source headers and parser implementations against a minimal
+# Arduino.h stub with a desktop compiler + AddressSanitizer. No ESP32 toolchain
+# or PlatformIO registry is needed, so they run anywhere g++ is present.
 #
 #   make        # build and run
 #   make clean
 
 CXX      ?= g++
 SRCDIR    = ../../src/protocols
+DRIVERDIR = ../../src/drivers
 CXXFLAGS  = -std=gnu++11 -Wall -Wextra -g -O1 \
             -fsanitize=address,undefined -fno-omit-frame-pointer \
-            -I. -I$(SRCDIR)
+            -I. -I$(SRCDIR) -I$(DRIVERDIR)
 
 SRCS = test_parsers.cpp $(SRCDIR)/crsf_parser.cpp $(SRCDIR)/mavlink_parser.cpp
 BIN  = test_parsers

@@ -2,45 +2,61 @@
 
 #ifdef MODULE_RX5808
 
-RX5808Driver::RX5808Driver(uint8_t csPin, uint8_t rssiAnalogPin, SPIClass* spi) {
-    chipSelectPin = csPin;
-    rssiPin = rssiAnalogPin;
-    spiInstance = spi;
-    currentBand = RX5808_BAND_R; // Default to Raceband
-    currentChannel = 0;
-    initialized = false;
+RX5808Driver::RX5808Driver(uint8_t dataPin, uint8_t clockPin,
+                           uint8_t selectPin, uint8_t rssiAnalogPin)
+    : dataPin(dataPin),
+      clockPin(clockPin),
+      selectPin(selectPin),
+      rssiPin(rssiAnalogPin),
+      currentBand(RX5808_BAND_R),
+      currentChannel(0),
+      initialized(false) {
+}
+
+RX5808Driver::RX5808Driver(uint8_t legacyControlPin, uint8_t rssiAnalogPin)
+    : RX5808Driver(legacyControlPin, legacyControlPin, legacyControlPin,
+                   rssiAnalogPin) {
 }
 
 bool RX5808Driver::begin() {
-    pinMode(chipSelectPin, OUTPUT);
+    if (dataPin == clockPin || dataPin == selectPin || clockPin == selectPin) {
+        Serial.println(
+            "[RX5808] ERROR: DATA, CLOCK and SELECT require independent pins");
+        return false;
+    }
+
+    pinMode(dataPin, OUTPUT);
+    pinMode(clockPin, OUTPUT);
+    pinMode(selectPin, OUTPUT);
     pinMode(rssiPin, INPUT);
-    digitalWrite(chipSelectPin, HIGH);
-    
+    digitalWrite(dataPin, LOW);
+    digitalWrite(clockPin, LOW);
+    digitalWrite(selectPin, HIGH);
+
     delay(100);
-    
-    // Set default channel (Raceband CH1 - 5658 MHz)
-    setChannel(RX5808_BAND_R, 0);
-    
     initialized = true;
-    Serial.println("[RX5808] Initialized successfully");
+    setChannel(RX5808_BAND_R, 0);
+
+    Serial.println("[RX5808] Initialized with RTC6715 3-wire control");
     return true;
 }
 
-void RX5808Driver::writeRegister(uint32_t data) {
-    digitalWrite(chipSelectPin, LOW);
+void RX5808Driver::writeFrame(uint32_t frame) {
+    digitalWrite(selectPin, LOW);
+    digitalWrite(clockPin, LOW);
     delayMicroseconds(1);
-    
-    // RX5808 uses 25-bit serial protocol
-    // Send MSB first
-    for (int8_t i = 24; i >= 0; i--) {
-        digitalWrite(chipSelectPin, (data >> i) & 0x01);
+
+    for (uint8_t bit = 0; bit < rx5808_protocol::kFrameBitCount; ++bit) {
+        digitalWrite(dataPin, rx5808_protocol::frameBit(frame, bit) ? HIGH : LOW);
         delayMicroseconds(1);
-        
-        // Clock pulse (using CS pin as clock in bit-bang mode)
-        // Note: RX5808 has specific timing requirements
+        digitalWrite(clockPin, HIGH);
+        delayMicroseconds(1);
+        digitalWrite(clockPin, LOW);
+        delayMicroseconds(1);
     }
-    
-    digitalWrite(chipSelectPin, HIGH);
+
+    digitalWrite(dataPin, LOW);
+    digitalWrite(selectPin, HIGH);
     delayMicroseconds(1);
 }
 
@@ -51,28 +67,6 @@ uint16_t RX5808Driver::getFrequencyForChannel(uint8_t band, uint8_t channel) {
     return RX5808_FREQ_TABLE[band][channel];
 }
 
-uint32_t RX5808Driver::calculateSynthRegister(uint16_t frequency) {
-    // RX5808 synthesizer calculation
-    // Frequency = (N * 8 + A) * 2 + F
-    // Where N is integer divider, A is fractional part
-    
-    uint16_t N = (frequency - 479) / 2;
-    uint8_t A = (frequency - 479) % 2;
-    
-    // Build 25-bit register value
-    // [24:20] = Address (0x01 for synth register)
-    // [19:12] = N divider
-    // [11:5]  = Reserved
-    // [4]     = A bit
-    // [3:0]   = Control bits
-    
-    uint32_t synthReg = 0x01000000; // Address 0x01
-    synthReg |= ((uint32_t)N << 7);
-    synthReg |= ((uint32_t)A << 4);
-    synthReg |= 0x08; // Control bits
-    
-    return synthReg;
-}
 
 void RX5808Driver::setChannel(uint8_t band, uint8_t channel) {
     if (band > 4 || channel > 7) {
@@ -91,8 +85,8 @@ void RX5808Driver::setChannel(uint8_t band, uint8_t channel) {
 }
 
 void RX5808Driver::setFrequency(uint16_t frequencyMHz) {
-    uint32_t synthReg = calculateSynthRegister(frequencyMHz);
-    writeRegister(synthReg);
+    const uint32_t frame = rx5808_protocol::synthWriteFrame(frequencyMHz);
+    writeFrame(frame);
     delay(30); // Allow PLL to lock
 }
 

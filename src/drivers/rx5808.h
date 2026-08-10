@@ -2,8 +2,8 @@
 #define RX5808_H
 
 #include <Arduino.h>
-#include <SPI.h>
 #include "../config.h"
+#include "rx5808_protocol.h"
 
 #ifdef MODULE_RX5808
 
@@ -23,19 +23,23 @@ struct RX5808Channel {
 
 class RX5808Driver {
 private:
-    uint8_t chipSelectPin;
+    uint8_t dataPin;
+    uint8_t clockPin;
+    uint8_t selectPin;
     uint8_t rssiPin;
-    SPIClass* spiInstance;
     uint8_t currentBand;
     uint8_t currentChannel;
     bool initialized;
     
-    void writeRegister(uint32_t data);
+    void writeFrame(uint32_t frame);
     uint16_t getFrequencyForChannel(uint8_t band, uint8_t channel);
-    uint32_t calculateSynthRegister(uint16_t frequency);
     
 public:
-    RX5808Driver(uint8_t csPin, uint8_t rssiAnalogPin, SPIClass* spi = &SPI);
+    RX5808Driver(uint8_t dataPin, uint8_t clockPin, uint8_t selectPin,
+                 uint8_t rssiAnalogPin);
+    // Legacy Rev A compatibility: begin() fails explicitly because its
+    // one-pin pseudo-interface cannot clock the RTC6715 protocol.
+    RX5808Driver(uint8_t legacyControlPin, uint8_t rssiAnalogPin);
     
     bool begin();
     void setChannel(uint8_t band, uint8_t channel);

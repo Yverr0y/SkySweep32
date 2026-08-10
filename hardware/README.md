@@ -16,9 +16,19 @@ are documented in:
 
 * [`rev_b/HARDWARE_ARCHITECTURE.md`](rev_b/HARDWARE_ARCHITECTURE.md)
 * [`rev_b/BOM_LOCK.md`](rev_b/BOM_LOCK.md)
+* [`rev_b/hardware_manifest.yaml`](rev_b/hardware_manifest.yaml) — authoritative
+  machine-readable module, rail, signal, GPIO and connector contract
 
 Rev B is still **DESIGN IN PROGRESS / UNVALIDATED IN PHYSICAL HARDWARE / DO NOT
 ORDER**. Its status changes only through committed validation evidence.
+
+Generate or verify the firmware pin map:
+
+```bash
+python scripts/generate_rev_b_pinmap.py
+python scripts/generate_rev_b_pinmap.py --check
+pio run -e esp32s3_rev_b_pro
+```
 
 ## Legacy Rev A files
 

@@ -29,17 +29,13 @@ bool SPIManager::begin() {
     digitalWrite(PIN_NRF24_CS, HIGH);
     #endif
     
-    #ifdef MODULE_RX5808
-    pinMode(PIN_RX5808_CS, OUTPUT);
-    digitalWrite(PIN_RX5808_CS, HIGH);
-    #endif
     
     #ifdef MODULE_LORA
     pinMode(PIN_LORA_CS, OUTPUT);
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
     
-    #ifdef MODULE_SD_CARD
+    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B)
     pinMode(PIN_SD_CS, OUTPUT);
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
@@ -74,13 +70,10 @@ void SPIManager::deselectAll() {
     #ifdef MODULE_NRF24
     digitalWrite(PIN_NRF24_CS, HIGH);
     #endif
-    #ifdef MODULE_RX5808
-    digitalWrite(PIN_RX5808_CS, HIGH);
-    #endif
     #ifdef MODULE_LORA
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
-    #ifdef MODULE_SD_CARD
+    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B)
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
 }

@@ -15,9 +15,11 @@ enum PowerMode {
     POWER_SLEEP = 3       // Deep sleep between scan cycles
 };
 
-// Battery monitoring (optional — connect battery voltage divider to GPIO36)
-#define PIN_VBAT_ADC        36    // ADC1_CH0, input-only
-#define VBAT_DIVIDER_RATIO  2.0f  // Voltage divider: 100k/100k
+// Battery monitoring (optional single-cell input through a 100k/100k divider).
+#ifndef PIN_VBAT_ADC
+#define PIN_VBAT_ADC        36
+#endif
+#define VBAT_DIVIDER_RATIO  2.0f
 #define VBAT_FULL           4.2f
 #define VBAT_EMPTY          3.3f
 

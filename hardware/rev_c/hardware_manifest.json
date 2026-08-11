@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "design": {
+    "name": "SkySweep32 Passive Monitor",
+    "revision": "C",
+    "status": "READY_FOR_FIRST_PROTOTYPE",
+    "orderable": false,
+    "canonical": true,
+    "scope": "passive_receive_and_energy_observation_only",
+    "orderable_scope": "ONE ENGINEERING PROTOTYPE ONLY; NOT A PRODUCTION RELEASE"
+  },
+  "source_of_truth": {
+    "physical_authority": [
+      "manufacturer documentation",
+      "hardware/rev_c/skysweep32_rev_c.kicad_sch",
+      "hardware/rev_c/skysweep32_rev_c.kicad_pcb"
+    ],
+    "contract_authority": "hardware/rev_c/hardware_manifest.json",
+    "derived": [
+      "src/generated/hardware_rev_c.h",
+      "boards/skysweep32_rev_c.json",
+      "hardware/rev_c/manufacturing/bom.csv",
+      "hardware/rev_c/validation/*"
+    ]
+  },
+  "requirements": {
+    "passive_rf": {
+      "sub_ghz": "855-925 MHz channelized RSSI/activity observation with E07-900M10S; no 433 MHz operation",
+      "two_point_four_ghz": "nRF24L01+ one-bit RPD energy observation plus ESP32 Wi-Fi/BLE receive functions; not protocol identity",
+      "five_point_eight_ghz": "not implemented in Rev C; no stable exact RX5808 MPN is accepted",
+      "remote_id": "experimental BLE/Wi-Fi receive software; no standards-conformance claim"
+    },
+    "ui": "Adafruit PID 326 SSD1306 OLED on keyed removable JST-PH harness, status LED, user button, buzzer and optional vibration motor",
+    "storage": "removable microSD in exact Molex 104031-0811 socket on dedicated SPI bus",
+    "position": "u-blox SAM-M10Q-00B GNSS module, UART NMEA and optional TIMEPULSE",
+    "networking": "ESP32 Wi-Fi dashboard and ESP-NOW only; no canonical LoRa radio",
+    "power": "5 V USB-C source rated at least 2 A; no battery charger and no battery on Rev C",
+    "programming": "ESP32-S3 native USB, manual BOOT/RESET, labelled UART0/test pads",
+    "enclosure": "indoor portable two-part printed enclosure; not sealed and not IP rated",
+    "assembly": "four-layer assembled PCB with replaceable E01 module and lid-mounted OLED harness"
+  },
+  "excluded": [
+    "RX5808 or other provisional 5.8 GHz receiver",
+    "LoRa radio",
+    "TinyML model inference",
+    "direction finding",
+    "battery charging",
+    "active countermeasures or jamming outputs"
+  ],
+  "firmware": {
+    "platformio_environment": "esp32s3_rev_c_passive",
+    "board_definition": "skysweep32_rev_c",
+    "board_macro": "BOARD_SKYSWEEP32_REV_C",
+    "profile_macro": "PROFILE_PASSIVE_MONITOR",
+    "features": [
+      "MODULE_NRF24",
+      "MODULE_CC1101",
+      "MODULE_OLED",
+      "MODULE_WEB_SERVER",
+      "MODULE_REMOTE_ID",
+      "MODULE_GPS",
+      "MODULE_SD_CARD",
+      "MODULE_ESPNOW"
+    ]
+  },
+  "mcu": {
+    "reference": "U1",
+    "manufacturer": "Espressif Systems",
+    "mpn": "ESP32-S3-WROOM-1-N8",
+    "flash_mb": 8,
+    "psram_mb": 0,
+    "voltage_v": 3.3,
+    "maximum_envelope_mm": [18.0, 25.5, 3.1],
+    "model_fidelity": "KICAD_STANDARD_MODEL_VERIFIED_AGAINST_DATASHEET_ENVELOPE",
+    "datasheet": "https://www.espressif.com/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf"
+  },
+  "signals": {
+    "I2C_SDA": {"gpio": 1, "firmware_macro": "PIN_I2C_SDA"},
+    "I2C_SCL": {"gpio": 2, "firmware_macro": "PIN_I2C_SCL"},
+    "SD_DETECT": {"gpio": 4, "firmware_macro": "PIN_SD_DETECT"},
+    "NRF24_CE": {"gpio": 8, "firmware_macro": "PIN_NRF24_CE"},
+    "NRF24_CSN": {"gpio": 9, "firmware_macro": "PIN_NRF24_CS"},
+    "CC1101_CSN": {"gpio": 10, "firmware_macro": "PIN_CC1101_CS"},
+    "RF_SPI_MOSI": {"gpio": 11, "firmware_macro": "PIN_SPI_MOSI"},
+    "RF_SPI_SCK": {"gpio": 12, "firmware_macro": "PIN_SPI_SCK"},
+    "RF_SPI_MISO": {"gpio": 13, "firmware_macro": "PIN_SPI_MISO"},
+    "CC1101_GDO0": {"gpio": 15, "firmware_macro": "PIN_CC1101_GDO0"},
+    "CC1101_GDO2": {"gpio": 16, "firmware_macro": "PIN_CC1101_GDO2"},
+    "GPS_PPS": {"gpio": 21, "firmware_macro": "PIN_GPS_PPS"},
+    "SD_SPI_MOSI": {"gpio": 35, "firmware_macro": "PIN_SD_MOSI"},
+    "SD_SPI_SCK": {"gpio": 36, "firmware_macro": "PIN_SD_SCK"},
+    "SD_SPI_MISO": {"gpio": 37, "firmware_macro": "PIN_SD_MISO"},
+    "SD_CSN": {"gpio": 38, "firmware_macro": "PIN_SD_CS"},
+    "ALERT_BUZZER": {"gpio": 39, "firmware_macro": "PIN_BUZZER"},
+    "ALERT_LED": {"gpio": 40, "firmware_macro": "PIN_ALERT_LED"},
+    "VIBRATION": {"gpio": 41, "firmware_macro": "PIN_VIBRATION"},
+    "USER_BUTTON": {"gpio": 42, "firmware_macro": "PIN_USER_BUTTON"},
+    "GPS_RX": {"gpio": 47, "firmware_macro": "PIN_GPS_RX"},
+    "GPS_TX": {"gpio": 48, "firmware_macro": "PIN_GPS_TX"},
+    "USB_D_MINUS": {"gpio": 19, "firmware_macro": null},
+    "USB_D_PLUS": {"gpio": 20, "firmware_macro": null}
+  },
+  "reserved_gpio": {
+    "0": "BOOT button only",
+    "3": "strapping pin; no peripheral load",
+    "19": "native USB D-",
+    "20": "native USB D+",
+    "43": "UART0 TX test pad",
+    "44": "UART0 RX test pad",
+    "45": "strapping pin; no peripheral load",
+    "46": "strapping pin; no peripheral load"
+  },
+  "major_parts": {
+    "RF1": {
+      "manufacturer": "Chengdu Ebyte Electronic Technology",
+      "mpn": "E01-ML01DP5",
+      "function": "2.4 GHz RPD energy observation",
+      "supply_v": 3.3,
+      "design_current_ma": 130,
+      "maximum_envelope_mm": [22.0, 33.4, 9.0],
+      "model_fidelity": "MECHANICAL_ENVELOPE_APPROXIMATION_FROM_EBYTE_DRAWING",
+      "datasheet": "https://www.cdebyte.com/products/E01-ML01DP5"
+    },
+    "RF2": {
+      "manufacturer": "Chengdu Ebyte Electronic Technology",
+      "mpn": "E07-900M10S",
+      "function": "855-925 MHz RSSI/activity observation",
+      "supply_v": 3.3,
+      "design_current_ma": 50,
+      "maximum_envelope_mm": [14.0, 20.0, 2.4],
+      "model_fidelity": "MECHANICAL_ENVELOPE_APPROXIMATION_FROM_EBYTE_DRAWING",
+      "datasheet": "https://www.cdebyte.com/pdf-down.aspx?id=1332"
+    },
+    "GPS1": {
+      "manufacturer": "u-blox AG",
+      "mpn": "SAM-M10Q-00B",
+      "function": "detector position and time",
+      "supply_v": 3.3,
+      "design_current_ma": 100,
+      "maximum_envelope_mm": [15.9, 15.9, 6.3],
+      "model_fidelity": "MECHANICAL_ENVELOPE_APPROXIMATION_FROM_UBX-22013293",
+      "datasheet": "https://github.com/sparkfun/SparkFun_u-blox_SAM-M10Q/blob/main/Documentation/SAM-M10Q_DataSheet_UBX-22013293.pdf",
+      "integration_manual": "https://github.com/sparkfun/SparkFun_u-blox_SAM-M10Q/blob/main/Documentation/SAM-M10Q_IntegrationManual_UBX-22020019.pdf"
+    },
+    "SD1": {
+      "manufacturer": "Molex",
+      "mpn": "104031-0811",
+      "function": "microSD storage with card detect",
+      "model_fidelity": "KICAD_STANDARD_MODEL_FROM_MANUFACTURER_DRAWING"
+    },
+    "DISP1": {
+      "manufacturer": "Adafruit Industries",
+      "mpn": "PID 326",
+      "function": "lid-mounted 0.96 inch SSD1306 OLED",
+      "maximum_envelope_mm": [29.2, 26.7, 6.2],
+      "model_fidelity": "MECHANICAL_ENVELOPE_APPROXIMATION_FROM_ADAFRUIT_DRAWING",
+      "datasheet": "https://www.adafruit.com/product/326"
+    }
+  },
+  "power": {
+    "input_connector": "GCT USB4105-GF-A",
+    "input_requirement": "USB-C 5 V, 2 A source; no USB-PD voltage negotiation",
+    "fuse": "Bourns MF-MSMF200-2",
+    "vbus_tvs": "Littelfuse SMAJ5.0A",
+    "usb_esd": "STMicroelectronics USBLC6-2SC6",
+    "regulator": "Diodes Incorporated AP63203WU-7",
+    "inductor": "Bourns SRN6028-3R9M",
+    "rail_v": 3.3,
+    "rail_limit_ma": 2000,
+    "calculated_peak_ma": 1050,
+    "physical_validation_required": true
+  },
+  "mechanical": {
+    "board_datum": "lower-left board corner, top view",
+    "board_dimensions_mm": [120.0, 85.0],
+    "board_thickness_mm": 1.6,
+    "layer_count": 4,
+    "mounting_holes": [
+      [5.0, 5.0, 3.2],
+      [115.0, 5.0, 3.2],
+      [115.0, 80.0, 3.2],
+      [5.0, 80.0, 3.2]
+    ],
+    "mounting_keepout_radius_mm": 5.0,
+    "minimum_component_clearance_mm": 0.5,
+    "minimum_enclosure_clearance_mm": 1.5,
+    "enclosure_type": "two-part printed indoor instrument case"
+  }
+}

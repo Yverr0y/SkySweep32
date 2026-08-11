@@ -1,0 +1,26 @@
+{
+  "design": "SkySweep32 Rev C",
+  "maturity": "READY_FOR_FIRST_PROTOTYPE",
+  "production_validated": false,
+  "kicad_version": "10.0.5",
+  "board": "skysweep32_rev_c.kicad_pcb",
+  "stackup": "4 layer, 1.6 mm FR-4, ENIG; see README.md",
+  "files": {
+    "skysweep32_rev_c-B_Cu.gbl": "32e8fa21dcf982e71d825e80c6ef9c9203cb09e48171e8a74fbc4e358b42e722",
+    "skysweep32_rev_c-B_Mask.gbs": "2ec3cc9140f90d0f3350ea5ef0386951ce11092aeff1455668c633008ace23c9",
+    "skysweep32_rev_c-B_Paste.gbp": "f106698fef2510cd697c1955979be5d5347ca33d55da237c9cae8769e1e78d52",
+    "skysweep32_rev_c-B_Silkscreen.gbo": "b796e2f381e4c9ecf7c654cb708455efd5214dff63d0886630477ba8b1870d53",
+    "skysweep32_rev_c-Edge_Cuts.gm1": "9a2127e930ac3010c99197cdbd2a924d723dc5dd3e5a5a169b27cde61b2f460e",
+    "skysweep32_rev_c-F_Cu.gtl": "37266809ac800504c2392878d2b1d01aef05041a2dca06808a2e60b231d91c9e",
+    "skysweep32_rev_c-F_Mask.gts": "90b259dc0573f8d7bb3b632015eac2ff82a8d044e1deb6d9b32617300e32abf2",
+    "skysweep32_rev_c-F_Paste.gtp": "5f1c2b67b0b86bc8dd361dd875a2e137bdd65c1fd40a846ce3b9a5f0aae3d6cb",
+    "skysweep32_rev_c-F_Silkscreen.gto": "903d99d20d83c5a1cd48f51c25c4040147dfbc73dc3dfee4743a795a13e5423e",
+    "skysweep32_rev_c-GND_PLANE.g1": "ade622439051046cb70759139d15c7cbf7d4f381b7978189e280a5dd98486db3",
+    "skysweep32_rev_c-NPTH-drl_map.gbr": "91ca8e6f1fde6b0eb4236021150c3b9ca40253c8fc50018203aebcd2c224b555",
+    "skysweep32_rev_c-NPTH.drl": "57972ac6aaf683a0a3de2035e4a55285c3250b8bc0180c734113c0157fa256ec",
+    "skysweep32_rev_c-POWER_PLANE.g2": "ecc4ac632c5a9d8673e75f91caa6acbe843bbd117f91b02ab5e9484b875b9f42",
+    "skysweep32_rev_c-PTH-drl_map.gbr": "29c3f147bd6eeaf0671991ee695cb2d691335a91c2d82f80989deb491cb1d236",
+    "skysweep32_rev_c-PTH.drl": "0ccf30f57f5a963b40691474647d93112e016950bf40d91f5f5511ee30bcd6f2",
+    "skysweep32_rev_c-job.gbrjob": "99b9a538c5c8b83add3069a37a6c1e47dd9312cb20c7ee2e8d2623354df6fdf7"
+  }
+}

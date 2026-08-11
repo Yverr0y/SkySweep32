@@ -1,0 +1,79 @@
+{
+  "design": {
+    "name": "SkySweep32 Passive Monitor",
+    "revision": "C",
+    "status": "READY_FOR_FIRST_PROTOTYPE",
+    "orderable": false,
+    "canonical": true,
+    "scope": "passive_receive_and_energy_observation_only",
+    "orderable_scope": "ONE ENGINEERING PROTOTYPE ONLY; NOT A PRODUCTION RELEASE"
+  },
+  "freecad_version": "1.1.3",
+  "input_sha256": {
+    "pcba_step": "f1e8877a4ccf9c5a5f9c9b86712ec33d9cdd6df61ff764e7f0efdc8c1822c406",
+    "oled_step": "ba985b1a464443e1b0bec237a793e7de1977cf7e58ea25d6d0eb18609aa9e627"
+  },
+  "base_bbox_mm": [
+    -4.0,
+    124.0,
+    -89.0,
+    4.0,
+    -8.0,
+    7.0
+  ],
+  "lid_bbox_mm": [
+    -6.2,
+    126.20000000000002,
+    -91.2,
+    6.200000000000003,
+    1.6,
+    15.5
+  ],
+  "base_valid": true,
+  "lid_valid": true,
+  "button_valid": true,
+  "screw_valid": true,
+  "nut_valid": true,
+  "pcba_base_collision_mm3": 0.0,
+  "pcba_lid_collision_mm3": 0.0,
+  "pcba_oled_collision_mm3": 0.0,
+  "oled_lid_collision_mm3": 0.0,
+  "pcba_button_collision_mm3": 0.0,
+  "pressed_button_switch_contact_mm3": [
+    1.1988317566098643,
+    1.1988317566098643,
+    1.1988317566098643
+  ],
+  "pressed_button_lid_collision_mm3": 0.0,
+  "base_lid_collision_mm3": 0.0,
+  "fastener_case_collision_mm3": 0.0,
+  "fastener_pcba_collision_mm3": 0.0,
+  "service_envelope_collision_mm3": {
+    "usb_cable": 0.0,
+    "microsd_card": 0.0,
+    "e01_sma_plug": 0.0,
+    "e07_sma_body": 0.0
+  },
+  "pcba_bbox_mm": [
+    -12.770000005398,
+    122.7,
+    -85.00000000000001,
+    3.1086244689504383e-15,
+    -3.410482016606,
+    10.615
+  ],
+  "lid_ceiling_clearance_mm": 1.8849999999999998,
+  "board_edge_clearance_mm": 1.5,
+  "base_lid_fit_clearance_mm": 0.3,
+  "oled_lateral_clearance_mm": 0.2,
+  "oled_vertical_clearance_mm": 0.1,
+  "button_press_to_switch_mm": 0.65,
+  "fastener_specification": {
+    "screw": "DIN 912 M3 x 20",
+    "screw_head_clearance_mm": 0.35,
+    "nut": "DIN 934 M3",
+    "nut_across_flats_clearance_mm": 0.3
+  },
+  "status": "PASS",
+  "failures": []
+}

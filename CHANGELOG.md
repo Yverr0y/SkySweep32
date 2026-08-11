@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Hardware
+- **Canonical Rev C passive monitor**: Replaced the failed Rev B identity with a
+  clean ESP32-S3 design using exact E01-ML01DP5, E07-900M10S, SAM-M10Q-00B,
+  Molex 104031-0811, protected USB-C input, and a reviewed four-layer PCB.
+- **Evidence-first PCB and mechanics**: Added reproducible zero-warning ERC,
+  zero-violation/zero-unconnected DRC, exact fitted/DNP BOM exports, Gerbers,
+  drills, placement data, complete PCBA STEP, a case built around that assembly,
+  M3 fasteners, connector/card/antenna/button service envelopes, collision
+  checks, renders, and a dimensioned drawing.
+- **First-prototype maturity only**: Rev C is ready for one physical engineering
+  prototype. It has not been assembled, bench-tested, field-tested, qualified,
+  or production-validated.
+
+### Firmware and CI
+- Added the manifest-gated `esp32s3_rev_c_passive` board target and separated
+  current Rev C, failed Rev B, and legacy Rev A pin maps.
+- Added `hardware/verify.py` and a hardware CI workflow covering pin staleness,
+  KiCad ERC/DRC, mechanical CAD checks, fabrication export, and evidence upload.
+- Reclassified TinyML, Remote ID conformance, 5.8 GHz reception, LoRa
+  interoperability/localization, ATAK, direction finding, and field-use claims
+  according to the evidence present in the repository.
+
+### Documentation
+- Replaced the public site's tier/jammer marketing and stale wiring visualizer
+  with the Rev C engineering status, capability limits, and evidence links.
+- Added exact assembly/bring-up instructions and a physical prototype validation
+  checklist. Marked old DevKit buying/wiring pages as legacy and incompatible
+  with Rev C.
+
 ### Fixed
 - **PCB preview fidelity**: `render_pcb.py` now overlays the actual generated copper segments and vias from `skysweep32_pro.kicad_pcb` instead of showing only illustrative hardcoded traces; the preview revision is synchronized to PCB v1.1.
 - **RX5808 control protocol**: Replaced the unusable one-GPIO pseudo-SPI implementation with independent DATA, CLOCK and SELECT signals and the RTC6715 25-bit LSB-first register frame. Known-frequency protocol vectors are covered by host tests.

@@ -1,4 +1,8 @@
 # SkySweep32 Architecture Guide
+> **LEGACY v0.6.1 FIRMWARE DESCRIPTION — NOT THE REV C HARDWARE CONTRACT.**
+> Tasks may compile without a demonstrated physical signal path. See the
+> [current capability matrix](../../README.md#honest-capability-matrix).
+
 
 ## Overview
 

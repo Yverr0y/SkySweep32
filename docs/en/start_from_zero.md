@@ -1,4 +1,8 @@
 # SkySweep32 Build from Scratch (Beginner's Guide)
+> **LEGACY / UNVERIFIED DEVKIT EXPERIMENT — DO NOT BUY PARTS BASED ON THIS GUIDE.**
+> It is not a build guide for canonical Rev C and does not prove drone or
+> protocol detection. Start with the [Rev C status](../../hardware/rev_c/README.md).
+
 
 If you've never built electronics before, don't know how to solder, and are hearing the word "microcontroller" for the first time — **this guide is for you**. 
 Here we will assemble the basic version of the drone detector (Starter Tier) without a soldering iron, simply snapping wires together like Lego bricks.

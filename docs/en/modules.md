@@ -1,4 +1,9 @@
 # SkySweep32 Modular Upgrade Guide
+> **LEGACY v0.6.1 DEVKIT TIERS — NOT REV C — DO NOT PROCURE FROM THIS PAGE.**
+> These configurations and capability claims are historical and physically
+> unverified. Rev C has one exact passive architecture documented
+> [here](../../hardware/rev_c/README.md).
+
 
 ## 📦 Hardware Tiers
 

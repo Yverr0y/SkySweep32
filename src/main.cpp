@@ -121,11 +121,16 @@ struct RFModuleData {
     bool protocolCRSF;
 };
 
-// RF data accessible from multiple tasks
+// RF data accessible from multiple tasks. Disabled slots remain addressable so
+// the fixed band indices used by telemetry do not drift between build profiles.
 volatile RFModuleData rfModules[3] = {
-    {"CC1101",    PIN_CC1101_CS,   0, false, false, false},
-    {"NRF24L01+", PIN_NRF24_CS,   0, false, false, false},
+    {"CC1101",    PIN_CC1101_CS, 0, false, false, false},
+    {"NRF24L01+", PIN_NRF24_CS,  0, false, false, false},
+#ifdef MODULE_RX5808
     {"RX5808",    PIN_RX5808_CONTROL, 0, false, false, false}
+#else
+    {"RX5808",    UINT8_MAX, 0, false, false, false}
+#endif
 };
 
 // RSSI history for ML classifier

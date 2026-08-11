@@ -17,13 +17,26 @@
 // #define TIER_JUGGERNAUT // Pro + 4x VCO Jammers (~$100+)
 
 // Default to TIER_STANDARD if nothing defined
-#if !defined(TIER_BASE) && !defined(TIER_STANDARD) && !defined(TIER_PRO) && !defined(TIER_JUGGERNAUT)
+#if !defined(PROFILE_PASSIVE_MONITOR) && !defined(TIER_BASE) && !defined(TIER_STANDARD) && !defined(TIER_PRO) && !defined(TIER_JUGGERNAUT)
     #define TIER_STANDARD
 #endif
 
 // ============================================================================
 // MODULE FLAGS — Auto-configured by tier, or override individually
 // ============================================================================
+
+// Canonical Rev C passive profile. Keep this list synchronized through the
+// manifest-gated PlatformIO target rather than inheriting legacy release tiers.
+#ifdef PROFILE_PASSIVE_MONITOR
+    #define MODULE_NRF24
+    #define MODULE_CC1101
+    #define MODULE_OLED
+    #define MODULE_WEB_SERVER
+    #define MODULE_REMOTE_ID
+    #define MODULE_GPS
+    #define MODULE_SD_CARD
+    #define MODULE_ESPNOW
+#endif
 
 // --- Tier: Base ---
 #if defined(TIER_BASE) || defined(TIER_STANDARD) || defined(TIER_PRO)
@@ -73,24 +86,22 @@
 
 // --- Optional modules (enable manually in any tier) ---
 // #define MODULE_ACOUSTIC            // MEMS microphone acoustic detection (~$5)
-// #define MODULE_ML                  // ML drone classification (rule-based + optional TFLite)
-// #define ENABLE_COUNTERMEASURES     // Active countermeasures (LEGAL AUTH REQUIRED!)
-
-// Auto-enable ML if any RF module is active
-#if defined(MODULE_CC1101) || defined(MODULE_NRF24) || defined(MODULE_RX5808)
-    #ifndef MODULE_ML
-        #define MODULE_ML
-    #endif
-#endif
+// TinyML is never auto-enabled. MODULE_ML remains an explicit experimental
+// opt-in because the repository does not contain a trained production model.
 
 // ============================================================================
 // PIN DEFINITIONS
 // ============================================================================
 
-#ifdef BOARD_SKYSWEEP32_REV_B
+#ifdef BOARD_SKYSWEEP32_REV_C
 
-// Generated from hardware/rev_b/hardware_manifest.yaml. The PlatformIO Rev B
+// Generated from hardware/rev_c/hardware_manifest.json. The PlatformIO Rev C
 // environment rejects a stale generated header before compilation.
+#include "generated/hardware_rev_c.h"
+
+#elif defined(BOARD_SKYSWEEP32_REV_B)
+
+// Legacy, non-orderable Rev B pin map retained only for reproducibility.
 #include "generated/hardware_rev_b.h"
 #define PIN_RX5808_CONTROL  PIN_RX5808_SELECT
 

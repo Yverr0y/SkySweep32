@@ -1,0 +1,53 @@
+name: Rev C Hardware Gates
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - 'hardware/**'
+      - 'boards/skysweep32_rev_c.json'
+      - 'scripts/generate_rev_c_pinmap.py'
+      - 'src/generated/hardware_rev_c.h'
+      - '.github/workflows/hardware.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'hardware/**'
+      - 'boards/skysweep32_rev_c.json'
+      - 'scripts/generate_rev_c_pinmap.py'
+      - 'src/generated/hardware_rev_c.h'
+      - '.github/workflows/hardware.yml'
+  workflow_dispatch:
+
+jobs:
+  cad-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/checkout@v4
+
+      - name: Install pinned CAD dependencies
+        run: |
+          sudo add-apt-repository --yes ppa:kicad/kicad-10.0-releases
+          sudo add-apt-repository --yes ppa:freecad-maintainers/freecad-stable
+          sudo apt-get update
+          sudo apt-get install --yes kicad freecad
+          python -m pip install kicad-sch-api==0.5.6
+
+      - name: Rebuild electrical, mechanical, and fabrication evidence
+        run: python hardware/verify.py --skip-firmware --skip-renders
+
+      - name: Upload engineering reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rev-c-engineering-reports
+          if-no-files-found: error
+          path: |
+            hardware/rev_c/validation/
+            hardware/rev_c/enclosure/mechanical_validation.json
+            hardware/rev_c/manufacturing/fabrication_manifest.json

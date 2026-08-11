@@ -35,7 +35,7 @@ bool SPIManager::begin() {
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
     
-    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B)
+    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B) && !defined(BOARD_SKYSWEEP32_REV_C)
     pinMode(PIN_SD_CS, OUTPUT);
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
@@ -73,7 +73,7 @@ void SPIManager::deselectAll() {
     #ifdef MODULE_LORA
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
-    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B)
+    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B) && !defined(BOARD_SKYSWEEP32_REV_C)
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
 }

@@ -45,8 +45,13 @@ jobs:
         pio run -e esp32dev_standard
         pio run -e esp32dev_pro
 
+    - name: Build Canonical Rev C Passive Target
+      run: |
+        python scripts/generate_rev_c_pinmap.py --check
+        pio run -e esp32s3_rev_c_passive
 
-    - name: Validate Rev B Hardware Contract
+
+    - name: Compile-check Legacy Rev B Target
       run: |
         python scripts/generate_rev_b_pinmap.py --check
         pio run -e esp32s3_rev_b_pro

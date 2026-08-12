@@ -235,17 +235,21 @@ static void testMAVLink() {
         CHECK(pkt.msgid == MAVLINK_MSG_ID_HEARTBEAT, "parsed supported msgid");
     }
 
-    // 3) Message IDs without a CRC_EXTRA table entry are unsupported. A frame
-    //    that omits CRC_EXTRA must not be accepted as valid MAVLink.
+    // 3) Message IDs without an explicit common-dialect CRC_EXTRA entry are
+    //    unsupported. Frames omitting CRC_EXTRA must not be accepted as MAVLink,
+    //    including both an in-range table hole and an out-of-range ID.
     {
-        uint8_t frame[9] = {MAVLINK_STX_V1, 1, 9, 1, 1, 200, 0x5A, 0, 0};
-        const uint16_t crc = mavCrc(&frame[1], 6);
-        frame[7] = static_cast<uint8_t>(crc);
-        frame[8] = static_cast<uint8_t>(crc >> 8);
+        const uint8_t unsupportedIds[] = {3, 200};
+        for (uint8_t msgid : unsupportedIds) {
+            uint8_t frame[9] = {MAVLINK_STX_V1, 1, 9, 1, 1, msgid, 0x5A, 0, 0};
+            const uint16_t crc = mavCrc(&frame[1], 6);
+            frame[7] = static_cast<uint8_t>(crc);
+            frame[8] = static_cast<uint8_t>(crc >> 8);
 
-        MAVLinkParser p;
-        CHECK(!feedMAV(p, frame, sizeof(frame)),
-              "unsupported msgid without CRC_EXTRA is rejected");
+            MAVLinkParser p;
+            CHECK(!feedMAV(p, frame, sizeof(frame)),
+                  "unsupported msgid without CRC_EXTRA is rejected");
+        }
     }
 
     // 4) Truncated large frame must not be accepted or over-read.

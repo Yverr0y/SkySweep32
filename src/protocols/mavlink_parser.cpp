@@ -1,18 +1,22 @@
 #include "mavlink_parser.h"
 
-// CRC_EXTRA values for MAVLink v1.0 messages
-static const uint8_t MAVLINK_CRC_EXTRA[] = {
-    50, 124, 137, 0, 237, 217, 104, 119, 0, 0,  // 0-9
-    0, 89, 0, 0, 0, 0, 0, 0, 0, 0,              // 10-19
-    214, 159, 220, 168, 24, 23, 170, 144, 67, 115, // 20-29
-    39, 246, 185, 104, 237, 244, 222, 212, 9, 254, // 30-39
-    230, 28, 28, 132, 221, 232, 11, 153, 41, 39,   // 40-49
-    78, 196, 0, 0, 15, 3, 0, 0, 0, 0,              // 50-59
-    167, 183, 119, 191, 118, 148, 21, 0, 243, 124, // 60-69
-    0, 0, 38, 20, 158, 152, 143, 0, 0, 0,          // 70-79
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                  // 80-89
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0                   // 90-99
-};
+// CRC_EXTRA values for the MAVLink v1 common-dialect messages this parser
+// explicitly recognizes. Unknown IDs are rejected; a zero placeholder would
+// otherwise accept non-MAVLink frames whose checksum omits CRC_EXTRA.
+static int mavlinkCrcExtra(uint8_t messageId) {
+    switch (messageId) {
+        case MAVLINK_MSG_ID_HEARTBEAT: return 50;
+        case MAVLINK_MSG_ID_SYS_STATUS: return 124;
+        case MAVLINK_MSG_ID_SYSTEM_TIME: return 137;
+        case MAVLINK_MSG_ID_GPS_RAW_INT: return 24;
+        case MAVLINK_MSG_ID_ATTITUDE: return 39;
+        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: return 104;
+        case MAVLINK_MSG_ID_RC_CHANNELS_RAW: return 244;
+        case MAVLINK_MSG_ID_COMMAND_LONG: return 152;
+        case MAVLINK_MSG_ID_COMMAND_ACK: return 143;
+        default: return -1;
+    }
+}
 
 MAVLinkParser::MAVLinkParser() {
     rxIndex = 0;
@@ -29,7 +33,8 @@ static uint16_t mavlinkCrcAccumulate(uint16_t crc, uint8_t data) {
 }
 
 bool MAVLinkParser::validateChecksum(MAVLinkPacket* packet) {
-    if (packet->msgid >= sizeof(MAVLINK_CRC_EXTRA)) {
+    const int crcExtra = mavlinkCrcExtra(packet->msgid);
+    if (crcExtra < 0) {
         return false;
     }
     uint16_t crc = 0xFFFF;
@@ -41,7 +46,7 @@ bool MAVLinkParser::validateChecksum(MAVLinkPacket* packet) {
     for (uint16_t i = 0; i < packet->len; i++) {
         crc = mavlinkCrcAccumulate(crc, packet->payload[i]);
     }
-    crc = mavlinkCrcAccumulate(crc, MAVLINK_CRC_EXTRA[packet->msgid]);
+    crc = mavlinkCrcAccumulate(crc, static_cast<uint8_t>(crcExtra));
     return crc == packet->checksum;
 }
 

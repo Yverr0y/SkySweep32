@@ -8,7 +8,9 @@
 #include "spi_manager.h"
 #include "activity_classifier.h"
 #include "alert_manager.h"
+#ifdef MODULE_ESPNOW
 #include "espnow_mesh.h"
+#endif
 #ifdef MODULE_ATAK
 #include "atak_client.h"
 #endif
@@ -313,6 +315,7 @@ void taskRFScanning(void* parameter) {
             }
             
             
+#ifdef MODULE_ESPNOW
             // Share coarse activity with nearby SkySweep nodes. The payload
             // deliberately carries no inferred transmitter protocol or identity.
             if (activity >= ACTIVITY_HIGH) {
@@ -323,6 +326,7 @@ void taskRFScanning(void* parameter) {
                     0.0f,
                     0.0f);
             }
+#endif
             
             
             // Experimental legacy classifier remains opt-in and is forbidden by
@@ -766,12 +770,13 @@ void setup() {
     atakClient.begin();
     #endif
     
-    // --- Initialize ESP-NOW Mesh ---
+#ifdef MODULE_ESPNOW
+    // --- Initialize ESP-NOW networking ---
     Serial.println("[INIT] ESP-NOW Mesh...");
     if (!espNowMesh.begin()) {
         Serial.println("[ERROR] ESP-NOW init failed");
     }
-    
+#endif
     // --- Initialize Remote ID (after WiFi is configured) ---
     #ifdef MODULE_REMOTE_ID
     Serial.println("[INIT] Remote ID (BLE)...");
@@ -888,7 +893,9 @@ void loop() {
     
     // Fast non-blocking updates
     alertManager.update();
+#ifdef MODULE_ESPNOW
     espNowMesh.update();
+#endif
     
     // Yield to FreeRTOS tasks
     vTaskDelay(pdMS_TO_TICKS(10));

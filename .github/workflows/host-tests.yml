@@ -28,7 +28,7 @@ jobs:
     - name: Install cppcheck
       run: sudo apt-get update && sudo apt-get install -y cppcheck
 
-    # Analyze legacy compile-only optional paths as well as current source.
+    # Analyze legacy compile-only optional paths and the current ESP-NOW path.
     # Countermeasure source was removed; no obsolete active-feature macro is
     # defined here.
     - name: Run cppcheck (warnings)
@@ -36,6 +36,6 @@ jobs:
         cppcheck --enable=warning --inline-suppr \
           --suppress=missingInclude --suppress=missingIncludeSystem \
           --std=c++11 \
-          -DTIER_PRO -DMODULE_ACOUSTIC -DMODULE_COMPASS -DMODULE_ATAK -DMODULE_ML \
+          -DTIER_PRO -DMODULE_ACOUSTIC -DMODULE_COMPASS -DMODULE_ATAK -DMODULE_ML -DMODULE_ESPNOW \
           -I src -I src/drivers -I src/protocols \
           --error-exitcode=1 src

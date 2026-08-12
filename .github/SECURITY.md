@@ -30,14 +30,16 @@ so the report and any proof of concept remain private.
 
 ### Passive product scope
 
-Canonical Rev C is a passive receive/energy-observation product profile. The
-repository contains no RF-jamming, protocol-injection, deauthentication, or
-GPS-denial implementation. Those functions are not supported.
+Canonical Rev C is passive with respect to the signals it observes: it contains
+no RF-jamming, protocol-injection, deauthentication, or GPS-denial
+implementation. Those functions are not supported.
 
-The ESP32-S3, CC1101, and SX1281 are physically transmit-capable devices.
-Firmware configuration alone is not a regulatory authorization. Contributors
-must preserve the passive Rev C profile and comply with local radio, privacy,
-aviation, and data law.
+“Passive monitor” does not mean RF-silent. The Wi-Fi dashboard and ESP-NOW
+status/activity network intentionally transmit ordinary 2.4 GHz communications;
+those paths are not countermeasures. The ESP32-S3, CC1101, and SX1281 are also
+physically transmit-capable devices. Firmware configuration alone is not a
+regulatory authorization. Contributors must preserve the passive observation
+profile and comply with local radio, privacy, aviation, and data law.
 
 ### Security-relevant interfaces
 

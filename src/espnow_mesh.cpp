@@ -2,6 +2,8 @@
 #include "power_manager.h"
 #include <cstddef>  // offsetof
 
+#ifdef MODULE_ESPNOW
+
 ESPNowMesh espNowMesh;
 ESPNowMesh* ESPNowMesh::instance = nullptr;
 
@@ -295,3 +297,4 @@ uint8_t ESPNowMesh::getActivePeerCount() const {
     }
     return count;
 }
+#endif  // MODULE_ESPNOW

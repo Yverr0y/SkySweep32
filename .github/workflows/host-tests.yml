@@ -28,15 +28,14 @@ jobs:
     - name: Install cppcheck
       run: sudo apt-get update && sudo apt-get install -y cppcheck
 
-    # Static analysis on the full feature set (all optional modules enabled) so
-    # every source file is analyzed. Warning-level checks only, to keep the gate
-    # about likely defects rather than style. Also runs on the runner's system
-    # tools — independent of the PlatformIO registry.
+    # Analyze legacy compile-only optional paths and the current ESP-NOW path.
+    # Countermeasure source was removed; no obsolete active-feature macro is
+    # defined here.
     - name: Run cppcheck (warnings)
       run: |
         cppcheck --enable=warning --inline-suppr \
           --suppress=missingInclude --suppress=missingIncludeSystem \
           --std=c++11 \
-          -DTIER_PRO -DMODULE_ACOUSTIC -DMODULE_COMPASS -DMODULE_ATAK -DMODULE_ML -DENABLE_COUNTERMEASURES \
+          -DTIER_PRO -DMODULE_ACOUSTIC -DMODULE_COMPASS -DMODULE_ATAK -DMODULE_ML -DMODULE_ESPNOW \
           -I src -I src/drivers -I src/protocols \
           --error-exitcode=1 src

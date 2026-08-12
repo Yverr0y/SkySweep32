@@ -1,404 +1,194 @@
-# SkySweep32 | Пассивный детектор БПЛА
+# SkySweep32
 
-**Multi-band passive drone detector | Мультидиапазонный пассивный детектор дронов**
+Passive RF energy-observation and logging platform based on ESP32.
 
-[![CI](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue.svg)](https://www.espressif.com/en/products/socs/esp32)
-[![Build: PlatformIO](https://img.shields.io/badge/Build-PlatformIO-orange.svg)](https://platformio.org/)
-
-**Current release:** `v0.6.1`. Its legacy Rev A Pro PCB is syntax-compatible with KiCad 6+, but the electrical design, module fit, RF paths, enclosure fit and assembled hardware are **UNVERIFIED**.
+[![Firmware CI](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml)
+[![Hardware gates](https://github.com/bobberdolle1/SkySweep32/actions/workflows/hardware.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/hardware.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 [English](#english) | [Русский](#russian)
 
 ---
 
 <a name="english"></a>
-## 🇬🇧 English
+## English
 
-### Overview
+### Current status
 
-SkySweep32 is an advanced passive drone detection system based on the ESP32 microcontroller. It monitors radio spectrum across three frequency bands (900 MHz, 2.4 GHz, 5.8 GHz) to detect UAV control signals and video transmission. **Built with a modular, budget-friendly architecture** — start with a ~$15 base kit and upgrade as needed.
+**Hardware Rev C: READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION
+VALIDATED.**
 
-### 📦 Modular Tiers
+Rev C has a native KiCad 10 schematic and four-layer PCB, exact fitted BOM,
+zero unexcluded ERC errors/warnings, zero unexcluded DRC violations and zero
+unconnected pads, a complete PCBA STEP, CAD-checked enclosure with
+fasteners/service envelopes, fabrication exports, and a compiling canonical
+firmware target. Eight ERC footprint-filter exceptions and one DRC mixed-pad
+exception are explicit, narrowly scoped, and machine-audited. No Rev C board has
+yet been assembled or bench-tested. These are design/CAD results, not proof of
+RF performance, reliability, compliance, manufacturing yield, or field
+operation.
 
-| Tier | Name | Cost | Includes |
-|------|------|------|----------|
-| 🟢 **Base** | Starter | ~$15-20 | ESP32 + OLED + NRF24L01+ (2.4 GHz) + Web Dashboard + BLE Remote ID |
-| 🟡 **Standard** | Hunter | ~$35-45 | Base + CC1101 (900 MHz) + RX5808 (5.8 GHz) + ML Classification |
-| 🔴 **Pro** | Sentinel | ~$60-80 | Standard + GPS + SD Card Logger + LoRa Mesh Network |
-| 🟣 **EW Mode** | Juggernaut | ~$100+ | Sentinel + 4x VCO Jamming Modules (5.8G, 2.4G, 900M, 1.5G) |
+The public `v0.6.1` firmware release predates Rev C and targets legacy ESP32
+DevKit wiring. Do not flash those prebuilt binaries onto Rev C. Build the
+`esp32s3_rev_c_passive` environment from current source.
 
-**Optional add-ons**: 🎤 Acoustic Detection (~$5) | ⚔️ Countermeasures (auth required)
+| Revision | Status | Authority |
+|---|---|---|
+| [Rev C](hardware/rev_c/) | Current; first physical prototype only | Canonical schematic, PCB, BOM, pin contract, enclosure, and evidence |
+| [Rev B](hardware/rev_b/) | Failed/unverified; do not order | Historical audit evidence only |
+| [Rev A](hardware/LEGACY_REV_A_STATUS.md) | Legacy/unverified; do not order | Issue #10 parser-compatibility history only |
 
-> 📖 **[Full Modular Guide →](docs/en/modules.md)**
+### Honest capability matrix
 
-### Features
+`Implemented in source` does not mean physically validated.
 
-- **Multi-band RF & Spectrum Scanning**: Hardware sweeping across 900 MHz, 2.4 GHz, and 5.8 GHz bands checking for analog and digital drone links.
-- **Web Dashboard & Map**: Real-time dark-themed dashboard via WiFi with Leaflet.js interactive map, drone lists, and RSSI graphs.
-- **Signal Fingerprinting**: Built-in `SignalDatabase` identifying known drone patterns (e.g., DJI OcuSync, FPV Analog, Crossfire) via band-matching and RSSI variance.
-- **ESP-NOW Mesh**: Free, autonomous node-to-node network sharing threat alerts, heartbeats, and GPS telemetry across massive areas without extra hardware.
-- **Power Management**: 4 dynamic power states (Full, Balanced, Low, Deep Sleep) with battery ADC monitoring and runtime estimates.
-- **Countermeasures (Juggernaut)**: Optional VCO signal injection covering DJI, Walksnail, OpenIPC, ELRS, and GPS Denial.
-- **ATAK Integration (Cursor on Target)**: Native UDP broadcast of CoT packets to the Android Team Awareness Kit, showing drone targets and operator heading on tactical maps.
-- **Hardware Compass (QMC5883L)**: Direction finding via I2C magnetometer, calculating the vector of incoming drone signals.
-- **TinyML AI Classification**: TensorFlow Lite for Microcontrollers engine for predicting drone classes (DJI, FPV, etc.) based on RSSI variance and multi-band tensors.
-- **Stealth Mode (Dark Mode)**: Hardware/Software toggle to instantly disable OLED and buzzers, transferring all alerts to a covert vibration motor.
-- **Auto-Calibration Tool**: Integrated baseline noise calibration directly from the Web-UI.
-- **Alert System**: Non-blocking intelligent Buzzer and LED patterns scaling with Threat Levels (Info → Critical).
-- **Remote ID**: FAA ANSI/CTA-2063 compliant BLE drone identification natively on the ESP32.
-- **FreeRTOS Architecture**: Safe concurrent processing with hardware Watchdogs and SPI mutexes.
+| Capability | Source state | Rev C hardware state | Evidence / limit |
+|---|---|---|---|
+| 855–925 MHz observation | CC1101 register/RSSI driver compiles | Ebyte E07-900M10S fitted | Channelized RSSI/activity only; RF response unmeasured; no 433 MHz |
+| 2.4 GHz observation | SX1281 instantaneous-RSSI driver compiles | Ebyte E28-2G4M12SX fitted | Coarse RSSI/activity sweep only; no protocol or transmitter identity |
+| Wi-Fi dashboard | Implemented and compiles | ESP32-S3 radio present | Not run on physical Rev C |
+| BLE Remote ID | Experimental parser compiles | ESP32-S3 BLE present | No ASTM/ASD-STAN conformance suite; no FAA/ANSI compliance claim |
+| GNSS | NMEA path compiles | u-blox SAM-M10Q-00B fitted | No live-fix or antenna test |
+| microSD logging | Implemented and compiles | Molex 104031-0811 fitted | No physical write/endurance test |
+| ESP-NOW alerts | Implemented and compiles | ESP32-S3 radio present | No range, coexistence, or multi-node bench test |
+| MAVLink / CRSF parsing | Host unit tests and sanitizers pass | No current RF demodulator supplies these byte streams | Parser capability only; not over-air protocol detection |
+| TinyML inference | Placeholder dummy model exists in legacy optional source | Excluded from Rev C | Not implemented; rule-based labels are not trained inference |
+| 5.8 GHz FPV observation | RX5808 channel/RSSI driver compiles | Procurement-qualified `RX5808-2012-12P` envelope fitted | Eight hardware-selected channels and analog RSSI; supplier/pinout and RF response require incoming/bench checks |
+| LoRa / “Meshtastic” | Proprietary experimental packet code | Excluded from Rev C | Not Meshtastic protocol compatibility; no localization validation |
+| ATAK CoT | Optional source compiles in legacy full-feature builds | No special Rev C hardware | No interoperability or field test |
+| Compass direction finding | Heading-source code only | Excluded from Rev C | A magnetometer cannot determine RF bearing by itself |
+| Active countermeasures | Removed from current source and hardware | Excluded | SkySweep32 is a passive monitor |
 
-### Hardware Components (Standard Tier)
+SkySweep32 must not be described as field-tested, compliant, accurate drone
+classification, direction finding, or production-ready without new physical
+evidence.
 
-| Component | Model | Frequency | Purpose |
-|-----------|-------|-----------|---------| 
-| Microcontroller | ESP32 DevKit | - | Main processor + WiFi + BLE |
-| RF Module 1 | CC1101 | 900 MHz | ISM band monitoring |
-| RF Module 2 | NRF24L01+ | 2.4 GHz | WiFi/RC monitoring |
-| RF Module 3 | RX5808 | 5.8 GHz | Video link monitoring |
-| Display | OLED 128x64 (I2C) | - | Visual interface |
-| Microphone (optional) | ICS-43434 MEMS | I2S | Acoustic detection |
+### Rev C architecture
 
-> ⚠️ **Hardware status — EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
-> The checked-in PCB and enclosure are retained as the legacy Rev A concept. KiCad parser compatibility does not establish electrical, mechanical, RF or manufacturing validity. Read the [full Rev A status](hardware/LEGACY_REV_A_STATUS.md) before using any hardware file. The requirements-first Rev B [architecture](hardware/rev_b/HARDWARE_ARCHITECTURE.md) and [module lock](hardware/rev_b/BOM_LOCK.md) are design inputs, not released manufacturing data.
+- Espressif `ESP32-S3-WROOM-1-N16R8` with native USB-C programming.
+- Ebyte `E07-900M10S` for passive 855–925 MHz RSSI/activity observation.
+- Ebyte `E28-2G4M12SX` / SX1281 for passive 2.4 GHz instantaneous-RSSI
+  observation, with Adafruit `PID 2308` internal U.FL antenna.
+- Qualified-envelope `RX5808-2012-12P` for eight-channel 5.8 GHz analog RSSI
+  observation; every procured lot requires the documented incoming checks.
+- u-blox `SAM-M10Q-00B`, Molex `104031-0811` microSD socket, and Adafruit
+  `PID 326` OLED on a keyed harness.
+- Protected USB-C/battery power path using BQ24074, TPS61232, MAX17048, and
+  `AP63203WU-7`, with the specified protected Adafruit `PID 328` battery.
+- 150 × 95 mm four-layer PCB; continuous L2 ground reference.
+- 165.4 × 117.4 × 33.5 mm printed indoor enclosure generated around the
+  complete PCBA, battery, display, antennas, harnesses, and fasteners. Not
+  sealed or IP rated.
+- No LoRa, trained TinyML, RF direction-finding, or active-countermeasure
+  hardware.
 
-### Legacy Rev A pinout (unverified)
+See [Rev C architecture](hardware/rev_c/ARCHITECTURE.md), [exact manifest](hardware/rev_c/hardware_manifest.json), and [engineering audit](hardware/ENGINEERING_AUDIT_2026-08-11.md).
 
-#### SPI Bus (Shared)
-| Signal | ESP32 Pin |
-|--------|-----------|
-| MOSI   | GPIO 23   |
-| MISO   | GPIO 19   |
-| SCK    | GPIO 18   |
+### Build and verify
 
-#### Chip Select Pins
-| Module      | CS Pin    | CE Pin | Tier |
-|-------------|-----------|--------|------|
-| NRF24L01+   | GPIO 15   | GPIO 2 | Base+ |
-| CC1101      | GPIO 5    | -      | Standard+ |
-| RX5808      | GPIO 13   | -      | Standard+ |
-| LoRa SX1276 | GPIO 14   | -      | Pro (Changed in v0.4) |
-| SD Card     | GPIO 27   | -      | Pro |
-
-#### EW Output Pins (Juggernaut)
-| Signal | ESP32 Pin | Purpose |
-|--------|-----------|---------|
-| DAC 1  | GPIO 25   | 5.8GHz / 2.4GHz VCO Sweep |
-| DAC 2  | GPIO 26   | 900MHz / 1.5GHz GPS VCO Sweep |
-| LORA_R | GPIO 12   | LoRa Reset moved here |
-
-#### I2C Bus (OLED Display)
-| Signal | ESP32 Pin |
-|--------|-----------|
-| SDA    | GPIO 21   |
-| SCL    | GPIO 22   |
-
-#### Additional Connections
-- **RX5808 RSSI**: GPIO 34 (ADC1_CH6)
-- **Power**: 3.3V and GND to all modules
-
-### Software Architecture
-
-```
-src/
-├── main.cpp                    # FreeRTOS tasks & app orchestration
-├── config.h                    # Central config: tiers, pins, feature flags
-├── config_manager.h/cpp        # Runtime JSON config (SPIFFS)
-├── spi_manager.h/cpp           # Thread-safe shared-SPI bus (mutex)
-├── power_manager.h/cpp         # Power modes, battery ADC, deep sleep
-├── alert_manager.h/cpp         # Non-blocking buzzer/LED alert patterns
-├── countermeasures.h/cpp       # Threat assessment + optional EW (Juggernaut)
-├── signal_database.h/cpp       # Drone signal fingerprinting
-├── espnow_mesh.h/cpp           # ESP-NOW node-to-node mesh alerts
-├── web_server.h/cpp            # WiFi AP, dashboard, REST + WebSocket
-├── remote_id_detector.h/cpp    # BLE Remote ID scanner
-├── ml_classifier.h/cpp         # Drone classification (rules + TFLite)
-├── model_data.h                # TinyML model blob
-├── gps_module.h/cpp            # GPS (NEO-6M/7M)            [Pro]
-├── data_logger.h/cpp           # SD-card forensic logging   [Pro]
-├── meshtastic_client.h/cpp     # LoRa mesh + trilateration  [Pro]
-├── atak_client.h/cpp           # ATAK Cursor-on-Target UDP  [optional]
-├── compass_module.h/cpp        # QMC5883L direction finding [optional]
-├── acoustic_detector.h/cpp     # I2S MEMS acoustic detection[optional]
-├── drivers/
-│   ├── cc1101.h/cpp            # CC1101 900 MHz driver
-│   ├── nrf24l01.h/cpp          # NRF24L01+ 2.4 GHz driver
-│   └── rx5808.h/cpp            # RX5808 5.8 GHz driver
-└── protocols/
-    ├── mavlink_parser.h/cpp    # MAVLink protocol decoder
-    └── crsf_parser.h/cpp       # CRSF/ExpressLRS decoder
-
-test/host/                      # Desktop unit tests (g++ + ASan/UBSan)
-```
-
-### Build Instructions
+Requirements: Python 3.11+, PlatformIO, KiCad 10, FreeCAD 1.0+, and the pinned
+Python package/checksums in [`hardware/toolchain.json`](hardware/toolchain.json).
 
 ```bash
-# Clone repository
-git clone https://github.com/bobberdolle1/SkySweep32.git
-cd SkySweep32
+# Canonical Rev C firmware
+python scripts/generate_rev_c_pinmap.py --check
+pio run -e esp32s3_rev_c_passive
 
-# Build firmware
-pio run
+# Host parser tests
+make -C test/host
 
-# Upload to ESP32
-pio run --target upload
-
-# Monitor serial output
-pio device monitor
+# Complete electrical, PCB, mechanical, fabrication, render, and firmware gate
+python hardware/verify.py
 ```
 
-### Build release artifacts
+The verifier records tool versions, commands, timestamp, source revision, gate
+results, and evidence paths in
+[`hardware/rev_c/validation/verification_summary.json`](hardware/rev_c/validation/verification_summary.json).
+Skipped gates are recorded as skipped, never as passes.
 
-On Windows, run `powershell -ExecutionPolicy Bypass -File scripts/build_releases.ps1 -Version 0.6.1`. The three tier binaries are written to `releases/v0.6.1/`.
+### First-prototype files
 
-### Testing
+- [Rev C engineering README](hardware/rev_c/README.md)
+- [Fitted BOM](hardware/rev_c/manufacturing/bom_fitted.csv)
+- [Assembly and bring-up](hardware/rev_c/ASSEMBLY_AND_BRINGUP.md)
+- [Physical validation checklist](hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md)
+- [Mechanical drawing](hardware/rev_c/enclosure/rev_c_mechanical_drawing.svg)
+- [Fabrication manifest](hardware/rev_c/manufacturing/fabrication_manifest.json)
 
-The protocol parsers (CRSF/MAVLink), which decode untrusted over-the-air input, have
-desktop unit tests that build with the host `g++` — no ESP32 toolchain required:
+These files support one engineering prototype spin. They are not a
+mass-production release.
 
-```bash
-make -C test/host      # builds with AddressSanitizer/UBSan and runs the suite
-```
+### Legacy firmware profiles
 
-These run in CI (`.github/workflows/host-tests.yml`) alongside a `cppcheck`
-static-analysis pass. See [`test/host/README.md`](test/host/README.md).
+`esp32dev_base`, `esp32dev_standard`, `esp32dev_pro`, and
+`esp32s3_rev_b_pro` remain compile-checked for regression/history. Their pin
+maps, BOMs, and enclosure files are incompatible with Rev C. Documentation under
+`docs/en/` and `docs/ru/` that describes DevKit “tiers” is retained only as
+legacy v0.6.1 firmware history and must not be used to procure Rev C hardware.
 
-### Configuration
+### License and lawful use
 
-#### Enable Countermeasures (REQUIRES LEGAL AUTHORIZATION)
-
-Edit `platformio.ini`:
-```ini
-build_flags = -DENABLE_COUNTERMEASURES
-```
-
-Edit `src/main.cpp`:
-```cpp
-counterMeasures.armSystem(true);  // Uncomment this line
-```
-
-### Legal Notice
-
-⚠️ **WARNING**: Active RF countermeasures (jamming, protocol injection) are **ILLEGAL** in most jurisdictions without explicit authorization from regulatory authorities. Use of these features may result in:
-
-- Criminal prosecution
-- Heavy fines
-- Equipment confiscation
-- Interference with critical communications
-
-**Authorized Use Cases**:
-- Military and law enforcement operations
-- Critical infrastructure protection (with permits)
-- Conflict zones with appropriate authorization
-- Research and development in controlled environments
-
-**This project is for educational and authorized defense purposes only.**
-
-### Documentation
-
-- 🍼 **[Absolute Beginner Guide (Start Here)](docs/en/start_from_zero.md)** — No soldering, Lego-style assembly for beginners
-- 📘 [Hardware Setup Guide](docs/en/hardware.md) — Advanced wiring & BOM
-- 💻 [Software API Reference](docs/en/software.md) — REST & WebSocket APIs
-- ⚖️ [Legal Compliance](docs/en/legal.md) — Responsible use
-
-### License
-
-GNU General Public License v3.0 - See [LICENSE](LICENSE) file for details.
+GNU GPL v3. Passive reception can still be regulated and can expose private or
+protected information. Follow local radio, privacy, aviation, and data laws.
+The canonical hardware contains no active interference functions.
 
 ---
 
 <a name="russian"></a>
-## 🇷🇺 Русский
+## Русский
 
-### Обзор
+### Текущий статус
 
-SkySweep32 — продвинутая система пассивного обнаружения дронов на базе микроконтроллера ESP32. Система мониторит радиоэфир в трех диапазонах (900 МГц, 2.4 ГГц, 5.8 ГГц) для детекции сигналов управления БПЛА и видеопередачи. Включает опциональные возможности активного противодействия для авторизованных оборонных применений.
+**Hardware Rev C: ГОТОВ К ПЕРВОМУ ФИЗИЧЕСКОМУ ПРОТОТИПУ — НЕ ПРОВЕРЕН ДЛЯ
+СЕРИЙНОГО ПРОИЗВОДСТВА.**
 
-### Возможности
+Для Rev C подготовлены нативная схема KiCad 10, четырёхслойная PCB, точный BOM,
+ERC без неисключённых ошибок/предупреждений и DRC без неисключённых нарушений
+или неподключённых цепей, полная STEP-сборка PCBA, корпус с CAD-проверками
+коллизий и сервисных зон, Gerber/drill/placement-файлы и отдельная собираемая
+конфигурация прошивки. Восемь исключений ERC для фильтров посадочных мест и одно
+исключение DRC для смешанных контактных площадок явно задокументированы и
+проверяются автоматически. Физическая плата Rev C ещё не собрана и не испытана.
+RF-характеристики, надёжность, соответствие нормам и производственный выход не
+подтверждены.
 
-- **Мультидиапазонное и Спектральное сканирование**: Аппаратный скан эфира на 900 МГц, 2.4 ГГц и 5.8 ГГц диапазонах для детекции пультов, телеметрии и видеолинков.
-- **Web-Дашборд и Интерактивная Карта**: Локальный веб-интерфейс по WiFi с картой (Leaflet.js) для трекинга дронов и операторов через Remote ID.
-- **Сигнатурная База (Fingerprinting)**: Динамическое распознавание 8 типов дронов (DJI OcuSync, FPV, Crossfire и др.) через анализ дисперсии RSSI и паттернов "прыжков".
-- **Своя Mesh-сеть (ESP-NOW)**: Самоорганизующаяся децентрализованная сеть оповещения между детекторами (0 рублей стоимости, использует WiFi чип ESP32).
-- **Активный РЭБ (Juggernaut)**: Управление каскадом из 4-х внешних VCO-генераторов (5.8GHz, 2.4GHz, 900MHz, 1.5GHz GPS) через DAC-пины для подавления DJI, Walksnail, BetaFPV, OpenIPC и ELRS.
-- **Power Management (Батарея)**: Глубокий сон, скалер частоты ЦП и ADC-отслеживание батареи. Позволяет работать от 18650 днями. Автоматическая калибровка шума из UI.
-- **Умная Система Уведомлений**: Неблокирующий диспетчер сигналов для зуммера (Buzzer) и LED с динамическими паттернами под каждый уровень угрозы.
-- **Оценка угроз**: 5-уровневая классификация (НЕТ/НИЗКАЯ/СРЕДНЯЯ/ВЫСОКАЯ/КРИТИЧЕСКАЯ).
-- **Активное противодействие (опционально, требуется легальная авторизация)**.
+Готовые бинарные файлы релиза `v0.6.1` относятся к старой разводке ESP32 DevKit
+и несовместимы с Rev C. Для Rev C собирайте только
+`esp32s3_rev_c_passive` из текущего исходного кода.
 
-### Компоненты (Уровень Hunter)
+### Что реально делает Rev C
 
-| Компонент | Модель | Частота | Назначение |
-|-----------|--------|---------|------------|
-| Микроконтроллер | ESP32 DevKit | - | Основной процессор + WiFi/BLE |
-| РЧ-модуль 1 | CC1101 | 900 МГц | Мониторинг ISM-диапазона |
-| РЧ-модуль 2 | NRF24L01+ | 2.4 ГГц | Спектральное сканирование / RC |
-| РЧ-модуль 3 | RX5808 | 5.8 ГГц | Мониторинг видеолинка |
-| Дисплей | OLED 128x64 | - | Визуальный интерфейс |
-| Индикация | Passive Buzzer | - | Алерты и ошибки |
+- E07-900M10S: пассивное наблюдение RSSI/активности 855–925 МГц; 433 МГц
+  запрещены контрактом.
+- E28-2G4M12SX/SX1281: пассивный обзор мгновенного RSSI в диапазоне 2.4 ГГц.
+  Это не демодуляция и не распознавание DJI/ELRS/другого протокола.
+- RX5808-2012-12P: восемь аппаратно выбираемых каналов 5645–5945 МГц и
+  аналоговый RSSI; поставщик, распиновка и RF-отклик проверяются на первом
+  экземпляре.
+- ESP32-S3: Wi-Fi/BLE и ESP-NOW; работа на физической Rev C ещё не проверена.
+- SAM-M10Q, microSD, OLED, защищённый аккумулятор и зарядный тракт
+  предусмотрены конкретными деталями, но требуют стендовых испытаний.
+- BLE Remote ID остаётся экспериментальным: тестов на соответствие
+  ASTM/ASD-STAN нет.
+- TinyML не реализован: в legacy-исходниках лежит фиктивная модель.
+- LoRa, радиопеленгация и активное подавление исключены из Rev C.
 
-> ⚠️ **Статус hardware — ЭКСПЕРИМЕНТАЛЬНО / НЕ ПРОВЕРЕНО / НЕ ЗАКАЗЫВАТЬ**
-> Текущие PCB и корпус сохранены как концепт legacy Rev A. Совместимость синтаксиса с KiCad не подтверждает электрическую схему, механику, РЧ-тракт или пригодность к производству. Перед использованием файлов прочитайте [полный статус Rev A](hardware/LEGACY_REV_A_STATUS.md). [Архитектура](hardware/rev_b/HARDWARE_ARCHITECTURE.md) и [зафиксированные модули](hardware/rev_b/BOM_LOCK.md) Rev B — входные данные проектирования, а не выпущенные файлы производства.
+Rev A и Rev B — несовместимые, непроверенные исторические версии. Их нельзя
+заказывать и нельзя использовать их pin map/BOM/корпуса для Rev C.
 
-### Распиновка legacy Rev A (не проверена)
-
-#### Шина SPI (общая)
-| Сигнал | Пин ESP32 |
-|--------|-----------|
-| MOSI   | GPIO 23   |
-| MISO   | GPIO 19   |
-| SCK    | GPIO 18   |
-
-#### Пины Chip Select (индивидуальные)
-| Модуль      | CS пин    | CE пин (если есть) |
-|-------------|-----------|--------------------|
-| NRF24L01+   | GPIO 15   | GPIO 2             |
-| CC1101      | GPIO 5    | -                  |
-| RX5808      | GPIO 13   | -                  |
-| LoRa SX1276 | GPIO 14   | -                  |
-| SD Card     | GPIO 27   | -                  |
-
-#### Пины генерации помех (Уровень Juggernaut)
-| Пин | Функция | 
-|-----|---------|
-| GPIO 25 | DAC 1 (Шум для 5.8GHz и 2.4GHz VCO) |
-| GPIO 26 | DAC 2 (Шум для 900MHz и 1.5GHz GPS VCO) |
-| GPIO 12 | LoRa RESET (перенесен с GPIO 25) |
-
-#### Шина I2C (OLED-дисплей)
-| Сигнал | Пин ESP32 |
-|--------|-----------|
-| SDA    | GPIO 21   |
-| SCL    | GPIO 22   |
-
-#### Дополнительные подключения (Питание и Алерты)
-- **Зуммер (Buzzer)**: GPIO 4
-- **LED оповещения**: GPIO 2
-- **ADC Батареи (100k/100k)**: GPIO 36
-- **RX5808 RSSI**: GPIO 34 (ADC1_CH6)
-- **Питание**: 3.3V и GND на все модули (регулятор LDO 1117 обязателен!)
-
-### Архитектура ПО
-
-```
-src/
-├── main.cpp                    # Задачи FreeRTOS и оркестрация приложения
-├── config.h                    # Центральный конфиг: уровни, пины, флаги функций
-├── config_manager.h/cpp        # Runtime JSON-конфиг (SPIFFS)
-├── spi_manager.h/cpp           # Потокобезопасная общая шина SPI (мьютекс)
-├── power_manager.h/cpp         # Режимы питания, ADC батареи, глубокий сон
-├── alert_manager.h/cpp         # Неблокирующие паттерны зуммера/LED
-├── countermeasures.h/cpp       # Оценка угроз + опциональный РЭБ (Juggernaut)
-├── signal_database.h/cpp       # Сигнатурная база дронов
-├── espnow_mesh.h/cpp           # Mesh-оповещения ESP-NOW между узлами
-├── web_server.h/cpp            # WiFi AP, дашборд, REST + WebSocket
-├── remote_id_detector.h/cpp    # Сканер BLE Remote ID
-├── ml_classifier.h/cpp         # Классификация дронов (правила + TFLite)
-├── model_data.h                # Блоб модели TinyML
-├── gps_module.h/cpp            # GPS (NEO-6M/7M)             [Pro]
-├── data_logger.h/cpp           # Логирование на SD-карту     [Pro]
-├── meshtastic_client.h/cpp     # LoRa mesh + трилатерация    [Pro]
-├── atak_client.h/cpp           # ATAK Cursor-on-Target UDP   [опц.]
-├── compass_module.h/cpp        # QMC5883L пеленгация          [опц.]
-├── acoustic_detector.h/cpp     # Акустика I2S MEMS            [опц.]
-├── drivers/
-│   ├── cc1101.h/cpp            # Драйвер CC1101 900 МГц
-│   ├── nrf24l01.h/cpp          # Драйвер NRF24L01+ 2.4 ГГц
-│   └── rx5808.h/cpp            # Драйвер RX5808 5.8 ГГц
-└── protocols/
-    ├── mavlink_parser.h/cpp    # Декодер протокола MAVLink
-    └── crsf_parser.h/cpp       # Декодер CRSF/ExpressLRS
-
-test/host/                      # Юнит-тесты на хосте (g++ + ASan/UBSan)
-```
-
-### Инструкции по сборке
+### Сборка и проверка
 
 ```bash
-# Клонировать репозиторий
-git clone https://github.com/bobberdolle1/SkySweep32.git
-cd SkySweep32
-
-# Собрать прошивку
-pio run
-
-# Загрузить на ESP32
-pio run --target upload
-
-# Мониторинг Serial
-pio device monitor
+python scripts/generate_rev_c_pinmap.py --check
+pio run -e esp32s3_rev_c_passive
+make -C test/host
+python hardware/verify.py
 ```
 
-### Тестирование
+Основные документы: [Rev C](hardware/rev_c/README.md),
+[сборка и первый запуск](hardware/rev_c/ASSEMBLY_AND_BRINGUP.md),
+[чек-лист физического прототипа](hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md),
+[аудит](hardware/ENGINEERING_AUDIT_2026-08-11.md).
 
-Парсеры протоколов (CRSF/MAVLink), разбирающие недоверенный ввод из эфира, покрыты
-юнит-тестами, которые собираются хостовым `g++` — тулчейн ESP32 не нужен:
-
-```bash
-make -C test/host      # сборка с AddressSanitizer/UBSan и запуск тестов
-```
-
-Они гоняются в CI (`.github/workflows/host-tests.yml`) вместе со статическим
-анализом `cppcheck`. Подробнее — [`test/host/README.md`](test/host/README.md).
-
-### Конфигурация
-
-#### Включение противодействия (ТРЕБУЕТСЯ ЛЕГАЛЬНАЯ АВТОРИЗАЦИЯ)
-
-Редактировать `platformio.ini`:
-```ini
-build_flags = -DENABLE_COUNTERMEASURES
-```
-
-Редактировать `src/main.cpp`:
-```cpp
-counterMeasures.armSystem(true);  // Раскомментировать эту строку
-```
-
-### Правовое уведомление
-
-⚠️ **ВНИМАНИЕ**: Активные РЧ-противодействия (глушение, инъекция протоколов) **НЕЗАКОННЫ** в большинстве юрисдикций без явного разрешения регуляторных органов. Использование этих функций может привести к:
-
-- Уголовному преследованию
-- Крупным штрафам
-- Конфискации оборудования
-- Помехам критическим коммуникациям
-
-**Разрешенные случаи использования**:
-- Военные и правоохранительные операции
-- Защита критической инфраструктуры (с разрешениями)
-- Зоны боевых действий с соответствующей авторизацией
-- Исследования и разработка в контролируемых условиях
-
-**Этот проект предназначен только для образовательных и авторизованных оборонных целей.**
-
-### Документация
-
-- 🍼 **[Сборка с Абсолютного Нуля (Начни отсюда)](docs/ru/start_from_zero.md)** — Никакой пайки, Лего-сборка для новичков (рядового бойца)
-- 📘 [Руководство по аппаратной части](docs/ru/hardware.md) — Инструкция для инженеров с полным BOM
-- 💻 [Справочник API ПО](docs/ru/software.md) — Документация REST и WebSocket
-- ⚖️ [Правовое соответствие](docs/ru/legal.md) — Правила использования
-
-### Лицензия
-
-Стандартная общественная лицензия GNU v3.0 - См. файл [LICENSE](LICENSE) для деталей.
-
----
-
-## Contributing | Вклад в проект
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-Приветствуются вклады! Пожалуйста, прочитайте [CONTRIBUTING.md](CONTRIBUTING.md) для деталей.
-
-## Support | Поддержка
-
-- GitHub Issues: [Report bugs](https://github.com/bobberdolle1/SkySweep32/issues)
-- Discussions: [Community forum](https://github.com/bobberdolle1/SkySweep32/discussions)
-
----
-
-**Developed with ❤️ for drone defense research | Разработано с ❤️ для исследований противодроновой защиты**
+Лицензия: GNU GPL v3. Каноническая Rev C — только пассивное устройство и не
+содержит аппаратуры активных помех.

@@ -1,0 +1,144 @@
+{
+  "design": {
+    "name": "SkySweep32 Passive Monitor",
+    "revision": "C",
+    "status": "READY_FOR_FIRST_PROTOTYPE",
+    "orderable": false,
+    "canonical": true,
+    "scope": "passive_receive_and_energy_observation_only",
+    "orderable_scope": "ONE ENGINEERING PROTOTYPE ONLY; NOT A PRODUCTION RELEASE"
+  },
+  "freecad_version": "1.1.3",
+  "input_sha256": {
+    "hardware_manifest": "788f4e881ef4e8427b4746ca4b24c8afe4c0a7a466b013a9dd65bdd676e13ef8",
+    "pcba_step": "0bbeae0e4d924561fe7a0948ced117974dff19b9bc08eb975a437ddfaf8a4a89",
+    "oled_step": "fc9fc23ee1e164186e89164c4616284415f3137666b31d021e8dc5ffd21b0ab3",
+    "battery_step": "2f23a14cc129c8fcff50b460d666c283df78d2f57b3af3a437cb0ca25ba582bf"
+  },
+  "base_bbox_mm": [
+    -5.5,
+    155.5,
+    -107.5,
+    5.5,
+    -17.3,
+    7.0
+  ],
+  "lid_bbox_mm": [
+    -7.7,
+    157.70000000000002,
+    -109.7,
+    7.700000000000003,
+    1.6,
+    16.2
+  ],
+  "base_valid": true,
+  "lid_valid": true,
+  "button_valid": true,
+  "screw_valid": true,
+  "nut_valid": true,
+  "battery_valid": true,
+  "two4ghz_antenna_valid": true,
+  "two4ghz_cable_valid": true,
+  "oled_cable_valid": true,
+  "pcba_base_collision_mm3": 0.0,
+  "pcba_lid_collision_mm3": 0.0,
+  "pcba_oled_collision_mm3": 0.0,
+  "oled_lid_collision_mm3": 0.0,
+  "battery_base_collision_mm3": 0.0,
+  "battery_lid_collision_mm3": 0.0,
+  "battery_pcba_collision_mm3": 0.0,
+  "two4ghz_antenna_base_collision_mm3": 0.0,
+  "two4ghz_antenna_lid_collision_mm3": 0.0,
+  "two4ghz_antenna_pcba_collision_mm3": 0.0,
+  "two4ghz_cable_base_collision_mm3": 0.0,
+  "two4ghz_cable_lid_collision_mm3": 0.0,
+  "two4ghz_open_cable_base_collision_mm3": 0.0,
+  "two4ghz_open_cable_lid_collision_mm3": 0.0,
+  "oled_cable_base_collision_mm3": 0.0,
+  "oled_cable_lid_collision_mm3": 0.0,
+  "oled_open_cable_base_collision_mm3": 0.0,
+  "oled_open_cable_lid_collision_mm3": 0.0,
+  "battery_fastener_collision_mm3": 0.0,
+  "pcba_button_collision_mm3": 0.0,
+  "pressed_button_switch_contact_mm3": [
+    1.1988317566098643,
+    1.1988317566098643,
+    1.1988317566098643
+  ],
+  "pressed_button_lid_collision_mm3": 0.0,
+  "base_lid_collision_mm3": 0.0,
+  "fastener_case_collision_mm3": 0.0,
+  "fastener_pcba_collision_mm3": 0.0,
+  "service_envelope_collision_mm3": {
+    "usb_cable": 0.0,
+    "microsd_card": 0.0,
+    "five8ghz_sma_plug": 0.0,
+    "subghz_sma_plug": 0.0,
+    "five8ghz_antenna_swept": 0.0,
+    "subghz_antenna_swept": 0.0,
+    "battery_cable_and_plug": 0.0,
+    "oled_harness_bend": 0.0
+  },
+  "pcba_bbox_mm": [
+    -12.770000005398,
+    162.770000005398,
+    -95.2,
+    2.220446049250313e-15,
+    -3.410482016606,
+    11.615
+  ],
+  "battery_bbox_mm": [
+    15.0,
+    65.0,
+    -77.5,
+    -17.5,
+    -10.3,
+    -3.000000000000001
+  ],
+  "two4ghz_antenna_bbox_mm": [
+    105.0,
+    145.0,
+    -19.0,
+    -11.0,
+    12.5,
+    13.0
+  ],
+  "two4ghz_cable_centerline_length_mm": {
+    "closed": 94.96392885873462,
+    "lid_open_30mm": 90.6176107339524,
+    "available": 100.0,
+    "closed_service_slack": 5.036071141265381,
+    "lid_open_30mm_service_slack": 9.382389266047596
+  },
+  "oled_cable_centerline_length_mm": {
+    "closed": 92.6021857567207,
+    "lid_open_30mm": 89.13748537193409,
+    "available": 100.0,
+    "closed_service_slack": 7.397814243279299,
+    "lid_open_30mm_service_slack": 10.86251462806591
+  },
+  "lid_ceiling_clearance_mm": 1.584999999999999,
+  "battery_to_pcba_clearance_mm": 3.000000000000001,
+  "battery_floor_clearance_mm": 0.5,
+  "board_edge_clearance_mm": {
+    "left_right_top": 3.0,
+    "bottom_service_edge": 10.0
+  },
+  "closed_outer_dimensions_mm": [
+    165.4,
+    117.4,
+    33.5
+  ],
+  "base_lid_fit_clearance_mm": 0.3,
+  "oled_lateral_clearance_mm": 0.2,
+  "oled_vertical_clearance_mm": 0.1,
+  "button_press_to_switch_mm": 0.65,
+  "fastener_specification": {
+    "screw": "DIN 912 M3 x 30",
+    "screw_head_clearance_mm": 0.35,
+    "nut": "DIN 934 M3",
+    "nut_across_flats_clearance_mm": 0.3
+  },
+  "status": "PASS",
+  "failures": []
+}

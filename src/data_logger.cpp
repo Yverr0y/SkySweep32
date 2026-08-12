@@ -1,9 +1,23 @@
 #include "data_logger.h"
+#include "spi_manager.h"
 
 #ifdef MODULE_SD_CARD
-#ifdef BOARD_SKYSWEEP32_REV_B
-static SPIClass revBsdSpi(HSPI);
-#endif
+namespace {
+class SPIBusLock {
+public:
+    SPIBusLock() : locked(spiManager.acquire(pdMS_TO_TICKS(1000))) {}
+    ~SPIBusLock() {
+        if (locked) {
+            spiManager.release();
+        }
+    }
+
+    explicit operator bool() const { return locked; }
+
+private:
+    bool locked;
+};
+}  // namespace
 
 DataLogger::DataLogger() 
     : sdCardAvailable(false), logRotationSize(MAX_LOG_SIZE_MB * 1024 * 1024), 
@@ -12,18 +26,15 @@ DataLogger::DataLogger()
 
 bool DataLogger::begin(uint8_t csPin) {
     Serial.printf("[DataLogger] Initializing SD card (CS: GPIO %d)...\n", csPin);
+    SPIBusLock lock;
+    if (!lock) {
+        Serial.println("[DataLogger] SPI bus timeout");
+        return false;
+    }
     
-#ifdef BOARD_SKYSWEEP32_REV_B
-    revBsdSpi.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, csPin);
-    if (!SD.begin(csPin, revBsdSpi)) {
-#else
-    if (!SD.begin(csPin)) {
-#endif
+    if (!SD.begin(csPin, *spiManager.getSPI())) {
         Serial.println("[DataLogger] SD card initialization failed");
         sdCardAvailable = false;
-#ifdef BOARD_SKYSWEEP32_REV_B
-        revBsdSpi.end();
-#endif
         return false;
     }
     
@@ -32,6 +43,7 @@ bool DataLogger::begin(uint8_t csPin) {
     
     if (!createLogDirectory()) {
         Serial.println("[DataLogger] Failed to create log directory");
+        SD.end();
         return false;
     }
     
@@ -43,10 +55,9 @@ bool DataLogger::begin(uint8_t csPin) {
 }
 
 void DataLogger::end() {
+    SPIBusLock lock;
+    if (!lock) return;
     SD.end();
-#ifdef BOARD_SKYSWEEP32_REV_B
-    revBsdSpi.end();
-#endif
     sdCardAvailable = false;
 }
 
@@ -119,6 +130,8 @@ uint8_t DataLogger::getLogFileCount() {
 
 bool DataLogger::logDetection(const DetectionLogEntry& entry) {
     if (!sdCardAvailable) return false;
+    SPIBusLock lock;
+    if (!lock) return false;
     
     rotateLogsIfNeeded();
     
@@ -151,6 +164,8 @@ bool DataLogger::logRFData(const char* module, int rssi, float freq, const char*
 
 bool DataLogger::logDroneRemoteID(const char* uasID, double lat, double lon, float alt, int rssi) {
     if (!sdCardAvailable) return false;
+    SPIBusLock lock;
+    if (!lock) return false;
     
     rotateLogsIfNeeded();
     
@@ -171,6 +186,8 @@ bool DataLogger::logDroneRemoteID(const char* uasID, double lat, double lon, flo
 
 bool DataLogger::logSystemEvent(LogLevel level, const char* message) {
     if (!sdCardAvailable || level < minimumLogLevel) return false;
+    SPIBusLock lock;
+    if (!lock) return false;
     
     rotateLogsIfNeeded();
     
@@ -192,6 +209,8 @@ bool DataLogger::logSystemEvent(LogLevel level, const char* message) {
 
 bool DataLogger::exportToJSON(const char* outputFile, uint32_t startTime, uint32_t endTime) {
     if (!sdCardAvailable) return false;
+    SPIBusLock lock;
+    if (!lock) return false;
     
     File output = SD.open(outputFile, FILE_WRITE);
     if (!output) return false;
@@ -226,6 +245,8 @@ bool DataLogger::exportToJSON(const char* outputFile, uint32_t startTime, uint32
 
 bool DataLogger::exportToCSV(const char* outputFile, uint32_t startTime, uint32_t endTime) {
     if (!sdCardAvailable) return false;
+    SPIBusLock lock;
+    if (!lock) return false;
     
     File output = SD.open(outputFile, FILE_WRITE);
     if (!output) return false;
@@ -263,6 +284,8 @@ void DataLogger::setRotationSize(uint32_t sizeBytes) {
 
 uint32_t DataLogger::getTotalLogSize() {
     if (!sdCardAvailable) return 0;
+    SPIBusLock lock;
+    if (!lock) return 0;
     
     uint32_t totalSize = 0;
     File root = SD.open(LOG_DIR);

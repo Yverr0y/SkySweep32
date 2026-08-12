@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-08-13T00:02:48",
+    "ignored_checks": [],
+    "included_severities": [
+        "exclusion"
+    ],
+    "kicad_version": "10.0.5",
+    "schematic_parity": [],
+    "source": "skysweep32_rev_c.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "comment": "TPS61232 is an SMD device; its exposed-pad thermal vias intentionally mix plated through-hole and SMD pads.",
+            "description": "Тип посад. места не соответствует типам его конт. площадок (ожидался тип 'Выводного монтажа'; но задано 'SMD')",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Посад. место U5",
+                    "pos": {
+                        "x": 52.0,
+                        "y": 69.0
+                    },
+                    "uuid": "d82981c1-65b8-4a88-9b9a-4fbd8f3199c0"
+                }
+            ],
+            "severity": "warning",
+            "type": "footprint_type_mismatch"
+        }
+    ]
+}

@@ -1,6 +1,12 @@
 # SkySweep32 Pro Rev B Hardware Architecture
 
-This directory contains the production **Rev B** carrier board design for **SkySweep32 Pro Tier**.
+> **EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
+>
+> This directory contains a failed Rev B design baseline under engineering
+> audit. The checked-in ERC report has 8 warnings and the checked-in DRC report
+> has 375 violations, including mounting-hole/component conflicts. Generated
+> STEP/STL files and previews do not prove mechanical fit. Do not manufacture
+> this revision. See [`HARDWARE_VALIDATION_REPORT.md`](HARDWARE_VALIDATION_REPORT.md).
 
 ---
 
@@ -18,7 +24,7 @@ This directory contains the production **Rev B** carrier board design for **SkyS
    - Diodes Inc **AP63203WU-7** 2.0 A synchronous buck converter (3.3 V output, 44% headroom)
    - Dedicated low-pass RC filters on all RF power branches
 5. **No Decorative SMA Connectors**: Every SMA bulkhead maps 1:1 to an active radio module.
-6. **Sentinel Enclosure Rev B**: Precision CAD enclosure generated around the actual PCB assembly STEP model.
+6. **Sentinel Enclosure Rev B**: Generated enclosure concept; assembly fit and interference are unverified.
 
 ---
 
@@ -27,13 +33,13 @@ This directory contains the production **Rev B** carrier board design for **SkyS
 | File / Path | Description |
 |---|---|
 | [`skysweep32_pro_rev_b.kicad_sch`](skysweep32_pro_rev_b.kicad_sch) | Native KiCad 10 schematic |
-| [`skysweep32_pro_rev_b.kicad_pcb`](skysweep32_pro_rev_b.kicad_pcb) | Native 4-layer KiCad 10 PCB layout (fully routed) |
+| [`skysweep32_pro_rev_b.kicad_pcb`](skysweep32_pro_rev_b.kicad_pcb) | Native 4-layer KiCad 10 PCB baseline; checked-in DRC currently fails |
 | [`generate_pcb.py`](generate_pcb.py) | Automated PCB generation and net-contract assertion script |
 | [`build_case_rev_b.py`](build_case_rev_b.py) | FreeCAD Python 3D enclosure CAD synthesis script |
 | [`skysweep32_pro_rev_b.step`](skysweep32_pro_rev_b.step) | 3D PCB Assembly STEP file (5.1 MB) |
 | [`enclosures/skysweep32_pro_case_bottom_rev_b.stl`](enclosures/skysweep32_pro_case_bottom_rev_b.stl) | Sentinel Enclosure Bottom Case (3D Printable STL) |
 | [`enclosures/skysweep32_pro_case_lid_rev_b.stl`](enclosures/skysweep32_pro_case_lid_rev_b.stl) | Sentinel Enclosure Top Lid Case (3D Printable STL) |
-| [`HARDWARE_VALIDATION_REPORT.md`](HARDWARE_VALIDATION_REPORT.md) | Official PASS/FAIL verification matrix |
+| [`HARDWARE_VALIDATION_REPORT.md`](HARDWARE_VALIDATION_REPORT.md) | Evidence-backed current failure and maturity status |
 
 ---
 

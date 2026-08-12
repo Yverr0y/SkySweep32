@@ -1,0 +1,49 @@
+{
+  "design": "SkySweep32 Rev C Passive Monitor",
+  "maturity": "READY_FOR_FIRST_PROTOTYPE",
+  "production_validated": false,
+  "timestamp_utc": "2026-08-12T21:09:39.682537+00:00",
+  "source_revision": "9542a8328e2ef331ea2df5176d78a29f9e3644ce",
+  "source_tree_dirty": false,
+  "tools": {
+    "kicad": "10.0.5",
+    "kicad_sch_api": "0.5.6",
+    "freecad": "1.1.3",
+    "freecad_runner": "C:\\Users\\kiril\\AppData\\Local\\Programs\\FreeCAD 1.1\\bin\\python.exe",
+    "platformio": "PlatformIO Core, version 6.1.19",
+    "python": "3.14.5"
+  },
+  "commands": {
+    "pin_contract": "python scripts/generate_rev_c_pinmap.py --check",
+    "dashboard_embed": "python scripts/generate_dashboard.py --check",
+    "erc": "kicad-cli sch erc --severity-error --severity-warning --exit-code-violations",
+    "drc": "kicad-cli pcb drc --refill-zones --severity-error --severity-warning --exit-code-violations",
+    "pcba": "kicad-cli pcb export step --force",
+    "mechanical": "FreeCAD generate_3d_models.py && FreeCAD generate_enclosure.py",
+    "fabrication": "python hardware/rev_c/export_manufacturing.py",
+    "firmware": "pio run -e esp32s3_rev_c_passive"
+  },
+  "gates": {
+    "pin_contract": "PASS",
+    "dashboard_embed": "PASS",
+    "erc_zero_errors_warnings": "PASS",
+    "erc_no_globally_ignored_checks": "PASS",
+    "erc_eight_documented_footprint_filter_exclusions": "PASS",
+    "drc_zero_violations_unconnected": "PASS",
+    "drc_no_globally_ignored_checks": "PASS",
+    "drc_single_documented_exclusion": "PASS",
+    "mechanical_interference_and_service": "PASS",
+    "exact_bom_and_fabrication_exports": "PASS",
+    "firmware_build": "PASS",
+    "renders": "SKIPPED"
+  },
+  "evidence": {
+    "erc": "validation/erc.rpt",
+    "erc_exclusions": "validation/erc_exclusions.json",
+    "drc": "validation/drc.rpt",
+    "drc_exclusions": "validation/drc_exclusions.json",
+    "mechanical": "enclosure/mechanical_validation.json",
+    "fabrication": "manufacturing/fabrication_manifest.json",
+    "mechanical_drawing": "enclosure/rev_c_mechanical_drawing.svg"
+  }
+}

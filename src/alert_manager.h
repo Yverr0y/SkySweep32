@@ -18,9 +18,9 @@
 enum AlertType {
     ALERT_NONE = 0,
     ALERT_INFO,           // Short beep, LED blink
-    ALERT_DRONE_DETECTED, // Double beep, fast blink
-    ALERT_THREAT_HIGH,    // Rapid beeps, solid LED
-    ALERT_THREAT_CRITICAL,// Continuous alarm, flashing LED
+    ALERT_ACTIVITY_MEDIUM,  // Double beep, fast blink
+    ALERT_ACTIVITY_HIGH,    // Rapid beeps and LED blink
+    ALERT_ACTIVITY_CRITICAL,// Fast alarm pattern and LED blink
     ALERT_BATTERY_LOW,    // Slow triple beep
     ALERT_MESH_ALERT      // Different pattern for remote alerts
 };

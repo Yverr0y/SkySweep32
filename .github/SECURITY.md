@@ -11,9 +11,9 @@
 
 **DO NOT** open public issues for security vulnerabilities.
 
-Instead, please report security issues via:
-- Email: [security contact - to be added]
-- GitHub Security Advisories (private)
+Report security issues through
+[GitHub Security Advisories](https://github.com/bobberdolle1/SkySweep32/security/advisories/new)
+so the report and any proof of concept remain private.
 
 ### What to include:
 - Description of the vulnerability
@@ -26,23 +26,30 @@ Instead, please report security issues via:
 - Status update: 7 days
 - Fix timeline: Depends on severity
 
-## Security Considerations
+## Security considerations
 
-### RF Transmission
-This project includes RF transmission capabilities that may be:
-- Illegal in your jurisdiction
-- Subject to regulatory approval
-- Restricted to authorized personnel
+### Passive product scope
 
-**Users are solely responsible for legal compliance.**
+Canonical Rev C is passive with respect to the signals it observes: it contains
+no RF-jamming, protocol-injection, deauthentication, or GPS-denial
+implementation. Those functions are not supported.
 
-### Countermeasures
-Active countermeasures (jamming, protocol injection) are:
-- Disabled by default
-- Require compile-time flag
-- Subject to strict legal regulations
+“Passive monitor” does not mean RF-silent. The Wi-Fi dashboard and ESP-NOW
+status/activity network intentionally transmit ordinary 2.4 GHz communications;
+those paths are not countermeasures. The ESP32-S3, CC1101, and SX1281 are also
+physically transmit-capable devices. Firmware configuration alone is not a
+regulatory authorization. Contributors must preserve the passive observation
+profile and comply with local radio, privacy, aviation, and data law.
 
-**Unauthorized use may result in criminal prosecution.**
+### Security-relevant interfaces
+
+Treat BLE/Wi-Fi/RF parser input as untrusted. Relevant reports include:
+
+- malformed packets causing memory corruption, reset loops, or resource
+  exhaustion;
+- unauthenticated web, configuration, logging, or OTA paths;
+- leakage of stored GNSS observations, logs, or network credentials;
+- malicious firmware, dependency, manufacturing, or component substitutions.
 
 ## Responsible Disclosure
 

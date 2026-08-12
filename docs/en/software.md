@@ -1,4 +1,8 @@
 # Software Configuration Guide
+> **LEGACY v0.6.1 DEVKIT PROFILES.** The tier pin maps below are incompatible
+> with Rev C. For current hardware build only `esp32s3_rev_c_passive`; see the
+> [Rev C README](../../hardware/rev_c/README.md).
+
 
 ## Quick Start
 
@@ -73,10 +77,10 @@ curl -X POST http://192.168.4.1/api/config/reset
 | `wifi.password` | "skysweep32" | WiFi password |
 | `wifi.apMode` | true | AP mode (true) or Station mode (false) |
 | `wifi.channel` | 6 | WiFi channel (1-13) |
-| `thresholds.low` | 45 | RSSI value for LOW threat |
-| `thresholds.medium` | 60 | RSSI value for MEDIUM threat |
-| `thresholds.high` | 75 | RSSI value for HIGH threat |
-| `thresholds.critical` | 85 | RSSI value for CRITICAL threat |
+| `thresholds.low` | 45 | Normalized energy/RSSI threshold for LOW activity |
+| `thresholds.medium` | 60 | Normalized energy/RSSI threshold for MEDIUM activity |
+| `thresholds.high` | 75 | Normalized energy/RSSI threshold for HIGH activity |
+| `thresholds.critical` | 85 | Normalized energy/RSSI threshold for CRITICAL activity |
 | `rfScanMs` | 100 | RF polling interval (ms) |
 | `displayMs` | 500 | OLED refresh rate (ms) |
 | `bleScanMs` | 5000 | BLE Remote ID scan interval (ms) |
@@ -124,7 +128,6 @@ with open('.pio/build/esp32dev/firmware.bin', 'rb') as f:
 | `/api/config` | GET | Current runtime configuration |
 | `/api/config` | POST | Update configuration (JSON body) |
 | `/api/config/reset` | POST | Reset configuration to defaults |
-| `/api/calibrate` | POST | Recalibrate RSSI noise-floor thresholds |
 | `/api/ota` | POST | Upload firmware binary (multipart) |
 | `/api/power` | POST | Set power mode (`?mode=0-3`: Full/Balanced/Low/Sleep) |
 | `/api/logs` | GET | List SD card logs (JSON array of file objects) |
@@ -137,8 +140,8 @@ with open('.pio/build/esp32dev/firmware.bin', 'rb') as f:
 // RF data update
 {"type":"rf","module":"CC1101","rssi":72,"active":true}
 
-// Threat assessment
-{"type":"threat","level":"HIGH","protocol":"DJI OcuSync"}
+// Relative normalized energy/RSSI activity; no source identity is inferred
+{"type":"activity","level":"HIGH","basis":"CC1101 normalized energy/RSSI; source not identified"}
 
 // Drone detection (Remote ID) — also plots on map
 {"type":"drone","id":"UAS-12345","lat":55.7558,"lon":37.6173,"alt":120.5}
@@ -187,7 +190,6 @@ The serial monitor (`115200 baud`) provides real-time logging:
 | `-DTIER_STANDARD` | Standard tier (+ CC1101 + RX5808) |
 | `-DTIER_PRO` | Pro tier (+ GPS + SD + LoRa) |
 | `-DMODULE_ACOUSTIC` | Enable acoustic detection |
-| `-DENABLE_COUNTERMEASURES` | Enable active countermeasures ⚠️ |
 | `-DMODULE_COMPASS` | I2C Magnetometer (QMC5883L) |
 | `-DMODULE_ML` | TinyML AI classification |
 | `-DMODULE_ATAK` | Cursor on Target (ATAK) Integration |

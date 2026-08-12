@@ -19,12 +19,6 @@
 #define MAVLINK_MSG_ID_COMMAND_LONG         76
 #define MAVLINK_MSG_ID_COMMAND_ACK          77
 
-// MAVLink Commands
-#define MAV_CMD_NAV_WAYPOINT            16
-#define MAV_CMD_NAV_RETURN_TO_LAUNCH    20
-#define MAV_CMD_NAV_LAND                21
-#define MAV_CMD_DO_SET_MODE             176
-#define MAV_CMD_COMPONENT_ARM_DISARM    400
 
 // MAVLink Modes
 #define MAV_MODE_MANUAL_DISARMED        0
@@ -74,7 +68,6 @@ private:
     uint16_t rxIndex;
     MAVLinkPacket currentPacket;
     
-    uint16_t calculateCRC(uint8_t* data, uint8_t length, uint8_t msgid);
     bool validateChecksum(MAVLinkPacket* packet);
     
 public:
@@ -84,13 +77,6 @@ public:
     bool parseByte(uint8_t byte);
     MAVLinkPacket getPacket() { return currentPacket; }
     
-    // Packet builders for injection attacks
-    void buildHeartbeat(uint8_t* buffer, uint8_t* length, uint8_t sysid, uint8_t compid);
-    void buildCommandLong(uint8_t* buffer, uint8_t* length, uint16_t command, 
-                         uint8_t target_system, uint8_t target_component);
-    void buildRTHCommand(uint8_t* buffer, uint8_t* length);
-    void buildLandCommand(uint8_t* buffer, uint8_t* length);
-    void buildDisarmCommand(uint8_t* buffer, uint8_t* length);
     
     // Packet analysis
     bool isHeartbeat(MAVLinkPacket* packet);

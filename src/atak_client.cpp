@@ -65,18 +65,3 @@ void ATAKClient::sendHeartbeat(float lat, float lon, float alt, float course) {
     sendCoT(cot);
 }
 
-void ATAKClient::sendThreat(const char* threatId, float lat, float lon, float alt, const char* type, const char* targetCallsign, float course) {
-    String nowStr = generateTimeStr(0);
-    String staleStr = generateTimeStr(60); // stale in 1 minute
-    
-    String cot = "<?xml version=\"1.0\"?>";
-    cot += "<event version=\"2.0\" uid=\"" + String(threatId) + "\" type=\"" + String(type) + "\" time=\"" + nowStr + "\" start=\"" + nowStr + "\" stale=\"" + staleStr + "\" how=\"m-r\">";
-    cot += "<point lat=\"" + String(lat, 6) + "\" lon=\"" + String(lon, 6) + "\" hae=\"" + String(alt, 2) + "\" ce=\"9999999.0\" le=\"9999999.0\"/>";
-    cot += "<detail>";
-    cot += "<contact callsign=\"" + String(targetCallsign) + "\"/>";
-    cot += "<track course=\"" + String(course, 2) + "\" speed=\"0.0\"/>";
-    cot += "</detail>";
-    cot += "</event>";
-    
-    sendCoT(cot);
-}

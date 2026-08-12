@@ -107,23 +107,6 @@ void MeshtasticClient::processReceivedPacket(const uint8_t* data, size_t length,
                  packet.nodeID, rssi, snr);
 }
 
-bool MeshtasticClient::broadcastDetectionAlert(const DetectionAlert& alert) {
-    if (!isInitialized) return false;
-    
-    uint8_t packet[256];
-    size_t offset = 0;
-    
-    memcpy(packet + offset, &localNodeID, 4);
-    offset += 4;
-    
-    packet[offset++] = 3; // hop limit
-    packet[offset++] = 0; // hop count
-    
-    memcpy(packet + offset, &alert, sizeof(DetectionAlert));
-    offset += sizeof(DetectionAlert);
-    
-    return sendRawPacket(packet, offset);
-}
 
 bool MeshtasticClient::sendDirectMessage(uint32_t targetNodeID, const char* message) {
     if (!isInitialized || !message) return false;
@@ -199,88 +182,5 @@ uint32_t MeshtasticClient::generateNodeID() {
     return (uint32_t)(mac & 0xFFFFFFFF);
 }
 
-bool MeshtasticClient::triangulateThreat(const char* droneID, double& outLat, double& outLon) {
-    if (!droneID || !*droneID) return false;
-    struct Report {
-        double lat;
-        double lon;
-        int rssi;
-    };
-    std::vector<Report> reports;
-
-    for (const auto& p : receivedPackets) {
-        if (p.timestamp == 0) continue;
-
-        // Payloads are raw bytes received over LoRa; copy into an aligned
-        // object instead of type-punning a char buffer.
-        DetectionAlert alert{};
-        memcpy(&alert, p.payload, sizeof(alert));
-        if (memchr(alert.droneID, '\0', sizeof(alert.droneID)) == nullptr) continue;
-        if (strcmp(alert.droneID, droneID) == 0) {
-            bool duplicate = false;
-            for (const auto& r : reports) {
-                if (abs(r.lat - alert.latitude) < 0.00001 && abs(r.lon - alert.longitude) < 0.00001) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (!duplicate) {
-                reports.push_back({alert.latitude, alert.longitude, alert.rssi});
-            }
-        }
-    }
-
-    if (reports.size() < 3) {
-        Serial.printf("[LoRa] Triangulation failed: only %d reports found for %s\n", (int)reports.size(), droneID);
-        return false;
-    }
-
-    double latRef = reports[0].lat;
-    double lonRef = reports[0].lon;
-
-    double cosLat = cos(latRef * 3.141592653589793 / 180.0);
-    std::vector<double> x(reports.size());
-    std::vector<double> y(reports.size());
-    std::vector<double> d(reports.size());
-
-    for (size_t i = 0; i < reports.size(); ++i) {
-        x[i] = (reports[i].lon - lonRef) * 111139.0 * cosLat;
-        y[i] = (reports[i].lat - latRef) * 111139.0;
-        
-        double powerDiff = -40.0 - (double)reports[i].rssi;
-        d[i] = pow(10.0, powerDiff / 30.0);
-        
-        if (d[i] < 1.0) d[i] = 1.0;
-        if (d[i] > 10000.0) d[i] = 10000.0;
-    }
-
-    double x1 = x[0], y1 = y[0], d1 = d[0];
-    double x2 = x[1], y2 = y[1], d2 = d[1];
-    double x3 = x[2], y3 = y[2], d3 = d[2];
-
-    double A = 2.0 * (x2 - x1);
-    double B = 2.0 * (y2 - y1);
-    double C = (x2*x2 - x1*x1) + (y2*y2 - y1*y1) - (d2*d2 - d1*d1);
-
-    double D = 2.0 * (x3 - x1);
-    double E = 2.0 * (y3 - y1);
-    double F = (x3*x3 - x1*x1) + (y3*y3 - y1*y1) - (d3*d3 - d1*d1);
-
-    double determinant = A * E - B * D;
-    if (abs(determinant) < 0.0001) {
-        Serial.println("[LoRa] Triangulation failed: nodes are collinear");
-        return false;
-    }
-
-    double outX = (C * E - B * F) / determinant;
-    double outY = (A * F - C * D) / determinant;
-
-    outLon = lonRef + outX / (111139.0 * cosLat);
-    outLat = latRef + outY / 111139.0;
-
-    Serial.printf("[LoRa] Operator %s localized at: %.6f, %.6f (using %d reports)\n", 
-                  droneID, outLat, outLon, (int)reports.size());
-    return true;
-}
 
 #endif // MODULE_LORA

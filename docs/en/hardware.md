@@ -1,4 +1,8 @@
 # Hardware Setup Guide
+> **LEGACY v0.6.1 DEVKIT DOCUMENTATION — NOT REV C — DO NOT BUY PARTS FROM THIS PAGE.**
+> The generic modules, wiring, prices, and capability claims below were not
+> physically validated. Use the exact [Rev C prototype documentation](../../hardware/rev_c/README.md).
+
 
 ## Bill of Materials (BOM)
 

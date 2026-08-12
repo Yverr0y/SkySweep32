@@ -37,9 +37,6 @@ void ConfigManager::setDefaults() {
     cfg.logLevel = 1;  // INFO
     cfg.maxLogSizeMB = MAX_LOG_SIZE_MB;
     
-    // Countermeasures
-    cfg.countermeasuresArmed = false;
-    
     // Stealth
     cfg.stealthMode = false;
 }
@@ -91,37 +88,35 @@ bool ConfigManager::load() {
     // WiFi
     if (doc["wifi"]["ssid"]) strlcpy(cfg.wifiSSID, doc["wifi"]["ssid"], sizeof(cfg.wifiSSID));
     if (doc["wifi"]["password"]) strlcpy(cfg.wifiPassword, doc["wifi"]["password"], sizeof(cfg.wifiPassword));
-    if (doc["wifi"].containsKey("apMode")) cfg.wifiAPMode = doc["wifi"]["apMode"];
-    if (doc["wifi"].containsKey("channel")) cfg.wifiChannel = doc["wifi"]["channel"];
+    if (!doc["wifi"]["apMode"].isNull()) cfg.wifiAPMode = doc["wifi"]["apMode"];
+    if (!doc["wifi"]["channel"].isNull()) cfg.wifiChannel = doc["wifi"]["channel"];
     
     // RSSI thresholds
-    if (doc["thresholds"].containsKey("low")) cfg.rssiThresholdLow = doc["thresholds"]["low"];
-    if (doc["thresholds"].containsKey("medium")) cfg.rssiThresholdMedium = doc["thresholds"]["medium"];
-    if (doc["thresholds"].containsKey("high")) cfg.rssiThresholdHigh = doc["thresholds"]["high"];
-    if (doc["thresholds"].containsKey("critical")) cfg.rssiThresholdCritical = doc["thresholds"]["critical"];
+    if (!doc["thresholds"]["low"].isNull()) cfg.rssiThresholdLow = doc["thresholds"]["low"];
+    if (!doc["thresholds"]["medium"].isNull()) cfg.rssiThresholdMedium = doc["thresholds"]["medium"];
+    if (!doc["thresholds"]["high"].isNull()) cfg.rssiThresholdHigh = doc["thresholds"]["high"];
+    if (!doc["thresholds"]["critical"].isNull()) cfg.rssiThresholdCritical = doc["thresholds"]["critical"];
     
     // Scan intervals
-    if (doc.containsKey("rfScanMs")) cfg.rfScanIntervalMs = doc["rfScanMs"];
-    if (doc.containsKey("displayMs")) cfg.displayUpdateMs = doc["displayMs"];
-    if (doc.containsKey("bleScanMs")) cfg.bleScanIntervalMs = doc["bleScanMs"];
+    if (!doc["rfScanMs"].isNull()) cfg.rfScanIntervalMs = doc["rfScanMs"];
+    if (!doc["displayMs"].isNull()) cfg.displayUpdateMs = doc["displayMs"];
+    if (!doc["bleScanMs"].isNull()) cfg.bleScanIntervalMs = doc["bleScanMs"];
     
     // LoRa
-    if (doc["lora"].containsKey("freq")) cfg.loraFrequency = doc["lora"]["freq"];
-    if (doc["lora"].containsKey("txPower")) cfg.loraTxPower = doc["lora"]["txPower"];
-    if (doc["lora"].containsKey("intervalMs")) cfg.loraTransmitIntervalMs = doc["lora"]["intervalMs"];
+    if (!doc["lora"]["freq"].isNull()) cfg.loraFrequency = doc["lora"]["freq"];
+    if (!doc["lora"]["txPower"].isNull()) cfg.loraTxPower = doc["lora"]["txPower"];
+    if (!doc["lora"]["intervalMs"].isNull()) cfg.loraTransmitIntervalMs = doc["lora"]["intervalMs"];
     
     // GPS
-    if (doc.containsKey("gpsUpdateMs")) cfg.gpsUpdateIntervalMs = doc["gpsUpdateMs"];
+    if (!doc["gpsUpdateMs"].isNull()) cfg.gpsUpdateIntervalMs = doc["gpsUpdateMs"];
     
     // Logging
-    if (doc.containsKey("logLevel")) cfg.logLevel = doc["logLevel"];
-    if (doc.containsKey("maxLogMB")) cfg.maxLogSizeMB = doc["maxLogMB"];
+    if (!doc["logLevel"].isNull()) cfg.logLevel = doc["logLevel"];
+    if (!doc["maxLogMB"].isNull()) cfg.maxLogSizeMB = doc["maxLogMB"];
     
-    // Countermeasures
-    if (doc.containsKey("cmArmed")) cfg.countermeasuresArmed = doc["cmArmed"];
     
     // Stealth
-    if (doc.containsKey("stealthMode")) cfg.stealthMode = doc["stealthMode"];
+    if (!doc["stealthMode"].isNull()) cfg.stealthMode = doc["stealthMode"];
     
     return true;
 }
@@ -166,8 +161,6 @@ bool ConfigManager::save() {
     doc["logLevel"] = cfg.logLevel;
     doc["maxLogMB"] = cfg.maxLogSizeMB;
     
-    // Countermeasures
-    doc["cmArmed"] = cfg.countermeasuresArmed;
     
     // Stealth
     doc["stealthMode"] = cfg.stealthMode;
@@ -246,17 +239,17 @@ bool ConfigManager::fromJSON(const char* json) {
     // Apply only fields that are present
     if (doc["wifi"]["ssid"]) strlcpy(cfg.wifiSSID, doc["wifi"]["ssid"], sizeof(cfg.wifiSSID));
     if (doc["wifi"]["password"]) strlcpy(cfg.wifiPassword, doc["wifi"]["password"], sizeof(cfg.wifiPassword));
-    if (doc["wifi"].containsKey("apMode")) cfg.wifiAPMode = doc["wifi"]["apMode"];
-    if (doc["wifi"].containsKey("channel")) cfg.wifiChannel = doc["wifi"]["channel"];
+    if (!doc["wifi"]["apMode"].isNull()) cfg.wifiAPMode = doc["wifi"]["apMode"];
+    if (!doc["wifi"]["channel"].isNull()) cfg.wifiChannel = doc["wifi"]["channel"];
     
-    if (doc["thresholds"].containsKey("low")) cfg.rssiThresholdLow = doc["thresholds"]["low"];
-    if (doc["thresholds"].containsKey("medium")) cfg.rssiThresholdMedium = doc["thresholds"]["medium"];
-    if (doc["thresholds"].containsKey("high")) cfg.rssiThresholdHigh = doc["thresholds"]["high"];
-    if (doc["thresholds"].containsKey("critical")) cfg.rssiThresholdCritical = doc["thresholds"]["critical"];
+    if (!doc["thresholds"]["low"].isNull()) cfg.rssiThresholdLow = doc["thresholds"]["low"];
+    if (!doc["thresholds"]["medium"].isNull()) cfg.rssiThresholdMedium = doc["thresholds"]["medium"];
+    if (!doc["thresholds"]["high"].isNull()) cfg.rssiThresholdHigh = doc["thresholds"]["high"];
+    if (!doc["thresholds"]["critical"].isNull()) cfg.rssiThresholdCritical = doc["thresholds"]["critical"];
     
-    if (doc.containsKey("rfScanMs")) cfg.rfScanIntervalMs = doc["rfScanMs"];
-    if (doc.containsKey("logLevel")) cfg.logLevel = doc["logLevel"];
-    if (doc.containsKey("stealthMode")) cfg.stealthMode = doc["stealthMode"];
+    if (!doc["rfScanMs"].isNull()) cfg.rfScanIntervalMs = doc["rfScanMs"];
+    if (!doc["logLevel"].isNull()) cfg.logLevel = doc["logLevel"];
+    if (!doc["stealthMode"].isNull()) cfg.stealthMode = doc["stealthMode"];
     
     return save();
 }

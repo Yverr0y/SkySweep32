@@ -20,15 +20,6 @@ struct MeshPacket {
     uint32_t timestamp;
 };
 
-struct DetectionAlert {
-    double latitude;
-    double longitude;
-    float altitude;
-    char droneID[32];
-    int rssi;
-    uint8_t threatLevel;
-    uint32_t timestamp;
-};
 
 class MeshtasticClient {
 private:
@@ -52,7 +43,6 @@ public:
     bool begin(float frequency = LORA_FREQUENCY);
     void update();
     
-    bool broadcastDetectionAlert(const DetectionAlert& alert);
     bool sendDirectMessage(uint32_t targetNodeID, const char* message);
     
     uint8_t getReceivedPacketCount() const;
@@ -66,7 +56,6 @@ public:
     bool isTransmitRecoveryActive(uint32_t guardMs = 25) const;
     int16_t getLastRSSI() const;
     float getLastSNR() const;
-    bool triangulateThreat(const char* droneID, double& outLat, double& outLon);
 };
 
 #endif // MODULE_LORA

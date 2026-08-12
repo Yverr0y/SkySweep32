@@ -1,37 +1,36 @@
-# SkySweep32 — Hardware
+# SkySweep32 Hardware Revisions
 
-> **EXPERIMENTAL / UNVERIFIED / DO NOT ORDER**
->
-> These root-level PCB, generator, preview and enclosure files are the legacy
-> Rev A concept. KiCad 6 syntax compatibility is the only PCB claim established
-> by issue #10. Electrical design, exact module geometry, RF paths, power
-> integrity, enclosure fit, connector access and assembled operation have not
-> been validated. See [`LEGACY_REV_A_STATUS.md`](LEGACY_REV_A_STATUS.md).
+## Canonical current design: Rev C
 
-## Rev B redesign
+**Rev C status: READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION
+VALIDATED.**
 
-Rev B starts from requirements rather than the Rev A layout. The selected
-architecture, GPIO allocation, RF coexistence policy and locked module variants
-are documented in:
+[`rev_c/`](rev_c/) is the only current hardware source. Its native KiCad 10
+schematic and four-layer PCB, exact BOM, generated fabrication package, complete
+PCBA STEP, co-designed enclosure, firmware pin contract, and validation evidence
+are documented in [`rev_c/README.md`](rev_c/README.md).
 
-* [`rev_b/HARDWARE_ARCHITECTURE.md`](rev_b/HARDWARE_ARCHITECTURE.md)
-* [`rev_b/BOM_LOCK.md`](rev_b/BOM_LOCK.md)
-* [`rev_b/POWER_BUDGET.md`](rev_b/POWER_BUDGET.md)
-* [`rev_b/RF_COEXISTENCE.md`](rev_b/RF_COEXISTENCE.md)
-* [`rev_b/STACKUP_AND_CONSTRAINTS.md`](rev_b/STACKUP_AND_CONSTRAINTS.md)
-* [`rev_b/hardware_manifest.yaml`](rev_b/hardware_manifest.yaml) — authoritative
-  machine-readable module, rail, signal, GPIO and connector contract
-
-Rev B is still **DESIGN IN PROGRESS / UNVALIDATED IN PHYSICAL HARDWARE / DO NOT
-ORDER**. Its status changes only through committed validation evidence.
-
-Generate or verify the firmware pin map:
+Run the complete local gate from the repository root:
 
 ```bash
-python scripts/generate_rev_b_pinmap.py
-python scripts/generate_rev_b_pinmap.py --check
-pio run -e esp32s3_rev_b_pro
+python hardware/verify.py
 ```
+
+Passing this command establishes encoded ERC/DRC, CAD interference, export, and
+firmware-build results. It does not establish an assembled, bench-tested,
+field-tested, compliant, or production-validated device.
+
+## Revision authority
+
+| Revision | Status | Use |
+|---|---|---|
+| [`rev_c/`](rev_c/) | Ready for first physical prototype | Current engineering source and prototype fabrication package |
+| [`rev_b/`](rev_b/) | Failed/unverified; do not order | Historical audit evidence only |
+| Root-level files / [`enclosures/`](enclosures/) | Legacy Rev A; do not order | Historical issue #10 parser-compatibility artifacts only |
+
+Rev C is electrically, mechanically, and firmware incompatible with Rev A and
+Rev B. No legacy pin map, BOM, enclosure, generated report, or manufacturing
+file applies to Rev C.
 
 ## Legacy Rev A files
 

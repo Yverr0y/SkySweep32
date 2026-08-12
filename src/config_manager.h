@@ -39,9 +39,6 @@ struct RuntimeConfig {
     uint8_t logLevel;  // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
     uint32_t maxLogSizeMB;
     
-    // Countermeasures
-    bool countermeasuresArmed;
-    
     // Stealth
     bool stealthMode;
 };

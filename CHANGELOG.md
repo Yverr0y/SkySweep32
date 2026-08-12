@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Hardware
+- **Canonical Rev C passive monitor**: Replaced the failed Rev B identity with a
+  clean ESP32-S3-WROOM-1-N16R8 design using exact E28-2G4M12SX,
+  E07-900M10S, SAM-M10Q-00B, Molex 104031-0811, protected USB-C and battery
+  power paths, and a reviewed four-layer PCB.
+- **Evidence-first PCB and mechanics**: Added reproducible zero-unexcluded-warning
+  ERC, zero-unexcluded-violation/zero-unconnected DRC, machine-audited narrow
+  ERC/DRC exclusions, exact fitted/DNP BOM exports, Gerbers, drills, placement
+  data, complete PCBA STEP, a case built around that assembly, M3 fasteners,
+  connector/card/antenna/button service envelopes, collision checks, renders,
+  and a dimensioned drawing.
+- **First-prototype maturity only**: Rev C is ready for one physical engineering
+  prototype. It has not been assembled, bench-tested, field-tested, qualified,
+  or production-validated.
+
+### Firmware and CI
+- Added the manifest-gated `esp32s3_rev_c_passive` board target and separated
+  current Rev C, failed Rev B, and legacy Rev A pin maps.
+- Added `hardware/verify.py` and a hardware CI workflow covering pin staleness,
+  KiCad ERC/DRC, mechanical CAD checks, fabrication export, and evidence upload.
+- Reclassified TinyML, Remote ID conformance, 5.8 GHz reception, LoRa
+  interoperability/localization, ATAK, direction finding, and field-use claims
+  according to the evidence present in the repository.
+- Removed the fictional RSSI-to-drone signature database and all active
+  countermeasure/injection source. Runtime thresholds now classify only relative
+  normalized energy activity; ESP-NOW, OLED, alerts, and the dashboard use the
+  same non-identifying terminology.
+- Made `src/dashboard.html` the deterministic source for the embedded gzip
+  payload and removed the fake noise-calibration endpoint.
+- Added current Rev C SX1281 instantaneous-RSSI, RX5808 RTC6715 channel-control,
+  and MAX17048 battery-telemetry implementations. Removed transmit-frame builders
+  from the receive-only CRSF/MAVLink parsers and retained known-good receive
+  fixtures plus ASan/UBSan coverage.
+
+### Documentation
+- Replaced the public site's tier/jammer marketing and stale wiring visualizer
+  with the Rev C engineering status, capability limits, and evidence links.
+- Added exact assembly/bring-up instructions and a physical prototype validation
+  checklist. Marked old DevKit buying/wiring pages as legacy and incompatible
+  with Rev C.
+
 ### Fixed
 - **PCB preview fidelity**: `render_pcb.py` now overlays the actual generated copper segments and vias from `skysweep32_pro.kicad_pcb` instead of showing only illustrative hardcoded traces; the preview revision is synchronized to PCB v1.1.
 - **RX5808 control protocol**: Replaced the unusable one-GPIO pseudo-SPI implementation with independent DATA, CLOCK and SELECT signals and the RTC6715 25-bit LSB-first register frame. Known-frequency protocol vectors are covered by host tests.

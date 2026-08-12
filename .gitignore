@@ -38,3 +38,14 @@ Thumbs.db
 .idea/
 
 *.kicad_prl
+
+# Reproducibly fetched hardware tools and CAD intermediates
+.cache/
+hardware/rev_b/freerouting-*.jar
+*-backups/
+*.kicad_sch-bak
+*.kicad_pcb-bak
+hardware/rev_c/*.net
+hardware/rev_c/routing_input.*
+hardware/rev_c/*_placed.kicad_*
+hardware/rev_c/logs/

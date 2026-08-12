@@ -16,11 +16,6 @@
 #define CRSF_FRAMETYPE_ATTITUDE     0x1E
 #define CRSF_FRAMETYPE_FLIGHT_MODE  0x21
 
-// CRSF Addresses
-#define CRSF_ADDRESS_BROADCAST      0x00
-#define CRSF_ADDRESS_FLIGHT_CTRL    0xC8
-#define CRSF_ADDRESS_RADIO_TX       0xEA
-#define CRSF_ADDRESS_RECEIVER       0xEC
 
 struct CRSFPacket {
     uint8_t address;
@@ -63,7 +58,6 @@ private:
     uint8_t rxIndex;
     CRSFPacket currentPacket;
     
-    uint8_t calculateCRC(uint8_t* data, uint8_t length);
     bool validateCRC(CRSFPacket* packet);
     
 public:
@@ -73,9 +67,6 @@ public:
     bool parseBuffer(uint8_t* data, uint16_t length);
     CRSFPacket getPacket() { return currentPacket; }
     
-    // Packet builders for injection
-    void buildRCChannels(uint8_t* buffer, uint8_t* length, uint16_t* channels);
-    void buildLinkStats(uint8_t* buffer, uint8_t* length, CRSFLinkStats* stats);
     
     // Packet analysis
     bool isLinkStats(CRSFPacket* packet);

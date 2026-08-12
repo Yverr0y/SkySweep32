@@ -14,6 +14,18 @@ import kicad_sch_api as ksa
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "hardware_manifest.json"
 SCHEMATIC = HERE / "skysweep32_rev_c.kicad_sch"
+PROJECT = HERE / "skysweep32_rev_c.kicad_pro"
+
+ERC_EXCLUSION_COMMENTS = {
+    "J6": "J6 uses the reviewed side-entry JST PH footprint; the stock generic connector filter only matches underscore-prefixed connector names.",
+    "RF1": "RF1 uses the exact E28-2G4M12SX module footprint; the stock generic 2x07 connector filter is intentionally narrower.",
+    "F1": "F1 uses KiCad's standard 1812 fuse footprint for the reviewed Bourns MF-MSMF200-2; the stock Polyfuse filter omits Fuse:Fuse_*.",
+    "RF2": "RF2 uses the exact E07-900M10S module footprint; the stock generic 2x11 connector filter is intentionally narrower.",
+    "U6": "U6 uses the reviewed MAX17048 TDFN footprint while its nine electrical lands are represented by a generic numbered symbol.",
+    "RF3": "RF3 uses the procurement-qualified RX5808-2012-12P footprint; the stock generic 2x06 connector filter is intentionally narrower.",
+    "GPS1": "GPS1 uses the exact u-blox SAM-M10Q footprint; the stock generic 2x10 connector filter is intentionally narrower.",
+    "J3": "J3 uses the reviewed horizontal JST SH footprint; the stock generic connector filter only matches underscore-prefixed connector names.",
+}
 
 KICAD_ROOT = discover_kicad_root()
 SYMBOL_DIR = KICAD_ROOT / "share" / "kicad" / "symbols"
@@ -34,6 +46,47 @@ def apply_dnp_flags(path: Path, references: set[str]) -> None:
     if missing:
         raise RuntimeError(f"could not apply native DNP flags: {', '.join(sorted(missing))}")
     path.write_text(separator.join(chunks), encoding="utf-8")
+def sync_project_erc_exclusions(schematic_path: Path, project_path: Path) -> None:
+    """Regenerate the eight narrow footprint-filter exclusions with current UUIDs."""
+    symbol_chunks = schematic_path.read_text(encoding="utf-8").split("\n\t(symbol\n")[1:]
+    symbols: dict[str, tuple[int, int, str]] = {}
+    for chunk in symbol_chunks:
+        reference = re.search(r'\n\t\t\(property "Reference" "([^"]+)"', chunk)
+        position = re.search(r"\n\t\t\(at (-?[\d.]+) (-?[\d.]+)", chunk)
+        uuid = re.search(r'\n\t\t\(uuid "([^"]+)"\)', chunk)
+        if not reference or reference.group(1) not in ERC_EXCLUSION_COMMENTS:
+            continue
+        if not position or not uuid:
+            raise RuntimeError(f"could not read exclusion identity for {reference.group(1)}")
+        symbols[reference.group(1)] = (
+            round(float(position.group(1)) * 10000),
+            round(float(position.group(2)) * 10000),
+            uuid.group(1),
+        )
+    missing = ERC_EXCLUSION_COMMENTS.keys() - symbols.keys()
+    if missing:
+        raise RuntimeError(f"could not find ERC exclusion symbols: {', '.join(sorted(missing))}")
+
+    project = json.loads(project_path.read_text(encoding="utf-8"))
+    erc = project.setdefault("erc", {})
+    erc.setdefault(
+        "rule_severities",
+        {
+            "four_way_junction": "warning",
+            "footprint_filter": "warning",
+            "simulation_model_issue": "warning",
+            "single_global_label": "warning",
+        },
+    )
+    erc["erc_exclusions"] = [
+        [
+            f"footprint_filter|{symbols[ref][0]}|{symbols[ref][1]}|{symbols[ref][2]}|"
+            "00000000-0000-0000-0000-000000000000|||",
+            comment,
+        ]
+        for ref, comment in ERC_EXCLUSION_COMMENTS.items()
+    ]
+    project_path.write_text(json.dumps(project, indent=2) + "\n", encoding="utf-8")
 
 
 
@@ -208,7 +261,7 @@ def generate() -> None:
     label("F1", "1", "VBUS_RAW")
     label("F1", "2", "VBUS_PROTECTED")
     component(
-        "Device:D_TVS",
+        "Device:D_Zener",
         "D1",
         "SMAJ5.0A",
         (47, 53),
@@ -216,8 +269,9 @@ def generate() -> None:
         mpn="SMAJ5.0A",
         manufacturer="Littelfuse",
     )
-    label("D1", "1", "GND")
-    label("D1", "2", "VBUS_PROTECTED")
+    # SMAJ5.0A is unidirectional: pin 1 is cathode/stripe.
+    label("D1", "1", "VBUS_PROTECTED")
+    label("D1", "2", "GND")
     add_cap("C1", "10u", (54, 53), "VBUS_PROTECTED", "Capacitor_SMD:C_1206_3216Metric")
 
     component(
@@ -301,11 +355,13 @@ def generate() -> None:
         manufacturer="Analog Devices",
         datasheet="https://www.analog.com/media/en/technical-documentation/data-sheets/MAX17048-MAX17049.pdf",
     )
-    for pin in ("1", "4", "6", "9"):
+    for pin in ("1", "4", "9"):
         label("U6", pin, "GND")
     for pin in ("2", "3"):
         label("U6", pin, "BAT_CELL")
+    # QSTRT and active-low ALRT are unused; outputs must not be tied to ground.
     no_connect("U6", "5")
+    no_connect("U6", "6")
     label("U6", "7", "I2C_SCL")
     label("U6", "8", "I2C_SDA")
     add_cap("C29", "100n", (86, 118), "BAT_CELL")
@@ -561,6 +617,7 @@ def generate() -> None:
         "12": "GND",
     }.items():
         label("RF3", pin, net)
+    # CH4 and raw VIDEO OUT have no qualified Rev C consumer/interface.
     no_connect("RF3", "10")
     no_connect("RF3", "11")
     component(
@@ -678,8 +735,8 @@ def generate() -> None:
     add_resistor("R15", "100R", (151, 78), "ALERT_BUZZER_GATE", "ALERT_BUZZER_GATE_R")
     add_resistor("R16", "100k", (151, 91), "ALERT_BUZZER_GATE_R", "GND")
     component("Device:D", "D2", "PMEG3020EP", (174, 78), "Diode_SMD:D_SOD-128", mpn="PMEG3020EP,115", manufacturer="Nexperia")
-    label("D2", "1", "BUZZER_DRAIN")
-    label("D2", "2", "3V3")
+    label("D2", "1", "3V3")
+    label("D2", "2", "BUZZER_DRAIN")
 
     component("Device:LED", "D3", "GREEN", (142, 101), "LED_SMD:LED_0603_1608Metric", mpn="APT1608LZGCK", manufacturer="Kingbright")
     add_resistor("R17", "1k", (132, 101), "ALERT_LED", "STATUS_LED_A")
@@ -705,8 +762,8 @@ def generate() -> None:
     add_resistor("R18", "100R", (174, 99), "VIBRATION_GATE", "VIBRATION_GATE_R", dnp=True)
     add_resistor("R19", "100k", (174, 111), "VIBRATION_GATE_R", "GND", dnp=True)
     component("Device:D", "D4", "PMEG3020EP", (190, 91), "Diode_SMD:D_SOD-128", mpn="PMEG3020EP,115", manufacturer="Nexperia", dnp=True)
-    label("D4", "1", "VIBRATION_DRAIN")
-    label("D4", "2", "SYS_5V")
+    label("D4", "1", "SYS_5V")
+    label("D4", "2", "VIBRATION_DRAIN")
 
     # Project metadata used in title block and BOM review.
     sch.set_title_block(
@@ -722,6 +779,7 @@ def generate() -> None:
     )
     sch.save(SCHEMATIC)
     apply_dnp_flags(SCHEMATIC, dnp_references)
+    sync_project_erc_exclusions(SCHEMATIC, PROJECT)
     print(f"[OK] Wrote {SCHEMATIC}")
 
 

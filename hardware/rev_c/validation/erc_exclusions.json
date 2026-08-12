@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/erc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-08-12T20:12:34",
+    "date": "2026-08-12T23:53:23",
     "ignored_checks": [],
     "included_severities": [
         "exclusion"
@@ -10,7 +10,7 @@
     "sheets": [
         {
             "path": "/",
-            "uuid_path": "/d6ed8d5a-5942-4036-86ce-1a6e07fa4256",
+            "uuid_path": "/30f1f7e4-d1cb-42df-abd4-9251eece2be0",
             "violations": [
                 {
                     "comment": "J6 uses the reviewed side-entry JST PH footprint; the stock generic connector filter only matches underscore-prefixed connector names.",
@@ -23,7 +23,7 @@
                                 "x": 0.1778,
                                 "y": 1.0795
                             },
-                            "uuid": "09f71a94-25b4-4cf5-9a39-1e86e6883c14"
+                            "uuid": "a18989ee-39d0-4c76-87cb-cd21cbee6963"
                         }
                     ],
                     "severity": "warning",
@@ -40,7 +40,7 @@
                                 "x": 0.3175,
                                 "y": 1.5748
                             },
-                            "uuid": "71b9e97c-9462-4cec-8649-a363dd93e033"
+                            "uuid": "4a9318ec-9cc4-4dc5-8299-57afe647aed7"
                         }
                     ],
                     "severity": "warning",
@@ -57,7 +57,7 @@
                                 "x": 0.3937,
                                 "y": 0.4064
                             },
-                            "uuid": "db6c220f-0d40-4a39-8e24-31b7d2fdb77d"
+                            "uuid": "155cc106-406b-458a-bf12-982e92609439"
                         }
                     ],
                     "severity": "warning",
@@ -74,7 +74,7 @@
                                 "x": 0.635,
                                 "y": 1.5748
                             },
-                            "uuid": "a613ff61-1af6-45bf-8ef4-fd2af8fc2c9e"
+                            "uuid": "99ca7a25-312e-4727-b2b0-6f513257d667"
                         }
                     ],
                     "severity": "warning",
@@ -91,7 +91,7 @@
                                 "x": 0.7747,
                                 "y": 1.1049
                             },
-                            "uuid": "ceb5c2f6-d638-43a2-97a3-e7bae9566eb9"
+                            "uuid": "7e01ad43-1adc-415b-9aeb-ff5bab414e5c"
                         }
                     ],
                     "severity": "warning",
@@ -108,7 +108,7 @@
                                 "x": 0.9144,
                                 "y": 1.5748
                             },
-                            "uuid": "91b4b42f-19b7-4821-82b5-aed8acc66710"
+                            "uuid": "8f9ea105-4300-4710-b06e-674c68733dad"
                         }
                     ],
                     "severity": "warning",
@@ -125,7 +125,7 @@
                                 "x": 1.0795,
                                 "y": 1.5748
                             },
-                            "uuid": "03694272-6ebf-4c20-bb4c-97bdcb942eee"
+                            "uuid": "1d89c5c6-b6cb-4464-854e-4c33975f50bc"
                         }
                     ],
                     "severity": "warning",
@@ -142,7 +142,7 @@
                                 "x": 1.6891,
                                 "y": 1.3843
                             },
-                            "uuid": "f1e2b6c9-dc53-4992-9ac3-18e29e45629c"
+                            "uuid": "cc6b9c3c-143a-4952-ac8e-b7edf88da6c1"
                         }
                     ],
                     "severity": "warning",

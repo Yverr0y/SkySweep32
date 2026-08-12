@@ -1,5 +1,5 @@
 Drill report for skysweep32_rev_c.kicad_pcb
-Created on 2026-08-12T20:20:53
+Created on 2026-08-12T23:59:53
 
 Copper Layer Stackup:
     =============================================================
@@ -13,16 +13,16 @@ Drill file 'skysweep32_rev_c-PTH.drl' contains
     plated through holes:
     =============================================================
     T1  0.200mm  0.0079"  (12 holes))
-    T2  0.300mm  0.0118"  (104 holes))
+    T2  0.300mm  0.0118"  (110 holes))
     T3  0.300mm  0.0118"  (5 holes))
-    T4  0.350mm  0.0138"  (7 holes))
+    T4  0.350mm  0.0138"  (16 holes))
     T5  0.400mm  0.0157"  (15 holes))
     T6  0.600mm  0.0236"  (4 holes)  (with 4 slots)
     T7  0.750mm  0.0295"  (2 holes))
     T8  0.900mm  0.0354"  (3 holes))
     T9  1.500mm  0.0591"  (2 holes))
 
-    Total plated holes count 154
+    Total plated holes count 169
 
 
 Drill file 'skysweep32_rev_c-NPTH.drl' contains

@@ -25,6 +25,7 @@ from tool_discovery import (  # noqa: E402
 SCHEMATIC = REV / "skysweep32_rev_c.kicad_sch"
 BOARD = REV / "skysweep32_rev_c.kicad_pcb"
 VALIDATION = REV / "validation"
+PROJECT = REV / "skysweep32_rev_c.kicad_pro"
 PREVIEWS = REV / "previews"
 TOOLCHAIN = json.loads((ROOT / "hardware" / "toolchain.json").read_text(encoding="utf-8"))
 
@@ -33,6 +34,14 @@ TOOLCHAIN = json.loads((ROOT / "hardware" / "toolchain.json").read_text(encoding
 def command(args: list[str], *, cwd: Path = ROOT) -> None:
     print("+", subprocess.list2cmdline(args), flush=True)
     subprocess.run(args, cwd=cwd, check=True)
+def kicad_command(args: list[str], *, cwd: Path = ROOT) -> None:
+    """Run KiCad CLI without letting it rewrite reviewed project rule settings."""
+    project = PROJECT.read_bytes()
+    try:
+        command(args, cwd=cwd)
+    finally:
+        PROJECT.write_bytes(project)
+
 
 
 def output(args: list[str], *, cwd: Path = ROOT) -> str:
@@ -56,16 +65,13 @@ def assert_reports() -> dict[str, object]:
         raise RuntimeError("ERC report is not zero-error/zero-warning")
     if erc_exclusions.get("ignored_checks"):
         raise RuntimeError(f"ERC has globally ignored checks: {erc_exclusions['ignored_checks']}")
+    project = json.loads(PROJECT.read_text(encoding="utf-8"))
     expected_erc_uuids = {
-        "09f71a94-25b4-4cf5-9a39-1e86e6883c14",
-        "71b9e97c-9462-4cec-8649-a363dd93e033",
-        "db6c220f-0d40-4a39-8e24-31b7d2fdb77d",
-        "a613ff61-1af6-45bf-8ef4-fd2af8fc2c9e",
-        "ceb5c2f6-d638-43a2-97a3-e7bae9566eb9",
-        "91b4b42f-19b7-4821-82b5-aed8acc66710",
-        "03694272-6ebf-4c20-bb4c-97bdcb942eee",
-        "f1e2b6c9-dc53-4992-9ac3-18e29e45629c",
+        exclusion[0].split("|")[3]
+        for exclusion in project["erc"]["erc_exclusions"]
     }
+    if len(expected_erc_uuids) != 8:
+        raise RuntimeError(f"expected eight reviewed ERC exclusions, found {len(expected_erc_uuids)}")
     erc_violations = [
         violation
         for sheet in erc_exclusions.get("sheets", [])
@@ -97,13 +103,14 @@ def assert_reports() -> dict[str, object]:
         raise RuntimeError(f"expected exactly one documented DRC exclusion, found {len(exclusions)}")
     exclusion = exclusions[0]
     excluded_items = exclusion.get("items", [])
+    expected_drc_uuid = project["board"]["design_settings"]["drc_exclusions"][0][0].split("|")[3]
     if (
         exclusion.get("type") != "footprint_type_mismatch"
         or not exclusion.get("excluded")
         or exclusion.get("comment")
         != "TPS61232 is an SMD device; its exposed-pad thermal vias intentionally mix plated through-hole and SMD pads."
         or len(excluded_items) != 1
-        or excluded_items[0].get("uuid") != "e210886d-8d41-4f15-ab61-554c52d94c95"
+        or excluded_items[0].get("uuid") != expected_drc_uuid
     ):
         raise RuntimeError(f"unexpected DRC exclusion: {exclusion}")
     if mechanical.get("status") != "PASS" or mechanical.get("failures"):
@@ -145,27 +152,28 @@ def main() -> int:
     PREVIEWS.mkdir(parents=True, exist_ok=True)
     summary_path = VALIDATION / "verification_summary.json"
     summary_path.unlink(missing_ok=True)
+    reviewed_project = PROJECT.read_bytes()
 
     command([sys.executable, str(ROOT / "scripts" / "generate_rev_c_pinmap.py"), "--check"])
     command([sys.executable, str(ROOT / "scripts" / "generate_dashboard.py"), "--check"])
-    command([
+    kicad_command([
         str(kicad), "sch", "erc", "--severity-error", "--severity-warning",
         "--exit-code-violations", "--output", str(VALIDATION / "erc.rpt"), str(SCHEMATIC),
     ])
-    command([
+    kicad_command([
         str(kicad), "sch", "erc", "--severity-exclusions", "--format", "json",
         "--output", str(VALIDATION / "erc_exclusions.json"), str(SCHEMATIC),
     ])
-    command([
+    kicad_command([
         str(kicad), "pcb", "drc", "--refill-zones", "--severity-error", "--severity-warning",
         "--exit-code-violations", "--output", str(VALIDATION / "drc.rpt"), str(BOARD),
     ])
-    command([
+    kicad_command([
         str(kicad), "pcb", "drc", "--refill-zones", "--severity-exclusions", "--format", "json",
         "--output", str(VALIDATION / "drc_exclusions.json"), str(BOARD),
     ])
     command([str(freecad), str(REV / "generate_3d_models.py")], cwd=REV)
-    command([
+    kicad_command([
         str(kicad), "pcb", "export", "step", "--force", "--output",
         str(REV / "skysweep32_rev_c_pcba.step"), str(BOARD),
     ])
@@ -173,17 +181,17 @@ def main() -> int:
     command([sys.executable, str(REV / "generate_mechanical_drawing.py")], cwd=REV)
 
     if not args.skip_renders:
-        command([
+        kicad_command([
             str(kicad), "pcb", "render", "--quality", "high", "--floor", "--perspective",
             "--rotate", "35,0,-35", "--width", "1800", "--height", "1200",
             "--background", "opaque", "--output", str(PREVIEWS / "pcb_iso.png"), str(BOARD),
         ])
-        command([
+        kicad_command([
             str(kicad), "pcb", "render", "--quality", "high", "--floor", "--perspective",
             "--rotate", "35,0,-35", "--side", "bottom", "--width", "1800", "--height", "1200",
             "--background", "opaque", "--output", str(PREVIEWS / "pcb_bottom.png"), str(BOARD),
         ])
-        command([
+        kicad_command([
             str(kicad), "pcb", "render", "--quality", "high", "--floor", "--width", "1800",
             "--height", "1200", "--background", "opaque", "--output",
             str(PREVIEWS / "pcb_top.png"), str(BOARD),
@@ -194,6 +202,7 @@ def main() -> int:
     if not args.skip_firmware:
         command([str(pio), "run", "-e", "esp32s3_rev_c_passive"])
 
+    PROJECT.write_bytes(reviewed_project)
     mechanical = assert_reports()
     required_freecad = version_tuple(TOOLCHAIN["freecad"]["minimum_version"])
     if version_tuple(str(mechanical["freecad_version"])) < required_freecad:

@@ -32,6 +32,12 @@ SCHEMATIC = HERE / "skysweep32_rev_c.kicad_sch"
 NETLIST = HERE / "skysweep32_rev_c.net"
 BOARD = HERE / "skysweep32_rev_c.kicad_pcb"
 BASE_BOARD = HERE / "skysweep32_rev_c_placed.kicad_pcb"
+PROJECT = HERE / "skysweep32_rev_c.kicad_pro"
+
+TPS61232_DRC_EXCLUSION = (
+    "TPS61232 is an SMD device; its exposed-pad thermal vias intentionally mix "
+    "plated through-hole and SMD pads."
+)
 FP_LIB = HERE / "SkySweep32RevC.pretty"
 SYSTEM_FP = KICAD_ROOT / "share" / "kicad" / "footprints"
 KICAD_CLI = discover_kicad_cli(KICAD_ROOT)
@@ -135,6 +141,24 @@ MODEL_OVERRIDES = {
 
 
 
+
+def sync_tps61232_drc_exclusion(board_path: Path, project: dict[str, object]) -> None:
+    """Keep the one reviewed U5 package-type exception bound to its UUID."""
+    chunks = board_path.read_text(encoding="utf-8").split("\n\t(footprint ")[1:]
+    u5_chunks = [chunk for chunk in chunks if '(property "Reference" "U5"' in chunk]
+    if len(u5_chunks) != 1:
+        raise RuntimeError(f"expected one U5 footprint, found {len(u5_chunks)}")
+    match = re.search(r'\n\t\t\(uuid "([^"]+)"', u5_chunks[0])
+    if not match:
+        raise RuntimeError("could not read U5 footprint UUID")
+
+    design_settings = project["board"]["design_settings"]
+    design_settings["drc_exclusions"] = [[
+        f"footprint_type_mismatch|52000000|69000000|{match.group(1)}|"
+        "00000000-0000-0000-0000-000000000000",
+        TPS61232_DRC_EXCLUSION,
+    ]]
+    PROJECT.write_text(json.dumps(project, indent=2) + "\n", encoding="utf-8")
 
 def natural_reference(reference: str) -> tuple[str, int]:
     match = re.fullmatch(r"([^0-9]+)([0-9]+)", reference)
@@ -386,6 +410,7 @@ def validate_net_contract(board: pcbnew.BOARD, mapping: dict[tuple[str, str], st
 
 
 def generate() -> pcbnew.BOARD:
+    reviewed_project = json.loads(PROJECT.read_text(encoding="utf-8"))
     subprocess.run([sys.executable, str(HERE / "generate_footprints.py")], check=True)
     export_netlist()
     components, nets = parse_netlist()
@@ -458,6 +483,7 @@ def generate() -> pcbnew.BOARD:
     pcbnew.SaveBoard(str(BOARD), board)
     inject_stackup(BASE_BOARD)
     inject_stackup(BOARD)
+    sync_tps61232_drc_exclusion(BOARD, reviewed_project)
     validate_net_contract(pcbnew.LoadBoard(str(BOARD)), member_names)
     print(f"[OK] Wrote placed board: {BOARD}")
     print(f"[INFO] Components: {len(board.GetFootprints())}; nets: {board.GetNetCount()}")

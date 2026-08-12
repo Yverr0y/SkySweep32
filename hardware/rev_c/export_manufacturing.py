@@ -16,14 +16,18 @@ HERE = Path(__file__).resolve().parent
 SCHEMATIC = HERE / "skysweep32_rev_c.kicad_sch"
 BOARD = HERE / "skysweep32_rev_c.kicad_pcb"
 MANIFEST = HERE / "hardware_manifest.json"
+PROJECT = HERE / "skysweep32_rev_c.kicad_pro"
 OUT = HERE / "manufacturing"
 GERBERS = OUT / "gerbers"
 
 
 
-
 def run(*args: str) -> None:
-    subprocess.run([str(KICAD), *args], cwd=HERE, check=True)
+    project = PROJECT.read_bytes()
+    try:
+        subprocess.run([str(KICAD), *args], cwd=HERE, check=True)
+    finally:
+        PROJECT.write_bytes(project)
 
 
 def export_bom(path: Path, *, exclude_dnp: bool) -> None:

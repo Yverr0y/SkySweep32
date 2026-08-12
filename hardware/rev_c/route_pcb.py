@@ -148,11 +148,74 @@ def apply_reviewed_repairs(board: pcbnew.BOARD) -> None:
     # overlap the thermal pad by 0.025 mm without entering the BAT escape rows.
     add_path(board, "GND", [(13.0, 70.25), (14.0, 70.25)], 0.25)
     add_path(board, "GND", [(13.0, 71.75), (14.0, 71.75)], 0.25)
+    # MAX17048 ALRT (pad 6) is intentionally unused. Remove the old router
+    # branch that tied the open-drain output to the exposed GND land.
+    remove_track(board, "GND", (14.0837, 71.0837), (14.25, 71.25))
+    remove_track(board, "GND", (14.25, 71.25), (15.0, 71.25))
     add_path(
         board, "BAT_CELL",
         [(13.0, 70.75), (11.5, 70.75), (11.5, 70.2127), (11.5315, 70.2127)],
         0.25,
     )
+    # The original symbol assignment accidentally forward-biased all three
+    # unidirectional diodes. Preserve the reviewed mechanical placement, but
+    # move their copper escapes to their actual cathode/anode pads.
+    remove_track(board, "VBUS_PROTECTED", (49.0, 85.0), (49.8494, 85.0))
+    remove_track(board, "VBUS_PROTECTED", (49.0, 85.0), (46.1375, 85.0))
+    remove_track(board, "VBUS_PROTECTED", (49.8494, 85.0), (52.2891, 82.5603))
+    remove_track(board, "GND", (49.0, 89.0), (40.1, 89.0))
+    remove_track(board, "GND", (49.0, 89.0), (51.0781, 86.9219))
+    add_path(board, "VBUS_PROTECTED", [(49.0, 89.0), (47.5, 89.0)], 0.8)
+    add_via(board, "VBUS_PROTECTED", (47.5, 89.0), 0.8, 0.35)
+    add_path(board, "VBUS_PROTECTED", [(47.5, 89.0), (46.1375, 85.0)], 0.8, pcbnew.B_Cu)
+    add_via(board, "VBUS_PROTECTED", (46.1375, 85.0), 0.8, 0.35)
+    add_path(board, "VBUS_PROTECTED", [(49.0, 89.0), (53.0, 90.0)], 0.8)
+    add_via(board, "VBUS_PROTECTED", (53.0, 90.0), 0.8, 0.35)
+    add_path(board, "VBUS_PROTECTED", [(53.0, 90.0), (52.2891, 82.5603)], 0.8, pcbnew.B_Cu)
+    add_via(board, "GND", (40.1, 89.0), 0.8, 0.35)
+    add_via(board, "GND", (51.0781, 86.9219), 0.8, 0.35)
+    add_path(board, "GND", [(49.0, 85.0), (50.5, 85.0)], 0.25)
+    add_via(board, "GND", (50.5, 85.0), 0.8, 0.35)
+
+    remove_track(board, "3V3", (118.2, 82.0), (120.175, 83.975))
+    remove_track(board, "3V3", (118.2, 82.0), (129.175, 82.0))
+    remove_track(board, "3V3", (120.175, 83.975), (120.175, 85.0))
+    remove_track(board, "BUZZER_DRAIN", (113.8, 81.3), (113.8, 82.0))
+    remove_track(board, "BUZZER_DRAIN", (108.5, 76.0), (113.8, 81.3))
+    add_path(board, "3V3", [(113.8, 82.0), (113.9472, 85.0)], 0.25)
+    add_path(board, "BUZZER_DRAIN", [(118.2, 82.0), (118.5, 78.5)], 0.25)
+    add_via(board, "BUZZER_DRAIN", (118.5, 78.5), 0.7, 0.3)
+    add_path(board, "BUZZER_DRAIN", [(118.5, 78.5), (109.0, 76.0)], 0.25, pcbnew.B_Cu)
+    add_via(board, "BUZZER_DRAIN", (109.0, 76.0), 0.7, 0.3)
+    add_path(board, "BUZZER_DRAIN", [(109.0, 76.0), (108.5, 76.0)], 0.25)
+    # The 3V3 escape previously passed through the old D2 pad assignment.
+    # Join the microSD branch on B.Cu instead of crossing the flyback diode.
+    add_via(board, "3V3", (116.0, 85.0), 0.7, 0.3)
+    add_path(board, "3V3", [(116.0, 85.0), (116.0, 87.0), (130.0, 87.0), (129.175, 82.0)], 0.35, pcbnew.B_Cu)
+    add_via(board, "3V3", (129.175, 82.0), 0.7, 0.3)
+
+    remove_track(board, "SYS_5V", (87.8, 83.8), (84.0, 83.8))
+    remove_track(board, "SYS_5V", (84.0, 83.8), (84.0, 76.0875))
+    remove_track(board, "SYS_5V", (92.0, 88.0), (87.8, 83.8))
+    remove_track(board, "VIBRATION_DRAIN", (85.0042, 89.2042), (84.0, 88.2))
+    add_path(board, "SYS_5V", [(84.0, 88.2), (87.0, 84.0)], 0.6)
+    add_via(board, "SYS_5V", (87.0, 84.0), 0.8, 0.35)
+    add_path(board, "SYS_5V", [(87.0, 84.0), (87.0, 76.0), (80.0, 76.0)], 0.6, pcbnew.B_Cu)
+    add_via(board, "SYS_5V", (80.0, 76.0), 0.8, 0.35)
+    add_path(board, "SYS_5V", [(80.0, 76.0), (84.0, 76.0875)], 0.6)
+    add_path(board, "SYS_5V", [(87.0, 84.0), (87.0, 78.0), (70.0, 78.0), (70.0, 78.1439)], 0.6, pcbnew.B_Cu)
+    add_via(board, "SYS_5V", (70.0, 78.1439), 0.8, 0.35)
+    add_path(board, "VIBRATION_DRAIN", [(84.0, 83.8), (84.0, 81.0)], 0.25)
+    add_via(board, "VIBRATION_DRAIN", (84.0, 81.0), 0.7, 0.3)
+    add_path(board, "VIBRATION_DRAIN", [(84.0, 81.0), (82.0, 85.0), (86.0, 90.0)], 0.25, pcbnew.B_Cu)
+    add_via(board, "VIBRATION_DRAIN", (86.0, 90.0), 0.7, 0.3)
+    add_path(board, "VIBRATION_DRAIN", [(86.0, 90.0), (85.0042, 89.2042)], 0.25)
+    add_path(board, "VIBRATION_DRAIN", [(94.0, 88.0), (93.0733, 88.0)], 0.25)
+    add_path(board, "VIBRATION_DRAIN", [(93.0733, 88.0), (93.0733, 88.8109)], 0.25)
+    add_path(board, "VIBRATION_DRAIN", [(93.0733, 88.8109), (92.68, 89.2042)], 0.25)
+    add_path(board, "VIBRATION_DRAIN", [(92.68, 89.2042), (85.0042, 89.2042)], 0.25)
+    # RX5808 VIDEO OUT is intentionally not routed on Rev C: the raw
+    # baseband output has no consumer or qualified service interface.
 
     # Escape both USB-C VBUS pad groups toward the connector body, change to
     # B.Cu, pass between the upper/lower shell stakes, then return beside F1.

@@ -11,9 +11,9 @@
   "freecad_version": "1.1.3",
   "input_sha256": {
     "hardware_manifest": "788f4e881ef4e8427b4746ca4b24c8afe4c0a7a466b013a9dd65bdd676e13ef8",
-    "pcba_step": "c61210c77da3fb64faf75e85fbbb2053e6041c37caad2f6a3200331a0d1ee2b1",
-    "oled_step": "f56744740a9d60170b0eda7c0a786ff5cd12d7026d636c148baed26ecf03384e",
-    "battery_step": "33aecdc23cf92a47d9270efd3855718572cdc7f65ab46e346ea5289dea6bb8b4"
+    "pcba_step": "e76b32301cf978e145c1cabba55418d32ab6e77f521a1506880434a4fe2ef96c",
+    "oled_step": "7b5828024cecda939773bc1220ee72aa666e3be92d2a4080cd1c8a44958a5c2f",
+    "battery_step": "edd219499e4cc258133feb9deefc0cb237008dbe2774192d2e9587ec289071c1"
   },
   "base_bbox_mm": [
     -5.5,

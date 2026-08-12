@@ -2,8 +2,8 @@
   "design": "SkySweep32 Rev C Passive Monitor",
   "maturity": "READY_FOR_FIRST_PROTOTYPE",
   "production_validated": false,
-  "timestamp_utc": "2026-08-11T12:41:20.023938+00:00",
-  "source_revision": "aa49c6ea25cda1c9aa97dac88714a65e5aee0f13",
+  "timestamp_utc": "2026-08-12T17:21:03.745360+00:00",
+  "source_revision": "56d4732dc654ab1547c84ec0729c414d49ca7f00",
   "source_tree_dirty": false,
   "tools": {
     "kicad": "10.0.5",
@@ -15,8 +15,9 @@
   },
   "commands": {
     "pin_contract": "python scripts/generate_rev_c_pinmap.py --check",
-    "erc": "kicad-cli sch erc --severity-all --exit-code-violations",
-    "drc": "kicad-cli pcb drc --refill-zones --severity-all --exit-code-violations",
+    "dashboard_embed": "python scripts/generate_dashboard.py --check",
+    "erc": "kicad-cli sch erc --severity-error --severity-warning --exit-code-violations",
+    "drc": "kicad-cli pcb drc --refill-zones --severity-error --severity-warning --exit-code-violations",
     "pcba": "kicad-cli pcb export step --force",
     "mechanical": "FreeCAD generate_3d_models.py && FreeCAD generate_enclosure.py",
     "fabrication": "python hardware/rev_c/export_manufacturing.py",
@@ -24,8 +25,13 @@
   },
   "gates": {
     "pin_contract": "PASS",
+    "dashboard_embed": "PASS",
     "erc_zero_errors_warnings": "PASS",
+    "erc_no_globally_ignored_checks": "PASS",
+    "erc_eight_documented_footprint_filter_exclusions": "PASS",
     "drc_zero_violations_unconnected": "PASS",
+    "drc_no_globally_ignored_checks": "PASS",
+    "drc_single_documented_exclusion": "PASS",
     "mechanical_interference_and_service": "PASS",
     "exact_bom_and_fabrication_exports": "PASS",
     "firmware_build": "PASS",
@@ -33,7 +39,9 @@
   },
   "evidence": {
     "erc": "validation/erc.rpt",
+    "erc_exclusions": "validation/erc_exclusions.json",
     "drc": "validation/drc.rpt",
+    "drc_exclusions": "validation/drc_exclusions.json",
     "mechanical": "enclosure/mechanical_validation.json",
     "fabrication": "manufacturing/fabrication_manifest.json",
     "mechanical_drawing": "enclosure/rev_c_mechanical_drawing.svg"

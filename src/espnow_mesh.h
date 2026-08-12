@@ -15,7 +15,7 @@
 // Message types
 enum ESPNowMsgType {
     MSG_HEARTBEAT    = 0x01,   // Node alive ping
-    MSG_THREAT_ALERT = 0x02,   // Drone detection alert
+    MSG_ACTIVITY_ALERT = 0x02,   // Coarse normalized energy/RSSI activity
     MSG_RF_DATA      = 0x03,   // Raw RF scan data share
     MSG_GPS_POS      = 0x04,   // Node GPS position
     MSG_SYNC         = 0x05,   // Time sync
@@ -31,16 +31,16 @@ struct __attribute__((packed)) ESPNowMessage {
     union {
         struct {
             float   batteryV; 
-            uint8_t threatLevel;
+            uint8_t activityLevel;
             uint8_t activeModules;
         } heartbeat;
         struct {
-            int8_t  rssi;
+            int8_t  normalizedRssi;
             uint8_t band;       // 0=433, 1=868, 2=915, 3=2400, 4=5800
-            uint8_t protocol;   // DroneProtocol enum
-            float   lat;
-            float   lon;
-        } threat;
+            uint8_t level;      // ActivityLevel numeric value
+            float   observerLat;
+            float   observerLon;
+        } activity;
         struct {
             double  lat;
             double  lon;
@@ -57,7 +57,7 @@ struct PeerNode {
     uint8_t nodeID;
     uint32_t lastSeen;
     float   batteryV;
-    uint8_t threatLevel;
+    uint8_t activityLevel;
     bool    active;
 };
 
@@ -98,7 +98,8 @@ public:
     
     // High-level sends
     bool sendHeartbeat();
-    bool sendThreatAlert(int8_t rssi, uint8_t band, uint8_t protocol, float lat, float lon);
+    bool sendActivityAlert(int8_t normalizedRssi, uint8_t band, uint8_t level,
+                           float observerLat, float observerLon);
     bool sendGPSPosition(double lat, double lon, float alt, uint8_t sats);
     
     // Getters

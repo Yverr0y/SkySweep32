@@ -48,12 +48,64 @@ def version_tuple(value: str) -> tuple[int, ...]:
 
 def assert_reports() -> dict[str, object]:
     erc = (VALIDATION / "erc.rpt").read_text(encoding="utf-8")
+    erc_exclusions = json.loads((VALIDATION / "erc_exclusions.json").read_text(encoding="utf-8"))
     drc = (VALIDATION / "drc.rpt").read_text(encoding="utf-8")
+    drc_exclusions = json.loads((VALIDATION / "drc_exclusions.json").read_text(encoding="utf-8"))
     mechanical = json.loads((REV / "enclosure" / "mechanical_validation.json").read_text(encoding="utf-8"))
     if not re.search(r"ERC messages:\s*0\s+Errors\s+0\s+Warnings", erc):
         raise RuntimeError("ERC report is not zero-error/zero-warning")
+    if erc_exclusions.get("ignored_checks"):
+        raise RuntimeError(f"ERC has globally ignored checks: {erc_exclusions['ignored_checks']}")
+    expected_erc_uuids = {
+        "09f71a94-25b4-4cf5-9a39-1e86e6883c14",
+        "71b9e97c-9462-4cec-8649-a363dd93e033",
+        "db6c220f-0d40-4a39-8e24-31b7d2fdb77d",
+        "a613ff61-1af6-45bf-8ef4-fd2af8fc2c9e",
+        "ceb5c2f6-d638-43a2-97a3-e7bae9566eb9",
+        "91b4b42f-19b7-4821-82b5-aed8acc66710",
+        "03694272-6ebf-4c20-bb4c-97bdcb942eee",
+        "f1e2b6c9-dc53-4992-9ac3-18e29e45629c",
+    }
+    erc_violations = [
+        violation
+        for sheet in erc_exclusions.get("sheets", [])
+        for violation in sheet.get("violations", [])
+    ]
+    erc_uuids = {
+        item["uuid"]
+        for violation in erc_violations
+        for item in violation.get("items", [])
+    }
+    if (
+        len(erc_violations) != len(expected_erc_uuids)
+        or erc_uuids != expected_erc_uuids
+        or any(
+            violation.get("type") != "footprint_filter"
+            or not violation.get("excluded")
+            or not violation.get("comment")
+            or len(violation.get("items", [])) != 1
+            for violation in erc_violations
+        )
+    ):
+        raise RuntimeError(f"unexpected ERC exclusions: {erc_violations}")
     if "Found 0 DRC violations" not in drc or "Found 0 unconnected pads" not in drc:
         raise RuntimeError("DRC report is not zero-violation/zero-unconnected")
+    if drc_exclusions.get("ignored_checks"):
+        raise RuntimeError(f"DRC has globally ignored checks: {drc_exclusions['ignored_checks']}")
+    exclusions = drc_exclusions.get("violations", [])
+    if len(exclusions) != 1:
+        raise RuntimeError(f"expected exactly one documented DRC exclusion, found {len(exclusions)}")
+    exclusion = exclusions[0]
+    excluded_items = exclusion.get("items", [])
+    if (
+        exclusion.get("type") != "footprint_type_mismatch"
+        or not exclusion.get("excluded")
+        or exclusion.get("comment")
+        != "TPS61232 is an SMD device; its exposed-pad thermal vias intentionally mix plated through-hole and SMD pads."
+        or len(excluded_items) != 1
+        or excluded_items[0].get("uuid") != "e210886d-8d41-4f15-ab61-554c52d94c95"
+    ):
+        raise RuntimeError(f"unexpected DRC exclusion: {exclusion}")
     if mechanical.get("status") != "PASS" or mechanical.get("failures"):
         raise RuntimeError("mechanical validation did not pass")
     return mechanical
@@ -95,13 +147,22 @@ def main() -> int:
     summary_path.unlink(missing_ok=True)
 
     command([sys.executable, str(ROOT / "scripts" / "generate_rev_c_pinmap.py"), "--check"])
+    command([sys.executable, str(ROOT / "scripts" / "generate_dashboard.py"), "--check"])
     command([
-        str(kicad), "sch", "erc", "--severity-all", "--exit-code-violations",
-        "--output", str(VALIDATION / "erc.rpt"), str(SCHEMATIC),
+        str(kicad), "sch", "erc", "--severity-error", "--severity-warning",
+        "--exit-code-violations", "--output", str(VALIDATION / "erc.rpt"), str(SCHEMATIC),
     ])
     command([
-        str(kicad), "pcb", "drc", "--refill-zones", "--severity-all",
+        str(kicad), "sch", "erc", "--severity-exclusions", "--format", "json",
+        "--output", str(VALIDATION / "erc_exclusions.json"), str(SCHEMATIC),
+    ])
+    command([
+        str(kicad), "pcb", "drc", "--refill-zones", "--severity-error", "--severity-warning",
         "--exit-code-violations", "--output", str(VALIDATION / "drc.rpt"), str(BOARD),
+    ])
+    command([
+        str(kicad), "pcb", "drc", "--refill-zones", "--severity-exclusions", "--format", "json",
+        "--output", str(VALIDATION / "drc_exclusions.json"), str(BOARD),
     ])
     command([str(freecad), str(REV / "generate_3d_models.py")], cwd=REV)
     command([
@@ -158,8 +219,9 @@ def main() -> int:
         },
         "commands": {
             "pin_contract": "python scripts/generate_rev_c_pinmap.py --check",
-            "erc": "kicad-cli sch erc --severity-all --exit-code-violations",
-            "drc": "kicad-cli pcb drc --refill-zones --severity-all --exit-code-violations",
+            "dashboard_embed": "python scripts/generate_dashboard.py --check",
+            "erc": "kicad-cli sch erc --severity-error --severity-warning --exit-code-violations",
+            "drc": "kicad-cli pcb drc --refill-zones --severity-error --severity-warning --exit-code-violations",
             "pcba": "kicad-cli pcb export step --force",
             "mechanical": "FreeCAD generate_3d_models.py && FreeCAD generate_enclosure.py",
             "fabrication": "python hardware/rev_c/export_manufacturing.py",
@@ -167,8 +229,13 @@ def main() -> int:
         },
         "gates": {
             "pin_contract": "PASS",
+            "dashboard_embed": "PASS",
             "erc_zero_errors_warnings": "PASS",
+            "erc_no_globally_ignored_checks": "PASS",
+            "erc_eight_documented_footprint_filter_exclusions": "PASS",
             "drc_zero_violations_unconnected": "PASS",
+            "drc_no_globally_ignored_checks": "PASS",
+            "drc_single_documented_exclusion": "PASS",
             "mechanical_interference_and_service": mechanical["status"],
             "exact_bom_and_fabrication_exports": "PASS",
             "firmware_build": "SKIPPED" if args.skip_firmware else "PASS",
@@ -176,7 +243,9 @@ def main() -> int:
         },
         "evidence": {
             "erc": "validation/erc.rpt",
+            "erc_exclusions": "validation/erc_exclusions.json",
             "drc": "validation/drc.rpt",
+            "drc_exclusions": "validation/drc_exclusions.json",
             "mechanical": "enclosure/mechanical_validation.json",
             "fabrication": "manufacturing/fabrication_manifest.json",
             "mechanical_drawing": "enclosure/rev_c_mechanical_drawing.svg",

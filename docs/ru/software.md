@@ -104,7 +104,6 @@ curl -X POST http://192.168.4.1/api/ota \
 | `/api/config` | GET | Текущая конфигурация |
 | `/api/config` | POST | Обновить конфигурацию |
 | `/api/config/reset` | POST | Сброс конфигурации |
-| `/api/calibrate` | POST | Перекалибровка порогов шумового пола RSSI |
 | `/api/ota` | POST | Загрузка прошивки |
 | `/api/power` | POST | Установка режима питания (`?mode=0-3`) |
 | `/api/logs` | GET | Получить список логов с SD-карты (JSON-массив) |
@@ -121,7 +120,6 @@ curl -X POST http://192.168.4.1/api/ota \
 | `-DTIER_STANDARD` | Стандартный уровень |
 | `-DTIER_PRO` | Профессиональный уровень |
 | `-DMODULE_ACOUSTIC` | Акустическое обнаружение |
-| `-DENABLE_COUNTERMEASURES` | Активные контрмеры ⚠️ |
 | `-DMODULE_COMPASS` | I2C Магнитометр (QMC5883L) |
 | `-DMODULE_ML` | Нейросетевая классификация (TinyML) |
 | `-DMODULE_ATAK` | Интеграция с Android Team Awareness Kit (CoT) |

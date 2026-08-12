@@ -40,7 +40,7 @@
 <header>
   <div class="eyebrow">Passive receive and energy observation</div>
   <h1>Engineering evidence, not marketing claims.</h1>
-  <p class="lede">SkySweep32 Rev C is a requirements-first ESP32-S3 carrier for passive sub-GHz and 2.4 GHz observation, GNSS, logging, display, and local networking. It replaces the failed Rev B prototype.</p>
+  <p class="lede">SkySweep32 Rev C is a requirements-first ESP32-S3 carrier for passive sub-GHz, 2.4 GHz, and 5.8 GHz energy/RSSI observation, GNSS, logging, display, and local networking. It replaces the failed Rev B prototype.</p>
   <div class="status" id="status"><strong>READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION VALIDATED</strong>No Rev C board has been assembled or bench-tested. ERC, DRC, fabrication export, firmware compilation, and CAD interference checks pass reproducibly. RF performance, reliability, compliance, and production yield remain unverified.</div>
   <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c">Rev C engineering files</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Physical test checklist</a></div>
 </header>
@@ -61,11 +61,11 @@
     <thead><tr><th>Function</th><th>Rev C implementation</th><th>What is not established</th></tr></thead>
     <tbody>
       <tr><td>855–925 MHz</td><td>E07-900M10S / CC1101 RSSI and activity observation</td><td>RF response is unmeasured; no 433 MHz operation; no protocol identity</td></tr>
-      <tr><td>2.4 GHz</td><td>E01-ML01DP5 / nRF24L01+ one-bit RPD energy observation</td><td>RPD is not RSSI, demodulation, or DJI/ELRS identification</td></tr>
+      <tr><td>2.4 GHz</td><td>E28-2G4M12SX / SX1281 instantaneous-RSSI sweep</td><td>Coarse energy/activity only; no demodulation or DJI/ELRS/transmitter identity</td></tr>
       <tr><td>Wi-Fi / BLE</td><td>ESP32-S3 receive functions and dashboard source</td><td>No physical Rev C run; BLE Remote ID parser has no conformance evidence</td></tr>
       <tr><td>GNSS / storage / display</td><td>Exact SAM-M10Q, Molex microSD socket, and Adafruit OLED</td><td>No live fix, card endurance, or physical UI test</td></tr>
       <tr><td>TinyML</td><td><span class="no">Excluded</span></td><td>Legacy source contains a 78-byte dummy model; trained inference is not implemented</td></tr>
-      <tr><td>5.8 GHz / LoRa / direction finding</td><td><span class="no">Excluded</span></td><td>No accepted exact RX5808, no canonical LoRa radio, no RF-bearing sensor</td></tr>
+      <tr><td>5.8 GHz</td><td>Procurement-qualified RX5808-2012-12P envelope; eight selected channels and analog RSSI</td><td>Every lot needs supplier/pinout incoming checks; RF response is unmeasured</td></tr>
       <tr><td>Active interference</td><td><span class="no">Excluded</span></td><td>Rev C is passive and contains no jammer, injection, or GPS-denial outputs</td></tr>
     </tbody>
   </table></div>
@@ -74,10 +74,10 @@
 <section>
   <h2>Rev C hardware</h2>
   <div class="grid">
-    <article class="card"><h3>Electrical</h3><p>ESP32-S3-WROOM-1-N8, protected 5 V USB-C, AP63203 3.3 V / 2 A supply, manual BOOT/RESET, and accessible power/UART test points.</p></article>
-    <article class="card"><h3>PCB</h3><p>120 × 85 mm, four layers, continuous L2 ground reference, reviewed RF/USB launch rules, zero current DRC violations and zero unconnected pads.</p></article>
-    <article class="card"><h3>Mechanical</h3><p>132.4 × 97.4 × 23.5 mm printed indoor enclosure generated around the complete PCBA STEP, with M3 hardware and USB/card/RF/button/display service envelopes.</p></article>
-    <article class="card"><h3>Limits</h3><p>Not sealed or IP rated. No battery charger. Custom module CAD is labelled maximum-envelope approximation. First print and first board must be measured.</p></article>
+    <article class="card"><h3>Electrical</h3><p>ESP32-S3-WROOM-1-N16R8, E07, E28/SX1281, qualified-envelope RX5808, SAM-M10Q, protected USB-C/battery power path, native USB, storage, display, and local controls.</p></article>
+    <article class="card"><h3>PCB</h3><p>150 × 95 mm, four layers, continuous L2 ground reference, reviewed RF/USB launch rules, zero unexcluded DRC violations and zero unconnected pads; one TPS61232 mixed-pad exception is documented and audited.</p></article>
+    <article class="card"><h3>Mechanical</h3><p>165.4 × 117.4 × 33.5 mm printed indoor enclosure generated around the complete PCBA, battery, display, antennas, cables, and M3 hardware, with connector/card/button service envelopes.</p></article>
+    <article class="card"><h3>Limits</h3><p>Not sealed or IP rated. Custom module CAD is labelled exact, referenced, or maximum-envelope approximation. First print, first board, RX5808 lot, RF response, power, thermal, and reliability tests remain mandatory.</p></article>
   </div>
 </section>
 
@@ -95,7 +95,7 @@ python hardware/verify.py</pre>
   <div class="eyebrow">Пассивный приём и наблюдение энергии</div>
   <h2>Статус Rev C</h2>
   <div class="status"><strong>ГОТОВ К ПЕРВОМУ ФИЗИЧЕСКОМУ ПРОТОТИПУ — НЕ ПРОВЕРЕН ДЛЯ СЕРИЙНОГО ПРОИЗВОДСТВА</strong>Физическая Rev C ещё не собрана. Воспроизводимо проходят ERC, DRC, экспорт производства, компиляция прошивки и CAD-проверки коллизий. RF-характеристики, надёжность, нормативное соответствие и производственный выход не подтверждены.</div>
-  <p class="lede">Rev C использует точные ESP32-S3-WROOM-1-N8, E07-900M10S, E01-ML01DP5, SAM-M10Q-00B и Molex 104031-0811. Наблюдение 2.4 ГГц — только однобитный порог RPD, а не распознавание протокола. BLE Remote ID экспериментален и не имеет тестов на соответствие. TinyML, 5.8 ГГц, LoRa, радиопеленгация и активные помехи исключены.</p>
+  <p class="lede">Rev C использует ESP32-S3-WROOM-1-N16R8, E07-900M10S, E28-2G4M12SX/SX1281, проверяемый при приёмке RX5808-2012-12P, SAM-M10Q-00B, Molex 104031-0811, защищённый аккумулятор и зарядный тракт. Диапазоны 2.4/5.8 ГГц дают только наблюдение энергии/RSSI, а не распознавание протокола. BLE Remote ID экспериментален и не имеет тестов на соответствие ASTM/ASD-STAN.</p>
   <p>Rev B и Rev A — несовместимые исторические версии, которые нельзя заказывать. Готовые бинарники v0.6.1 предназначены для старой ESP32 DevKit и несовместимы с Rev C. Текущая конфигурация: <code>esp32s3_rev_c_passive</code>.</p>
   <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c">Документация Rev C</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Чек-лист прототипа</a></div>
 </section>

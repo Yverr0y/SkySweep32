@@ -25,7 +25,7 @@ void ESPNowMesh::onReceiveCB(const uint8_t* mac, const uint8_t* data, int len) {
     size_t need = headerSize;
     switch (data[0]) {
         case MSG_HEARTBEAT:    need += sizeof(frame.payload.heartbeat); break;
-        case MSG_THREAT_ALERT: need += sizeof(frame.payload.threat);    break;
+        case MSG_ACTIVITY_ALERT: need += sizeof(frame.payload.activity); break;
         case MSG_GPS_POS:      need += sizeof(frame.payload.gps);       break;
         default: break;
     }
@@ -134,20 +134,22 @@ void ESPNowMesh::handleMessage(const uint8_t* mac, const ESPNowMessage* msg) {
     switch (msg->type) {
         case MSG_HEARTBEAT:
             peers[peerIdx].batteryV = msg->payload.heartbeat.batteryV;
-            peers[peerIdx].threatLevel = msg->payload.heartbeat.threatLevel;
-            Serial.printf("[MESH] Heartbeat from Node %d (bat: %.2fV, threat: %d)\n",
+            peers[peerIdx].activityLevel = msg->payload.heartbeat.activityLevel;
+            Serial.printf("[MESH] Heartbeat from Node %d (bat: %.2fV, activity: %d)\n",
                           msg->nodeID, msg->payload.heartbeat.batteryV,
-                          msg->payload.heartbeat.threatLevel);
+                          msg->payload.heartbeat.activityLevel);
             break;
-            
-        case MSG_THREAT_ALERT:
-            Serial.printf("[MESH] ⚠️ THREAT from Node %d: RSSI=%d band=%d proto=%d (%.4f, %.4f)\n",
-                          msg->nodeID,
-                          msg->payload.threat.rssi,
-                          msg->payload.threat.band,
-                          msg->payload.threat.protocol,
-                          msg->payload.threat.lat,
-                          msg->payload.threat.lon);
+
+        case MSG_ACTIVITY_ALERT:
+            Serial.printf(
+                "[MESH] Coarse RF activity from Node %d: normalized=%d band=%d "
+                "level=%d observer=(%.4f, %.4f)\n",
+                msg->nodeID,
+                msg->payload.activity.normalizedRssi,
+                msg->payload.activity.band,
+                msg->payload.activity.level,
+                msg->payload.activity.observerLat,
+                msg->payload.activity.observerLon);
             break;
             
         case MSG_GPS_POS:
@@ -239,26 +241,35 @@ bool ESPNowMesh::sendHeartbeat() {
     
     // Include power manager data if available
     msg.payload.heartbeat.batteryV = powerManager.getBatteryVoltage();
-    msg.payload.heartbeat.threatLevel = 0;  // Will be set by main loop
+    msg.payload.heartbeat.activityLevel = 0;  // Updated activity is sent separately
     msg.payload.heartbeat.activeModules = RF_MODULE_COUNT;
     
     return broadcast(msg);
 }
 
-bool ESPNowMesh::sendThreatAlert(int8_t rssi, uint8_t band, uint8_t protocol, float lat, float lon) {
+bool ESPNowMesh::sendActivityAlert(
+    int8_t normalizedRssi,
+    uint8_t band,
+    uint8_t level,
+    float observerLat,
+    float observerLon) {
     ESPNowMessage msg;
     memset(&msg, 0, sizeof(msg));
-    msg.type = MSG_THREAT_ALERT;
+    msg.type = MSG_ACTIVITY_ALERT;
     msg.nodeID = myNodeID;
     msg.sequence = sequenceCounter++;
     msg.timestamp = millis();
-    msg.payload.threat.rssi = rssi;
-    msg.payload.threat.band = band;
-    msg.payload.threat.protocol = protocol;
-    msg.payload.threat.lat = lat;
-    msg.payload.threat.lon = lon;
-    
-    Serial.printf("[MESH] Broadcasting threat alert: RSSI=%d band=%d\n", rssi, band);
+    msg.payload.activity.normalizedRssi = normalizedRssi;
+    msg.payload.activity.band = band;
+    msg.payload.activity.level = level;
+    msg.payload.activity.observerLat = observerLat;
+    msg.payload.activity.observerLon = observerLon;
+
+    Serial.printf(
+        "[MESH] Broadcasting coarse activity: normalized=%d band=%d level=%d\n",
+        normalizedRssi,
+        band,
+        level);
     return broadcast(msg);
 }
 

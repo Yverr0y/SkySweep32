@@ -4,79 +4,124 @@
 
 ## Product definition
 
-Rev C is a USB-powered passive RF activity monitor for an indoor/portable enclosure. It records energy/activity observations and received Remote ID messages; it does not identify arbitrary RF emitters from energy alone and it contains no active countermeasure output.
+Rev C is a passive RF activity monitor and logger for an indoor portable
+enclosure. It records channel energy/RSSI observations and received Wi-Fi/BLE
+messages. Energy observations do not identify arbitrary emitters. Rev C has no
+RF jamming, protocol-injection, GPS-denial, or other active-countermeasure
+output.
 
 ## Requirements matrix
 
-| Function | Rev C requirement | Implementation | Evidence required before prototype release |
+| Function | Rev C implementation | Evidence before first build | Physical evidence still required |
 |---|---|---|---|
-| 855–925 MHz | Channelized RSSI/activity | Exact Ebyte E07-900M10S, CC1101-compatible SPI, U.FL-to-panel-SMA pigtail | Datasheet pinout; schematic ERC; DRC; receive bench sweep after assembly |
-| 2.4 GHz energy | Coarse channel activity | Exact Ebyte E01-ML01DP5, nRF24L01+ RPD | Datasheet pinout; schematic ERC; DRC; conducted/OTA receive comparison after assembly |
-| Wi-Fi/BLE | Dashboard, ESP-NOW and experimental Remote ID reception | ESP32-S3-WROOM-1-N8 onboard antenna | Espressif antenna keepout; firmware build; reception test after assembly |
-| 5.8 GHz | No unsupported claim | Not fitted or routed | Documentation and firmware must not advertise Rev C 5.8 GHz hardware |
-| Position/time | NMEA UART and TIMEPULSE | u-blox SAM-M10Q-00B antenna module | UBX-22013293 / UBX-22020019 land pattern and keepout |
-| UI | Readable removable display, status, user input | Lid-mounted Adafruit PID 326 OLED over keyed JST-PH; LED; button; buzzer; optional vibration | Harness pinout and enclosure fit check |
-| Storage | Removable card with accessible insertion path | Molex 104031-0811 microSD socket on dedicated SPI | Molex drawing/KiCad footprint; enclosure card-access check |
-| Power | One explicit source; safe protection; 3.3 V rail | USB-C 5 V/2 A, fuse, TVS, AP63203 2 A buck; no battery | Current budget; regulator reference design; current-limited bring-up |
-| Programming | No external programmer required | ESP32-S3 native USB; BOOT/RESET; UART0 test pads | USB routing/ESD check; firmware upload smoke test after assembly |
-| Assembly | Repeatable PCBA and serviceable enclosure | Four-layer PCB, replaceable E01 module, lid harness, panel antenna pigtails | Gerber/drill inspection; assembly STEP interference test |
-| Environment | Portable indoor instrument | Printed two-part case; not sealed | CAD checks only; no IP or environmental claim |
+| 855–925 MHz | Ebyte `E07-900M10S`, CC1101-compatible SPI, carrier J5 edge-launch SMA | Datasheet pinout, ERC, DRC, routed PCBA STEP | Conducted channel/RSSI sweep with the selected regional antenna |
+| 2.4 GHz energy | Ebyte `E28-2G4M12SX` / SX1281 instantaneous RSSI, onboard IPEX/U.FL and Adafruit PID 2308 internal antenna | Ebyte/Semtech pin contract, ERC, DRC, antenna/cable CAD envelope | Register identity, frequency sweep, RSSI response, and enclosure detuning test |
+| 5.8 GHz energy | Qualified-envelope `RX5808-2012-12P`, eight hardware-selected channels, analog RSSI, J7 edge-launch SMA | Referenced 12-pad drawing, procurement restriction, ERC, DRC, antenna service envelope | Incoming inspection, pinout confirmation, channel truth table, RSSI response, and Taoglas `TG.59.0113` receive comparison |
+| Wi-Fi/BLE | ESP32-S3 dashboard, ESP-NOW, and experimental Remote ID reception | Espressif keepout and firmware build | Reception/coexistence test; standards conformance is not established |
+| Position/time | u-blox `SAM-M10Q-00B`, UART NMEA and TIMEPULSE | u-blox land pattern/integration review, ERC, DRC | Live fix, antenna status, and TIMEPULSE measurement |
+| UI | Lid-mounted Adafruit PID 326 OLED on PID 4210 JST-SH cable; LED, buzzer, three buttons; optional DNP vibration output | Harness contract, button actuation and cable-length CAD checks | Pixel, button, visibility, buzzer, and repeated lid-service tests |
+| Storage | Molex `104031-0811` removable microSD socket with card detect | Manufacturer footprint/model, ERC, DRC, card-removal envelope | Card detect, write/read verification, and repeated insertion |
+| Power | USB-C or protected Adafruit PID 328 1S LiPo; BQ24074 power path; TPS61232 5 V boost; AP63203 3.3 V rail | Datasheet circuits, ERC, DRC, encoded 1.35 A peak budget | Current-limited bring-up, charge/power-path, ripple, transient, and thermal tests |
+| Programming | ESP32-S3 native USB, BOOT/RESET, UART0 test pads | USB routing/ESD review and firmware build | Enumeration, upload, reconnect, and ESD robustness tests |
+| Mechanical | 150 × 95 mm four-layer PCBA in generated two-part enclosure | Full PCBA STEP, battery/display/antenna/cable/fastener/service-envelope checks | First print, first PCBA, tolerance, cable dressing, and serviceability measurements |
 
-Cost target is approximately USD 60–100 for one-off parts excluding assembly and printed enclosure. The RF modules and display are deliberately module-based because a direct multiband RF design would require controlled-impedance RF layout and test evidence unavailable before a first prototype. GNSS and microSD are direct components because their manufacturer land patterns and integration requirements are stable and this removes large breakout boards and ambiguous voltage-level circuitry.
+The module-based receivers are deliberate first-prototype choices. A direct
+multiband RF implementation would require RF characterization and manufacturing
+controls that do not yet exist. The RX5808 source is the weakest procurement
+item: only a 12-pad, 28 × 23 × 3 mm module matching the referenced drawing is
+permitted, and the first received lot must be electrically and mechanically
+qualified before assembly.
 
 ## Functional architecture
 
 ```mermaid
 graph TD
-    USB[USB-C 5 V / native USB] --> PWR[Fuse + TVS + AP63203 3.3 V]
-    PWR --> MCU[ESP32-S3-WROOM-1-N8]
-    PWR --> NRF[E01-ML01DP5]
-    PWR --> SUB[E07-900M10S]
-    PWR --> GPS[SAM-M10Q-00B]
-    PWR --> SD[Molex microSD]
-    MCU -->|shared RF SPI| NRF
+    USB[USB-C 5 V / native USB] --> CHG[BQ24074 power path]
+    BAT[Protected 1S LiPo] --> CHG
+    CHG --> BOOST[TPS61232 fixed 5 V]
+    BOOST --> BUCK[AP63203 3.3 V]
+    BUCK --> MCU[ESP32-S3-WROOM-1-N16R8]
+    BUCK --> RF24[E28-2G4M12SX / SX1281]
+    BUCK --> SUB[E07-900M10S / CC1101]
+    BOOST --> RX5[RX5808 2012 / analog RSSI]
+    BUCK --> GPS[SAM-M10Q-00B]
+    BUCK --> SD[Molex microSD]
+    MCU -->|shared RF SPI| RF24
     MCU -->|shared RF SPI| SUB
-    MCU -->|dedicated SD SPI| SD
+    MCU -->|channel selects + ADC| RX5
+    MCU -->|shared SPI, separate CS| SD
     MCU -->|UART + PPS| GPS
-    MCU -->|I2C harness| OLED[Adafruit PID 326]
-    MCU --> ALERT[LED + buzzer + vibration]
+    MCU -->|I2C / JST-SH| OLED[Adafruit PID 326]
+    MCU --> ALERT[LED + buzzer + optional vibration]
 ```
 
 ## Interface contract
 
-The reviewed pin contract lives in `hardware_manifest.json`; the firmware header and board definition are generated from it. RF1 and RF2 share SCK/MOSI/MISO but have independent chip selects. SD uses a separate SPI controller to isolate card write bursts from receiver traffic. GNSS uses UART plus a TIMEPULSE input. The display is the only I2C peripheral required by the base design.
+The reviewed signal contract lives in `hardware_manifest.json`; the firmware
+header and PlatformIO board definition derive from it. E28 and E07 share
+SCK/MOSI/MISO and have independent chip selects. microSD uses the same physical
+SPI signals with its own chip select. RX5808 uses three channel-select lines and
+an analog RSSI path. GNSS uses UART plus TIMEPULSE. The display is on I2C.
 
-ESP32-S3 strapping pins GPIO0, GPIO3, GPIO45 and GPIO46 are not assigned to peripherals. GPIO19/20 remain native USB. GPIO35–37 are valid only for the N8 non-octal-PSRAM module selected here; substituting an octal-flash/PSRAM variant is prohibited without a new pin review.
+GPIO0 is reserved for BOOT. GPIO3, GPIO45, and GPIO46 carry no peripheral load.
+GPIO19/20 remain native USB. GPIO35–37 are reserved because the selected
+`ESP32-S3-WROOM-1-N16R8` uses octal PSRAM. Substituting another ESP32-S3 module
+variant requires a new schematic, pin-map, firmware, and layout review.
 
 ## Power architecture
 
-The AP63203 rail is designed from the manufacturer application circuit, with a 3.9 µH inductor, local ceramic input/output capacitance and bulk capacitance at the module loads. The 2 A regulator rating is not the available continuous system current by itself; thermal performance, USB source, fuse and transient behavior still require physical testing.
+USB VBUS is protected by the `MF-MSMF200-2` resettable fuse and `SMAJ5.0A` TVS;
+USB D+/D− use `USBLC6-2SC6`. The `BQ24074RGTR` is configured for an 800 mA charge
+current and 1.3 A input limit with a fixed 10 kΩ/10 kΩ battery-temperature
+window. Use only the specified protected Adafruit PID 328 / LP785060 pack with
+the documented JST-PH polarity.
 
-| Load | Peak design current |
-|---|---:|
-| ESP32-S3 Wi-Fi/BLE burst | 500 mA |
-| E01-ML01DP5 receive/transition allowance | 130 mA |
-| E07-900M10S receive/transition allowance | 50 mA |
-| SAM-M10Q acquisition allowance | 100 mA |
-| microSD write burst | 200 mA |
-| OLED, LED, buzzer and vibration logic | 70 mA |
-| Margin and leakage | 50 mA |
-| **Total** | **1,100 mA** |
-
-The manifest currently records 1,050 mA because the vibration motor is externally powered from protected 5 V through a switched connector; the 3.3 V regulator calculation excludes motor current. Both rails require bench measurements during bring-up.
+`TPS61232DRCR` generates the switched 5 V system rail. `AP63203WU-7` generates
+3.3 V through the reviewed `SRN6028-3R9M` inductor/application network. The
+manifest's 1.35 A peak estimate covers ESP32 radio bursts, all three receiver
+paths, GNSS acquisition, microSD writes, display/alerts, and margin. IC ratings
+do not establish usable continuous current or thermal margin; both rails and the
+charge/power-path behavior require first-board measurement.
 
 ## RF interpretation limits
 
-The E01 RPD bit only indicates received power above an approximate threshold; it is not RSSI and cannot classify a transmitter. The E07/CC1101 RSSI is useful for relative channel activity within the tuned 855–925 MHz range but does not prove protocol identity. Remote ID reception uses the ESP32 Wi-Fi/BLE stack and remains experimental until tested against known conforming transmitters.
+- E28/SX1281 RSSI is channel energy, not protocol or transmitter identity.
+- E07/CC1101 RSSI is relative activity within the configured 855–925 MHz range;
+  Rev C must not issue a 433 MHz configuration.
+- RX5808 analog RSSI is limited to the documented eight channel selections. Its
+  module source and calibration remain unverified until incoming inspection and
+  bench characterization.
+- ESP32 Wi-Fi/BLE Remote ID reception remains experimental until tested against
+  known conforming transmitters and a standards-conformance suite.
 
 ## Mechanical rules
 
-The lower-left PCB corner is the common datum. Mounting holes and 5 mm radial fastener/boss keepouts are fixed before placement. USB, microSD, BOOT/RESET, OLED harness and antenna pigtails are edge-constrained. The enclosure must be regenerated from the PCB assembly STEP and checked for component, fastener, plug, card, harness and lid collisions before `READY_FOR_PROTOTYPE` status is allowed.
+The lower-left PCB corner is the shared datum. Mounting holes, 5 mm radial
+fastener/boss keepouts, USB-C, microSD, both edge-launch SMA connectors, three
+buttons, status LED, OLED, protected battery, and internal 2.4 GHz antenna are
+manifest-defined interfaces. The enclosure generator consumes the complete PCBA
+STEP and checks:
+
+- base/lid/PCBA/OLED/battery/fastener/button collisions;
+- USB cable, microSD card, SMA plug, and external antenna service volumes;
+- closed and 30 mm-open OLED and internal-antenna cable routes against their
+  exact 100 mm cable limits;
+- battery-to-PCBA and floor clearances;
+- button travel to switch contact.
+
+Passing these checks means the modeled solids satisfy the encoded constraints.
+It does not establish printed tolerances, connector mating force, antenna
+performance, or physical serviceability.
 
 ## Source-of-truth hierarchy
 
 1. Manufacturer datasheets and mechanical drawings define physical reality.
-2. The reviewed KiCad schematic and PCB define the circuit and manufactured geometry.
-3. `hardware_manifest.json` defines the cross-domain contract: exact MPNs, features, pin map, board datum and mechanical interfaces.
-4. Firmware headers, PlatformIO board metadata, BOM exports, reports, renders and enclosure derivatives are generated evidence, not independent design authority.
-5. Narrative documentation describes the above and never overrides failing machine evidence.
+2. The reviewed KiCad schematic and PCB define the circuit and manufactured
+   geometry.
+3. `hardware_manifest.json` defines cross-domain exact MPNs, feature scope,
+   firmware pins, board datum, assembly items, and mechanical interfaces.
+4. Firmware headers, PlatformIO metadata, BOM/placement exports, reports,
+   renders, enclosure derivatives, and manufacturing files are generated
+   evidence, not independent design authority.
+5. Narrative documentation describes those sources and never overrides failing
+   machine evidence.

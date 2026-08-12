@@ -15,6 +15,7 @@ from tool_discovery import discover_kicad_cli
 HERE = Path(__file__).resolve().parent
 SCHEMATIC = HERE / "skysweep32_rev_c.kicad_sch"
 BOARD = HERE / "skysweep32_rev_c.kicad_pcb"
+MANIFEST = HERE / "hardware_manifest.json"
 OUT = HERE / "manufacturing"
 GERBERS = OUT / "gerbers"
 
@@ -46,14 +47,17 @@ def validate_exact_bom(path: Path) -> None:
 
 
 def write_accessories() -> None:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     rows = [
-        ["DISP1", "1", "Adafruit Industries", "PID 326", "ALL", "0.96 inch SSD1306 OLED breakout"],
-        ["W1", "1", "Adafruit Industries", "PID 4210", "ALL", "100 mm STEMMA QT/Qwiic JST-SH cable"],
-        ["ANT2", "1", "TE Connectivity / Linx", "ANT-2.4-CW-HWR-SMA", "ALL", "2.4 GHz SMA male antenna for RF1"],
-        ["ANT1", "1", "TE Connectivity / Linx", "ANT-868-CW-HWR-SMA", "EU-868", "868 MHz SMA male antenna for J5"],
-        ["ANT1", "1", "TE Connectivity / Linx", "ANT-916-CW-HWR-SMA", "US-915", "916 MHz SMA male antenna for J5"],
-        ["SCREW1-SCREW4", "4", "Generic to DIN 912", "M3x20-A2", "ALL", "M3 x 20 socket-head screw"],
-        ["NUT1-NUT4", "4", "Generic to DIN 934", "M3-A2", "ALL", "M3 hex nut"],
+        [
+            item["refs"],
+            str(item["qty"]),
+            item["manufacturer"],
+            item["mpn_or_standard"],
+            item["variant"],
+            item["description"],
+        ]
+        for item in manifest["assembly_items"]
     ]
     with (OUT / "assembly_items.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.writer(stream, lineterminator="\n")

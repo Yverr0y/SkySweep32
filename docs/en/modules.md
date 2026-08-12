@@ -21,11 +21,11 @@ SkySweep32 is designed to be **budget-friendly and modular**. Start with the bas
 | **Total** | | **~$15** | |
 
 **Capabilities**:
-- ✅ 2.4 GHz band monitoring (WiFi, DJI, ExpressLRS)
-- ✅ Remote ID detection via BLE (free — uses ESP32 built-in Bluetooth)
-- ✅ Web dashboard via WiFi (free — uses ESP32 built-in WiFi)
-- ✅ OLED display with real-time RSSI
-- ✅ 5-level threat assessment
+- ⚠️ nRF24L01+ one-bit RPD energy observation; no Wi-Fi, DJI, or ExpressLRS identity
+- ⚠️ Experimental BLE Remote ID parser; no ASTM/ASD-STAN conformance evidence
+- ✅ Web dashboard via ESP32 Wi-Fi
+- ✅ OLED display with the one-bit activity state
+- ✅ Five relative activity levels; not threat or identity classification
 - ❌ No 900 MHz / 5.8 GHz coverage
 - ❌ No GPS / logging / mesh networking
 
@@ -63,15 +63,15 @@ pio run  # Default: TIER_STANDARD
 | Additional Component | Model | Price | Purpose |
 |---------------------|-------|-------|---------|
 | RF Module (900 MHz) | CC1101 | ~$5-7 | ISM band monitoring |
-| RF Module (5.8 GHz) | RX5808 | ~$8-12 | FPV video detection |
+| RF Module (5.8 GHz) | RX5808 | ~$8-12 | Uncalibrated analog energy/RSSI observation |
 | **Upgrade Cost** | | **~$15-20** | |
 | **Total (with Starter)** | | **~$35** | |
 
 **New Capabilities**:
 - ✅ Triple-band monitoring: 900 MHz + 2.4 GHz + 5.8 GHz
-- ✅ Protocol detection: MAVLink, CRSF/ExpressLRS
-- ✅ AI drone classification (rule-based: DJI, FPV, Military)
-- ✅ Analog video signal detection
+- ⚠️ MAVLink and CRSF parser source exists; physical reception is unverified
+- ❌ No AI or rule-based drone identity classification
+- ⚠️ 5.8 GHz analog RSSI path; actual RF response is unmeasured
 
 **Additional Wiring**:
 ```
@@ -109,11 +109,11 @@ ESP32 → RX5808:
 | **Total (with Hunter)** | | **~$60** | |
 
 **New Capabilities**:
-- ✅ GPS geolocation of detection events
-- ✅ Geofence alerts
-- ✅ SD card forensic logging (CSV/JSON export)
-- ✅ LoRa mesh networking (multi-node detection)
-- ✅ Collaborative threat tracking
+- ✅ GPS coordinates for the monitor itself
+- ✅ Geofence alert source exists; no physical test
+- ✅ SD card logging source exists; no card/endurance test
+- ⚠️ LoRa source compiles; no Meshtastic interoperability evidence
+- ⚠️ Coarse activity exchange only; no collaborative target tracking
 
 **Additional Wiring**:
 ```
@@ -189,8 +189,6 @@ build_flags = -DTIER_BASE
 ; Standard tier with acoustic
 build_flags = -DTIER_STANDARD -DMODULE_ACOUSTIC
 
-; Pro tier with countermeasures (LEGAL AUTH REQUIRED!)
-build_flags = -DTIER_PRO -DENABLE_COUNTERMEASURES
 
 ; Custom: Base + GPS only
 build_flags = -DTIER_BASE -DMODULE_GPS

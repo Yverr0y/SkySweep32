@@ -17,12 +17,24 @@ Rev B remains in `hardware/rev_b/` solely as historical, non-orderable evidence 
 Rev C deliberately:
 
 - limits canonical hardware to passive receive/energy observation;
-- uses ESP32-S3-WROOM-1-N8, E01-ML01DP5, E07-900M10S, SAM-M10Q-00B and Molex 104031-0811 as exact parts;
-- removes the provisional RX5808, LoRa breakout, GPS breakout and microSD breakout;
-- excludes TinyML, direction finding and active countermeasures from hardware claims;
-- uses a single JSON contract for firmware pins, exact parts and mechanical datums;
-- co-designs a new enclosure from the routed PCB assembly rather than inheriting Rev B dimensions.
+- uses `ESP32-S3-WROOM-1-N16R8`, `E28-2G4M12SX`, `E07-900M10S`,
+  `SAM-M10Q-00B`, and Molex `104031-0811` as exact production-intended parts;
+- admits only the drawing-qualified `RX5808-2012-12P` envelope and requires
+  incoming electrical/mechanical qualification before assembly;
+- removes LoRa, GPS, microSD, and OLED development breakouts;
+- excludes TinyML, direction finding, and active countermeasures from hardware
+  claims;
+- uses a single JSON contract for firmware pins, exact parts, assembly items,
+  and mechanical datums;
+- co-designs a new enclosure from the routed PCBA, protected battery, display,
+  antenna, harness, connector, and fastener envelopes rather than inheriting
+  Rev B dimensions.
 
 ## Consequences
 
-Rev B boards, enclosure parts and firmware pin maps are incompatible with Rev C. The public release remains v0.6.1 software plus historical Rev A/Rev B hardware until Rev C reaches `READY_FOR_PROTOTYPE`; no Rev C manufacturing package is published before that gate. Actual prototype assembly and bench testing remain required after all CAD gates pass.
+Rev B boards, enclosure parts, and firmware pin maps are incompatible with Rev
+C. Rev C now has a first-prototype-only fabrication package after reproducible
+ERC, DRC, firmware-build, export, and CAD gates. That package does not advance
+the design beyond `READY_FOR_FIRST_PROTOTYPE`; actual assembly, bring-up, RF and
+power characterization, tolerance checks, and serviceability tests remain
+mandatory.

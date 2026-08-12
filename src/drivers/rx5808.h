@@ -22,7 +22,14 @@ struct RX5808Channel {
 };
 
 class RX5808Driver {
+public:
+    enum ControlMode {
+        RTC6715_SERIAL,
+        THREE_BIT_STRAP,
+    };
+
 private:
+    ControlMode controlMode;
     uint8_t dataPin;
     uint8_t clockPin;
     uint8_t selectPin;
@@ -30,11 +37,14 @@ private:
     uint8_t currentBand;
     uint8_t currentChannel;
     bool initialized;
+    bool scanStarted;
     
     void writeFrame(uint32_t frame);
     uint16_t getFrequencyForChannel(uint8_t band, uint8_t channel);
     
 public:
+    RX5808Driver(ControlMode mode, uint8_t pin1, uint8_t pin2,
+                 uint8_t pin3, uint8_t rssiAnalogPin);
     RX5808Driver(uint8_t dataPin, uint8_t clockPin, uint8_t selectPin,
                  uint8_t rssiAnalogPin);
     // Legacy Rev A compatibility: begin() fails explicitly because its
@@ -46,6 +56,9 @@ public:
     void setFrequency(uint16_t frequencyMHz);
     
     int readRSSI(); // Returns 0-100 percentage
+    // Strap mode sweeps the eight manufacturer-defined Band-E channels;
+    // modified serial modules retain the legacy 40-channel sweep.
+    int scanNextChannel();
     int readRSSIRaw(); // Returns raw ADC value (0-4095)
     
     void scanBand(uint8_t band, int* rssiValues);

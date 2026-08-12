@@ -18,11 +18,11 @@ Use only the files in [`manufacturing/`](manufacturing/). Send the fabricator:
 - `bom_fitted.csv` and `positions.csv` for assembly;
 - `assembly_drawing.pdf` and `schematic.pdf` for review.
 
-Specify 120 × 85 mm, four-layer FR-4, 1.6 mm finished thickness, ENIG, 35 µm
+Specify 150 × 95 mm, four-layer FR-4, 1.6 mm finished thickness, ENIG, 35 µm
 finished copper, minimum 0.20 mm spacing, minimum 0.20 mm finished drill, and the
 stackup documented in [`README.md`](README.md). Require the fabricator to
-field-solve the USB 90 Ω differential pair and J5 50 Ω launch against its actual
-materials. Any geometry change requires a new DRC and impedance review.
+field-solve the USB 90 Ω differential pair and the J5/J7 50 Ω launches against
+its actual materials. Any geometry change requires new DRC and impedance review.
 
 Do not substitute major parts by package appearance. Check every quoted MPN
 against `bom_fitted.csv`. `bom.csv` also contains intentional DNP parts and is
@@ -31,19 +31,22 @@ not the assembly order list. Choose exactly one regional J5 antenna from
 
 ## Assembly order
 
-1. Inspect bare-board dimensions, layer count, finish, castellations/edge launch,
-   USB connector edge, microSD opening, and all four Ø3.2 mm mounting holes.
+1. Inspect bare-board dimensions, layer count, finish, edge launches, USB
+   connector edge, microSD opening, and all four Ø3.2 mm mounting holes.
 2. Assemble bottom-side SMT parts first, then top-side SMT parts. Follow the
    component rotations in `positions.csv`; do not infer pin 1 from renderings.
-3. Inspect the AP63203 regulator loop, USBLC6-2SC6 orientation, SAM-M10Q pad
-   wetting, E07-900M10S castellations, microSD socket coplanarity, USB-C shell
-   joints, and J5 ground tabs under magnification.
-4. Fit through-hole components. Keep the E01-ML01DP5 module square and within
-   its courtyard so its SMA connector aligns with the right-wall opening.
-5. Leave the microSD card, OLED harness, RF antennas, and enclosure disconnected
-   for initial power tests.
-6. Clean flux only with materials approved for the fitted components and socket.
-   Dry completely before resistance tests.
+3. Inspect the BQ24074, TPS61232, and AP63203 power loops; USBLC6-2SC6
+   orientation; SAM-M10Q center pad; E28/E07/RX5808 castellations; microSD socket
+   coplanarity; USB-C shell joints; and J5/J7 ground tabs under magnification.
+4. Reject any RX5808 module that is not the documented 12-pad
+   28 × 23 × 3 mm pattern. Record its supplier, lot, markings, dimensions, and
+   pin-to-function continuity before fitting it.
+5. Fit remaining board-edge and connector hardware without forcing alignment.
+   J5 and J7 must remain coplanar with their intended enclosure openings.
+6. Leave the battery, microSD card, OLED harness, internal U.FL antenna, external
+   SMA antennas, and enclosure disconnected for initial power tests.
+7. Clean flux only with materials approved for the fitted components and
+   sockets. Dry completely before resistance tests.
 
 ## Unpowered checks
 
@@ -71,7 +74,7 @@ Record all values in the prototype checklist.
    TP1, TP2, regulator switch-node behavior, input current, and regulator/module
    temperatures after 60 s.
 4. Raise the limit to 1.5 A only when firmware starts exercising radios, GNSS,
-   SD, display, and alerts. Rev C's calculated peak is 1.05 A; unexpected
+   SD, display, and alerts. Rev C's calculated peak is 1.35 A; unexpected
    sustained current or regulator temperature must be investigated, not
    normalized in documentation.
 5. Capture 3V3 ripple and transient droop at TP2 while each high-current module
@@ -104,33 +107,75 @@ Perform one function at a time before combined operation.
   file, remove/reinsert ten times, and confirm the card clears the case opening.
 - **GNSS:** use open sky, log time to first fix, NMEA validity, reported antenna
   status if available, and TIMEPULSE at TP/MCU input.
-- **2.4 GHz module:** attach `ANT-2.4-CW-HWR-SMA` before any transmit test.
-  Verify register identity and RPD response with a controlled signal source.
-  RPD is one-bit energy indication, not RSSI or protocol identification.
-- **855–925 MHz module:** fit the antenna variant for the configured legal band.
-  Verify CC1101 register identity, channel tuning, RSSI response, and spurious
-  behavior with shielded/attenuated equipment. Do not command 433 MHz.
+- **2.4 GHz module:** attach Adafruit PID 2308 directly to the E28 module's
+  onboard IPEX/U.FL connector before an RF response test.
+  Verify E28/SX1281 register identity, configured frequencies, and instantaneous
+  RSSI response at multiple controlled levels. RSSI is energy, not protocol or
+  transmitter identity.
+- **855–925 MHz module:** fit the exact regional J5 antenna from
+  `assembly_items.csv`. Verify CC1101 register identity, channel tuning, RSSI
+  response, and spurious behavior with shielded/attenuated equipment. Do not
+  command 433 MHz.
+- **5.8 GHz module:** fit Taoglas `TG.59.0113` to J7. Verify the RX5808
+  three-bit channel truth table, all eight expected frequencies
+  (5645–5945 MHz), analog RSSI monotonicity, noise floor, and adjacent-channel
+  behavior with a controlled attenuated source.
 - **Wi-Fi/BLE:** verify receive/web functions without claiming Remote ID
   conformance. Standards conformance requires separate captured-frame tests.
 
+## Battery and power-path checks
+
+Do these only after USB-only bring-up is stable.
+
+1. Verify the battery pack label, protection circuit, JST-PH housing orientation,
+   and polarity against Adafruit PID 328 before insertion. Reverse polarity is a
+   stop condition.
+2. With USB absent, connect the protected pack and verify BQ24074 power-path
+   startup, 5 V boost, 3.3 V rail, quiescent current, and firmware fuel-gauge
+   reading. Do not infer state of charge from voltage alone.
+3. Apply USB through a current-limited fixture. Record input current, charge
+   current, pack voltage, system-rail droop, and temperatures at the beginning,
+   middle, and charge termination. Confirm the configured 800 mA charge current
+   and 1.3 A input limit are not exceeded within measurement tolerance.
+4. Remove and restore USB under representative system load. Confirm the system
+   transfers between USB and battery without reset or rail excursion outside the
+   allowed range.
+5. Stop on swelling, pack heating, connector heating, unstable switching, or
+   charging behavior inconsistent with the BQ24074 configuration.
+
 ## Enclosure assembly
 
-1. Print base, lid, and three button plungers from the checked-in STLs. Start with
-   PETG, 0.20 mm layers, four perimeters, and 30% infill. Deburr openings without
-   changing functional dimensions.
+1. Print base, lid, and three button plungers from the checked-in STLs. Start
+   with PETG, 0.20 mm layers, four perimeters, and 30% infill. Deburr openings
+   without changing functional dimensions.
 2. Check four DIN 934 M3 nuts fit the traps without splitting the base. Install
    them before the PCB.
 3. Confirm the bare PCB lowers onto all four supports without force and every
-   connector lines up. Remove it before installing electronics if this fit fails.
-4. Fit the PCBA, route the RF1 antenna body through the right opening, and check
-   J5, USB-C, and microSD service access.
-5. Snap Adafruit PID 326 into the lid cradle, connect the PID 4210 cable, and
-   dress the cable so it cannot touch the antenna regions or be pinched.
-6. Insert the three plungers from the outside. Confirm each returns freely and
+   connector aligns. Remove it before installing electronics if this fit fails.
+4. Place the protected PID 328 battery in the lower bay with the lead toward J6.
+   Confirm 0.5 mm modeled floor clearance, free lead bend, no screw/nut contact,
+   and no preload before fitting the PCBA.
+5. Fit the PCBA. Connect Adafruit PID 2308 directly to the E28 module's onboard
+   IPEX/U.FL connector and attach its 40 × 8 mm element to the marked
+   underside-lid location. Dress the cable along the checked route; do not kink
+   it, cross an RF keepout, or load the connector.
+6. Snap Adafruit PID 326 into the lid cradle and connect the PID 4210 cable.
+   Dress both 100 mm cables only within the checked service-loop corridors. The
+   antenna route uses 94.96 mm closed / 90.62 mm at 30 mm lid opening
+   (5.04 / 9.38 mm slack); the OLED route uses 92.60 / 89.14 mm
+   (7.40 / 10.86 mm slack). Keep each loop outside antenna keepouts, button
+   travel, fasteners, and connector openings.
+7. Insert the three plungers from the outside. Confirm each returns freely and
    operates only its corresponding switch.
-7. Lower the lid vertically while monitoring the OLED cable. Install four DIN
-   912 M3 × 20 screws gradually in a diagonal pattern. Tighten only enough to
-   seat the lid; printed plastic is not a torque-qualified joint.
-8. Repeat USB insertion, card removal, button operation, LED visibility, and RF
-   connector access in the closed enclosure. Record any file modification needed
-   for fit; do not hand-correct a print and then call the CAD validated.
+8. Lower the lid vertically while watching the battery, OLED, and antenna
+   cables. Install four DIN 912 M3 × 30 screws gradually in a diagonal pattern.
+   Tighten only enough to seat the lid; printed plastic is not a
+   torque-qualified joint.
+9. Fit exactly one regional J5 antenna
+   (`ANT-868-CW-HWR-SMA` or `ANT-916-CW-HWR-SMA`) and Taoglas `TG.59.0113` to
+   J7 from outside. Confirm both hinged bodies rotate without striking the case
+   or blocking USB-C/microSD access.
+10. Repeat USB insertion, card removal, button operation, LED visibility, lid
+    opening by 30 mm, battery removal, and RF connector access. Record any CAD
+    or print modification needed for fit; do not hand-correct a print and then
+    call the checked CAD valid.

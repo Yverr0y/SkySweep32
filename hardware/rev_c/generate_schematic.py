@@ -35,6 +35,9 @@ def apply_dnp_flags(path: Path, references: set[str]) -> None:
         raise RuntimeError(f"could not apply native DNP flags: {', '.join(sorted(missing))}")
     path.write_text(separator.join(chunks), encoding="utf-8")
 
+
+
+
 def generate() -> None:
     dnp_references: set[str] = set()
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -96,6 +99,7 @@ def generate() -> None:
         sch.no_connects.add(pin_position(ref, pin))
 
     capacitor_parts = {
+        ("10n", "Capacitor_SMD:C_0603_1608Metric"): ("Murata", "GRM188R71H103KA01D"),
         ("100n", "Capacitor_SMD:C_0603_1608Metric"): ("Murata", "GRM188R71E104KA01D"),
         ("1u", "Capacitor_SMD:C_0603_1608Metric"): ("Murata", "GRM188R61A105KA61D"),
         ("10u", "Capacitor_SMD:C_0805_2012Metric"): ("Murata", "GRM21BR61A106KE19L"),
@@ -107,8 +111,14 @@ def generate() -> None:
         "22R": "RC0603FR-0722RL",
         "100R": "RC0603FR-07100RL",
         "1k": "RC0603FR-071KL",
+        "1.13k": "RC0603FR-071K13L",
+        "1.18k": "RC0603FR-071K18L",
+        "1.5k": "RC0603FR-071K5L",
+        "4.12k": "RC0603FR-074K12L",
+        "4.7k": "RC0603FR-074K7L",
         "5.1k": "RC0603FR-075K1L",
         "10k": "RC0603FR-0710KL",
+        "46.4k": "RC0603FR-0746K4L",
         "47k": "RC0603FR-0747KL",
         "100k": "RC0603FR-07100KL",
     }
@@ -154,7 +164,7 @@ def generate() -> None:
 
     # Sheet annotations establish a readable functional hierarchy without
     # introducing duplicated cross-sheet power and interface definitions.
-    sch.add_text("USB-C INPUT, PROTECTION AND 3.3 V POWER", position=(35, 25), size=1.6)
+    sch.add_text("USB-C, PROTECTED BATTERY, POWER PATH AND REGULATORS", position=(35, 25), size=1.6)
     sch.add_text("ESP32-S3 CONTROL, PROGRAMMING AND USER I/O", position=(105, 25), size=1.6)
     sch.add_text("PASSIVE RF RECEIVERS", position=(35, 125), size=1.6)
     sch.add_text("GNSS, STORAGE AND REMOVABLE DISPLAY", position=(105, 125), size=1.6)
@@ -228,19 +238,144 @@ def generate() -> None:
     add_resistor("R3", "22R", (62, 69), "USB_D_P_ESD", "USB_D_P")
     add_resistor("R4", "22R", (69, 69), "USB_D_N_ESD", "USB_D_N")
 
+    # Protected 1S battery, standalone charger/power path and fuel gauge.
+    component(
+        "Connector_Generic:Conn_01x02",
+        "J6",
+        "BATTERY — ADAFRUIT PID 328",
+        (18, 108),
+        "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
+        mpn="S2B-PH-SM4-TB(LF)(SN)",
+        manufacturer="JST",
+        datasheet=manifest["major_parts"]["BAT1"]["datasheet"],
+    )
+    label("J6", "1", "BAT_CELL")
+    label("J6", "2", "GND")
+    component(
+        "Battery_Management:BQ24074RGT",
+        "U4",
+        "BQ24074RGTR",
+        (38, 108),
+        "Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm",
+        mpn="BQ24074RGTR",
+        manufacturer="Texas Instruments",
+        datasheet="https://www.ti.com/lit/ds/symlink/bq24074.pdf",
+    )
+    label("U4", "1", "BQ_TS")
+    label("U4", "2", "BAT_CELL")
+    label("U4", "3", "BAT_CELL")
+    label("U4", "4", "GND")
+    label("U4", "5", "VSYS_BAT")
+    label("U4", "6", "GND")
+    no_connect("U4", "7")
+    label("U4", "8", "GND")
+    label("U4", "9", "CHG_N")
+    label("U4", "10", "VSYS_BAT")
+    label("U4", "11", "VSYS_BAT")
+    label("U4", "12", "BQ_ILIM")
+    label("U4", "13", "VBUS_PROTECTED")
+    label("U4", "14", "BQ_TMR")
+    label("U4", "15", "BQ_ITERM")
+    label("U4", "16", "BQ_ISET")
+    label("U4", "17", "GND")
+    add_resistor("R20", "10k", (19, 118), "BQ_TS", "GND")
+    add_resistor("R21", "46.4k", (26, 118), "BQ_TMR", "GND")
+    add_resistor("R22", "1.13k", (33, 118), "BQ_ISET", "GND")
+    add_resistor("R23", "1.18k", (40, 118), "BQ_ILIM", "GND")
+    add_resistor("R24", "4.12k", (47, 118), "BQ_ITERM", "GND")
+    add_cap("C17", "10u", (54, 118), "VBUS_PROTECTED", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C18", "10u", (61, 118), "BAT_CELL", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C19", "10u", (68, 118), "VSYS_BAT", "Capacitor_SMD:C_1206_3216Metric")
+    component("Device:LED", "D5", "CHARGE", (56, 102), "LED_SMD:LED_0603_1608Metric", mpn="APT1608LZGCK", manufacturer="Kingbright")
+    label("D5", "1", "CHG_N")
+    label("D5", "2", "CHG_LED_A")
+    add_resistor("R25", "1.5k", (64, 102), "VSYS_BAT", "CHG_LED_A")
+
+    component(
+        "Connector_Generic:Conn_01x09",
+        "U6",
+        "MAX17048G+T10",
+        (77, 111),
+        "Package_DFN_QFN:DFN-8-1EP_2x2mm_P0.5mm_EP0.9x1.3mm",
+        mpn="MAX17048G+T10",
+        manufacturer="Analog Devices",
+        datasheet="https://www.analog.com/media/en/technical-documentation/data-sheets/MAX17048-MAX17049.pdf",
+    )
+    for pin in ("1", "4", "6", "9"):
+        label("U6", pin, "GND")
+    for pin in ("2", "3"):
+        label("U6", pin, "BAT_CELL")
+    no_connect("U6", "5")
+    label("U6", "7", "I2C_SCL")
+    label("U6", "8", "I2C_SDA")
+    add_cap("C29", "100n", (86, 118), "BAT_CELL")
+    add_resistor("R26", "4.7k", (91, 118), "3V3", "I2C_SDA")
+    add_resistor("R27", "4.7k", (98, 118), "3V3", "I2C_SCL")
+
+    # Battery/system power switch controls the boost enable. The charger and
+    # protected battery remain connected while the switched rails are off.
+    component(
+        "Switch:SW_SPDT",
+        "SW4",
+        "SYSTEM POWER",
+        (76, 92),
+        "Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q",
+        mpn="OS102011MA1QN1",
+        manufacturer="C&K",
+    )
+    label("SW4", "1", "GND")
+    label("SW4", "2", "BOOST_EN")
+    label("SW4", "3", "VSYS_BAT")
+    component(
+        "Regulator_Switching:TPS61230DRC",
+        "U5",
+        "TPS61232DRCR",
+        (88, 92),
+        "Package_SON:Texas_S-PVSON-N10_ThermalVias",
+        mpn="TPS61232DRCR",
+        manufacturer="Texas Instruments",
+        datasheet="https://www.ti.com/lit/ds/symlink/tps61232.pdf",
+    )
+    label("U5", "1", "BOOST_SW")
+    label("U5", "2", "BOOST_SW")
+    label("U5", "3", "SYS_5V")
+    label("U5", "4", "SYS_5V")
+    no_connect("U5", "5")
+    no_connect("U5", "6")
+    label("U5", "7", "SYS_5V")
+    no_connect("U5", "8")
+    label("U5", "9", "BOOST_EN")
+    label("U5", "10", "VSYS_BAT")
+    label("U5", "11", "GND")
+    component(
+        "Device:L",
+        "L2",
+        "1uH SRN6028C-1R0Y",
+        (101, 86),
+        "Inductor_SMD:L_Bourns-SRN6028",
+        mpn="SRN6028C-1R0Y",
+        manufacturer="Bourns",
+    )
+    label("L2", "1", "VSYS_BAT")
+    label("L2", "2", "BOOST_SW")
+    add_cap("C20", "22u", (106, 113), "VSYS_BAT", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C21", "22u", (113, 113), "SYS_5V", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C22", "22u", (120, 113), "SYS_5V", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C23", "22u", (127, 113), "SYS_5V", "Capacitor_SMD:C_1206_3216Metric")
+
     component(
         "Regulator_Switching:AP63203WU",
         "U3",
         "AP63203WU-7",
-        (45, 101),
+        (112, 101),
         "Package_TO_SOT_SMD:TSOT-23-6",
         mpn="AP63203WU-7",
         manufacturer="Diodes Incorporated",
         datasheet="https://www.diodes.com/assets/Datasheets/AP63200-AP63201-AP63203-AP63205.pdf",
     )
     label("U3", "1", "3V3")
-    label("U3", "2", "VBUS_PROTECTED")
-    label("U3", "3", "VBUS_PROTECTED")
+    label("U3", "2", "SYS_5V")
+    label("U3", "3", "SYS_5V")
     label("U3", "4", "GND")
     label("U3", "5", "BUCK_SW")
     label("U3", "6", "BUCK_BST")
@@ -248,21 +383,21 @@ def generate() -> None:
         "Device:L",
         "L1",
         "3.9uH SRN6028-3R9M",
-        (60, 94),
+        (127, 94),
         "Inductor_SMD:L_Bourns-SRN6028",
         mpn="SRN6028-3R9M",
         manufacturer="Bourns",
     )
     label("L1", "1", "BUCK_SW")
     label("L1", "2", "3V3")
-    component("Device:C", "C2", "100n", (60, 108), "Capacitor_SMD:C_0603_1608Metric", manufacturer="Murata", mpn="GRM188R71E104KA01D")
+    component("Device:C", "C2", "100n", (127, 108), "Capacitor_SMD:C_0603_1608Metric", manufacturer="Murata", mpn="GRM188R71E104KA01D")
     label("C2", "1", "BUCK_BST")
     label("C2", "2", "BUCK_SW")
-    add_cap("C3", "22u", (69, 97), "3V3", "Capacitor_SMD:C_1206_3216Metric")
-    add_cap("C4", "22u", (76, 97), "3V3", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C3", "22u", (136, 97), "3V3", "Capacitor_SMD:C_1206_3216Metric")
+    add_cap("C4", "22u", (143, 97), "3V3", "Capacitor_SMD:C_1206_3216Metric")
 
-    # ERC power-source declarations are explicit and intentionally limited to
-    # the protected USB rail and regulated rail.
+    # ERC power-source declarations identify the protected input, switched
+    # system supply, regulated rail and common return.
     component("power:PWR_FLAG", "#FLG01", "PWR_FLAG", (63, 34), "")
     label("#FLG01", "1", "VBUS_PROTECTED")
     component("power:PWR_FLAG", "#FLG02", "PWR_FLAG", (69, 34), "")
@@ -286,23 +421,29 @@ def generate() -> None:
     label("U1", "2", "3V3")
     label("U1", "3", "MCU_EN")
     label("U1", "4", "SD_DETECT")
+    label("U1", "5", "RX5808_RSSI_ADC")
+    label("U1", "6", "RX5808_CH1")
+    label("U1", "7", "RX5808_CH2")
     label("U1", "8", "CC1101_GDO0")
     label("U1", "9", "CC1101_GDO2")
-    label("U1", "12", "NRF24_CE")
+    label("U1", "10", "SX1281_RESET")
+    label("U1", "11", "SX1281_DIO1")
+    label("U1", "12", "SX1281_BUSY")
     label("U1", "13", "USB_D_N")
     label("U1", "14", "USB_D_P")
-    label("U1", "17", "NRF24_CSN")
+    label("U1", "17", "SX1281_CSN")
     label("U1", "18", "CC1101_CSN")
     label("U1", "19", "RF_SPI_MOSI")
     label("U1", "20", "RF_SPI_SCK")
     label("U1", "21", "RF_SPI_MISO")
+    label("U1", "22", "RX5808_CH3")
     label("U1", "23", "GPS_PPS")
     label("U1", "24", "GPS_RX")
     label("U1", "25", "GPS_TX")
     label("U1", "27", "BOOT_N")
-    label("U1", "28", "SD_SPI_MOSI")
-    label("U1", "29", "SD_SPI_SCK")
-    label("U1", "30", "SD_SPI_MISO")
+    no_connect("U1", "28")
+    no_connect("U1", "29")
+    no_connect("U1", "30")
     label("U1", "31", "SD_CSN")
     label("U1", "32", "ALERT_BUZZER_GATE")
     label("U1", "33", "ALERT_LED")
@@ -312,7 +453,7 @@ def generate() -> None:
     label("U1", "37", "UART0_TX")
     label("U1", "38", "I2C_SCL")
     label("U1", "39", "I2C_SDA")
-    for pin in ("5", "6", "7", "10", "11", "15", "16", "22", "26"):
+    for pin in ("15", "16", "26"):
         no_connect("U1", pin)
 
     add_cap("C5", "10u", (93, 106), "3V3", "Capacitor_SMD:C_0805_2012Metric")
@@ -337,6 +478,9 @@ def generate() -> None:
         ("TP3", "GND", (107, 116)),
         ("TP4", "UART0_TX", (115, 116)),
         ("TP5", "UART0_RX", (123, 116)),
+        ("TP6", "BAT_CELL", (131, 116)),
+        ("TP7", "SYS_5V", (139, 116)),
+        ("TP8", "RX5808_RSSI_ADC", (147, 116)),
     ):
         component("Connector:TestPoint", ref, net, pos, "TestPoint:TestPoint_Pad_D1.0mm", dnp=True)
         label(ref, "1", net)
@@ -344,20 +488,24 @@ def generate() -> None:
     # Exact passive RF modules. Connector symbols expose every manufacturer pad
     # number; footprints encode the physical land patterns.
     component(
-        "Connector_Generic:Conn_01x08",
+        "Connector_Generic:Conn_02x07_Odd_Even",
         "RF1",
-        "E01-ML01DP5",
+        "E28-2G4M12SX",
         (32, 158),
-        "SkySweep32RevC:Module_Ebyte_E01_ML01DP5",
-        mpn="E01-ML01DP5",
+        "SkySweep32RevC:Module_Ebyte_E28_2G4M12SX",
+        mpn="E28-2G4M12SX",
         manufacturer="Chengdu Ebyte Electronic Technology",
+        datasheet=manifest["major_parts"]["RF1"]["datasheet"],
     )
     for pin, net in {
-        "1": "GND", "2": "3V3", "3": "NRF24_CE", "4": "NRF24_CSN",
-        "5": "RF_SPI_SCK", "6": "RF_SPI_MOSI", "7": "RF_SPI_MISO",
+        "1": "3V3", "2": "GND", "3": "RF_SPI_MISO", "4": "RF_SPI_MOSI",
+        "5": "RF_SPI_SCK", "6": "SX1281_CSN", "7": "GND", "8": "GND",
+        "9": "SX1281_RESET", "10": "SX1281_BUSY", "11": "SX1281_DIO1",
+        "14": "GND",
     }.items():
         label("RF1", pin, net)
-    no_connect("RF1", "8")
+    no_connect("RF1", "12")
+    no_connect("RF1", "13")
     add_cap("C8", "10u", (17, 183), "3V3", "Capacitor_SMD:C_0805_2012Metric")
     add_cap("C9", "100n", (24, 183), "3V3")
 
@@ -396,6 +544,56 @@ def generate() -> None:
     add_cap("C10", "10u", (80, 183), "3V3", "Capacitor_SMD:C_0805_2012Metric")
     add_cap("C11", "100n", (87, 183), "3V3")
 
+    component(
+        "Connector_Generic:Conn_02x06_Odd_Even",
+        "RF3",
+        "RX5808-2012-12P",
+        (92, 158),
+        "SkySweep32RevC:Module_RX5808_2012_12P",
+        mpn="RX5808-2012-12P",
+        manufacturer="Multi-source legacy module",
+        datasheet=manifest["major_parts"]["RF3"]["datasheet"],
+    )
+    for pin, net in {
+        "1": "GND", "2": "RX5808_RF_IN", "3": "GND",
+        "4": "RX5808_CH1", "5": "RX5808_CH2", "6": "RX5808_CH3",
+        "7": "GND", "8": "SYS_5V", "9": "RX5808_RSSI_RAW",
+        "12": "GND",
+    }.items():
+        label("RF3", pin, net)
+    no_connect("RF3", "10")
+    no_connect("RF3", "11")
+    component(
+        "Connector:Conn_Coaxial",
+        "J7",
+        "5.8-GHZ SMA",
+        (105, 140),
+        "Connector_Coaxial:SMA_Amphenol_132289_EdgeMount",
+        mpn="132289",
+        manufacturer="Amphenol RF",
+        datasheet="https://www.amphenolrf.com/library/download/link/link_id/595984/parent/132289/",
+    )
+    label("J7", "1", "RX5808_RF_IN")
+    label("J7", "2", "GND")
+    add_resistor("R28", "100k", (92, 183), "RX5808_CH1", "GND")
+    add_resistor("R29", "100k", (99, 183), "RX5808_CH2", "GND")
+    add_resistor("R30", "100k", (106, 183), "RX5808_CH3", "GND")
+    add_resistor("R31", "1k", (113, 183), "RX5808_RSSI_RAW", "RX5808_RSSI_ADC")
+    add_cap("C30", "10n", (120, 183), "RX5808_RSSI_ADC")
+    add_cap("C24", "100n", (127, 183), "SYS_5V")
+    add_cap("C25", "10u", (134, 183), "SYS_5V", "Capacitor_SMD:C_0805_2012Metric")
+    component(
+        "Device:C_Polarized",
+        "C26",
+        "470u 10V",
+        (141, 183),
+        "Capacitor_SMD:CP_Elec_10x10",
+        mpn="EEE-FK1A471P",
+        manufacturer="Panasonic",
+    )
+    label("C26", "1", "SYS_5V")
+    label("C26", "2", "GND")
+
     # GNSS with the exact 20-pad u-blox pin contract.
     component(
         "Connector_Generic:Conn_02x10_Odd_Even",
@@ -433,8 +631,8 @@ def generate() -> None:
         manufacturer="Molex",
     )
     sd_nets = {
-        "1": "SD_DAT2", "2": "SD_CSN", "3": "SD_SPI_MOSI", "4": "3V3",
-        "5": "SD_SPI_SCK", "6": "GND", "7": "SD_SPI_MISO", "8": "SD_DAT1",
+        "1": "SD_DAT2", "2": "SD_CSN", "3": "RF_SPI_MOSI", "4": "3V3",
+        "5": "RF_SPI_SCK", "6": "GND", "7": "RF_SPI_MISO", "8": "SD_DAT1",
         "9": "SD_DETECT", "10": "GND", "SH": "GND",
     }
     for pin, net in sd_nets.items():
@@ -498,7 +696,7 @@ def generate() -> None:
         manufacturer="JST",
         dnp=True,
     )
-    label("J4", "1", "VBUS_PROTECTED")
+    label("J4", "1", "SYS_5V")
     label("J4", "2", "VIBRATION_DRAIN")
     component("Transistor_FET:Q_NMOS_GSD", "Q2", "AO3400A", (183, 99), "Package_TO_SOT_SMD:SOT-23", mpn="AO3400A", manufacturer="Alpha & Omega Semiconductor", dnp=True)
     label("Q2", "1", "VIBRATION_GATE_R")
@@ -508,7 +706,7 @@ def generate() -> None:
     add_resistor("R19", "100k", (174, 111), "VIBRATION_GATE_R", "GND", dnp=True)
     component("Device:D", "D4", "PMEG3020EP", (190, 91), "Diode_SMD:D_SOD-128", mpn="PMEG3020EP,115", manufacturer="Nexperia", dnp=True)
     label("D4", "1", "VIBRATION_DRAIN")
-    label("D4", "2", "VBUS_PROTECTED")
+    label("D4", "2", "SYS_5V")
 
     # Project metadata used in title block and BOM review.
     sch.set_title_block(

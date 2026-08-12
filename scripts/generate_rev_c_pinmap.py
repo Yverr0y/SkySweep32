@@ -46,8 +46,12 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
 
     if design.get("revision") != "C" or design.get("orderable") is not False:
         raise ManifestError("Rev C must remain a non-orderable revision-C design")
-    if mcu.get("mpn") != "ESP32-S3-WROOM-1-N8" or mcu.get("psram_mb") != 0:
-        raise ManifestError("Rev C requires ESP32-S3-WROOM-1-N8 without PSRAM")
+    if (
+        mcu.get("mpn") != "ESP32-S3-WROOM-1-N16R8"
+        or mcu.get("flash_mb") != 16
+        or mcu.get("psram_mb") != 8
+    ):
+        raise ManifestError("Rev C requires ESP32-S3-WROOM-1-N16R8 (16 MB flash, 8 MB octal PSRAM)")
     if firmware.get("board_macro") != "BOARD_SKYSWEEP32_REV_C":
         raise ManifestError("unexpected Rev C board macro")
     if firmware.get("profile_macro") != "PROFILE_PASSIVE_MONITOR":
@@ -85,8 +89,10 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         raise ManifestError(f"peripheral signals use reserved GPIOs: {sorted(collisions)}")
 
     expected_features = {
-        "MODULE_NRF24",
+        "MODULE_SX1281",
         "MODULE_CC1101",
+        "MODULE_RX5808",
+        "MODULE_BATTERY_GAUGE",
         "MODULE_OLED",
         "MODULE_WEB_SERVER",
         "MODULE_REMOTE_ID",
@@ -96,7 +102,7 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
     }
     if set(firmware.get("features", [])) != expected_features:
         raise ManifestError("Rev C feature set differs from the reviewed passive profile")
-    forbidden_features = {"MODULE_RX5808", "MODULE_LORA", "MODULE_ML", "ENABLE_COUNTERMEASURES"}
+    forbidden_features = {"MODULE_NRF24", "MODULE_LORA", "MODULE_ML", "ENABLE_COUNTERMEASURES"}
     if forbidden_features & set(firmware.get("features", [])):
         raise ManifestError("Rev C contains a forbidden or unsupported feature")
 
@@ -119,6 +125,13 @@ def render_header(manifest: dict[str, Any], manifest_path: Path) -> str:
             lines.append(f"#define {macro:<22} {signal['gpio']:<2} // {name}")
     lines.extend(
         [
+            "#define PIN_SD_MOSI           PIN_SPI_MOSI // shared SPI data",
+            "#define PIN_SD_MISO           PIN_SPI_MISO // shared SPI data",
+            "#define PIN_SD_SCK            PIN_SPI_SCK  // shared SPI clock",
+        ]
+    )
+    lines.extend(
+        [
             "",
             "#define GPS_BAUD_RATE          9600",
             "#define GPS_UPDATE_INTERVAL    1000",
@@ -126,8 +139,8 @@ def render_header(manifest: dict[str, Any], manifest_path: Path) -> str:
             "#if defined(TIER_JUGGERNAUT) || defined(ENABLE_COUNTERMEASURES)",
             '#error "Rev C is passive-only and has no countermeasure hardware"',
             "#endif",
-            "#if defined(MODULE_RX5808) || defined(MODULE_LORA) || defined(MODULE_ML)",
-            '#error "Rev C does not implement RX5808, LoRa, or TinyML hardware/features"',
+            "#if defined(MODULE_NRF24) || defined(MODULE_LORA) || defined(MODULE_ML)",
+            '#error "Rev C does not implement nRF24L01+, LoRa, or TinyML hardware/features"',
             "#endif",
             "#ifdef MODULE_ACOUSTIC",
             '#error "Rev C does not route an I2S acoustic input"',

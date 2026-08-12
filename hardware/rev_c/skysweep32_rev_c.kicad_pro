@@ -70,7 +70,12 @@
         }
       },
       "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        [
+          "footprint_type_mismatch|52000000|69000000|e210886d-8d41-4f15-ab61-554c52d94c95|00000000-0000-0000-0000-000000000000",
+          "TPS61232 is an SMD device; its exposed-pad thermal vias intentionally mix plated through-hole and SMD pads."
+        ]
+      ],
       "meta": {
         "version": 2
       },
@@ -88,10 +93,10 @@
         "duplicate_footprints": "warning",
         "extra_footprint": "warning",
         "footprint": "error",
-        "footprint_filters_mismatch": "ignore",
+        "footprint_filters_mismatch": "warning",
         "footprint_symbol_field_mismatch": "warning",
         "footprint_symbol_mismatch": "warning",
-        "footprint_type_mismatch": "ignore",
+        "footprint_type_mismatch": "warning",
         "hole_clearance": "error",
         "hole_to_hole": "warning",
         "holes_co_located": "warning",
@@ -105,7 +110,7 @@
         "malformed_courtyard": "error",
         "microvia_drill_out_of_range": "error",
         "mirrored_text_on_front_layer": "warning",
-        "missing_courtyard": "ignore",
+        "missing_courtyard": "warning",
         "missing_footprint": "warning",
         "missing_tuning_profile": "warning",
         "net_conflict": "warning",
@@ -127,12 +132,12 @@
         "too_many_vias": "error",
         "track_angle": "error",
         "track_dangling": "warning",
-        "track_not_centered_on_via": "ignore",
+        "track_not_centered_on_via": "warning",
         "track_on_post_machined_layer": "error",
         "track_segment_length": "error",
         "track_width": "error",
         "tracks_crossing": "error",
-        "tuning_profile_track_geometries": "ignore",
+        "tuning_profile_track_geometries": "warning",
         "unconnected_items": "error",
         "unresolved_variable": "error",
         "via_dangling": "warning",
@@ -259,6 +264,48 @@
   "cvpcb": {
     "equivalence_files": []
   },
+  "erc": {
+    "erc_exclusions": [
+      [
+        "footprint_filter|177800|1079500|09f71a94-25b4-4cf5-9a39-1e86e6883c14|00000000-0000-0000-0000-000000000000|||",
+        "J6 uses the reviewed side-entry JST PH footprint; the stock generic connector filter only matches underscore-prefixed connector names."
+      ],
+      [
+        "footprint_filter|317500|1574800|71b9e97c-9462-4cec-8649-a363dd93e033|00000000-0000-0000-0000-000000000000|||",
+        "RF1 uses the exact E28-2G4M12SX module footprint; the stock generic 2x07 connector filter is intentionally narrower."
+      ],
+      [
+        "footprint_filter|393700|406400|db6c220f-0d40-4a39-8e24-31b7d2fdb77d|00000000-0000-0000-0000-000000000000|||",
+        "F1 uses KiCad's standard 1812 fuse footprint for the reviewed Bourns MF-MSMF200-2; the stock Polyfuse filter omits Fuse:Fuse_*."
+      ],
+      [
+        "footprint_filter|635000|1574800|a613ff61-1af6-45bf-8ef4-fd2af8fc2c9e|00000000-0000-0000-0000-000000000000|||",
+        "RF2 uses the exact E07-900M10S module footprint; the stock generic 2x11 connector filter is intentionally narrower."
+      ],
+      [
+        "footprint_filter|774700|1104900|ceb5c2f6-d638-43a2-97a3-e7bae9566eb9|00000000-0000-0000-0000-000000000000|||",
+        "U6 uses the reviewed MAX17048 TDFN footprint while its nine electrical lands are represented by a generic numbered symbol."
+      ],
+      [
+        "footprint_filter|914400|1574800|91b4b42f-19b7-4821-82b5-aed8acc66710|00000000-0000-0000-0000-000000000000|||",
+        "RF3 uses the procurement-qualified RX5808-2012-12P footprint; the stock generic 2x06 connector filter is intentionally narrower."
+      ],
+      [
+        "footprint_filter|1079500|1574800|03694272-6ebf-4c20-bb4c-97bdcb942eee|00000000-0000-0000-0000-000000000000|||",
+        "GPS1 uses the exact u-blox SAM-M10Q footprint; the stock generic 2x10 connector filter is intentionally narrower."
+      ],
+      [
+        "footprint_filter|1689100|1384300|f1e2b6c9-dc53-4992-9ac3-18e29e45629c|00000000-0000-0000-0000-000000000000|||",
+        "J3 uses the reviewed horizontal JST SH footprint; the stock generic connector filter only matches underscore-prefixed connector names."
+      ]
+    ],
+    "rule_severities": {
+      "four_way_junction": "warning",
+      "footprint_filter": "warning",
+      "simulation_model_issue": "warning",
+      "single_global_label": "warning"
+    }
+  },
   "libraries": {
     "pinned_footprint_libs": [],
     "pinned_symbol_libs": []
@@ -358,6 +405,18 @@
       },
       {
         "netclass": "Power",
+        "pattern": "BAT_CELL"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "VSYS_BAT"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "SYS_5V"
+      },
+      {
+        "netclass": "Power",
         "pattern": "3V3"
       },
       {
@@ -367,6 +426,10 @@
       {
         "netclass": "Power",
         "pattern": "BUCK_BST"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BOOST_SW"
       },
       {
         "netclass": "USB",
@@ -379,6 +442,10 @@
       {
         "netclass": "RF_50R",
         "pattern": "SUBGHZ_ANT"
+      },
+      {
+        "netclass": "RF_50R",
+        "pattern": "RX5808_RF_IN"
       }
     ]
   },

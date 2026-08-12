@@ -14,10 +14,9 @@
 // #define TIER_BASE       // ESP32 + OLED + NRF24L01+ (~$15-20)
 // #define TIER_STANDARD   // Base + CC1101 + RX5808 (~$35-45)
 // #define TIER_PRO        // Standard + GPS + SD + LoRa (~$60-80)
-// #define TIER_JUGGERNAUT // Pro + 4x VCO Jammers (~$100+)
 
 // Default to TIER_STANDARD if nothing defined
-#if !defined(PROFILE_PASSIVE_MONITOR) && !defined(TIER_BASE) && !defined(TIER_STANDARD) && !defined(TIER_PRO) && !defined(TIER_JUGGERNAUT)
+#if !defined(PROFILE_PASSIVE_MONITOR) && !defined(TIER_BASE) && !defined(TIER_STANDARD) && !defined(TIER_PRO)
     #define TIER_STANDARD
 #endif
 
@@ -28,8 +27,10 @@
 // Canonical Rev C passive profile. Keep this list synchronized through the
 // manifest-gated PlatformIO target rather than inheriting legacy release tiers.
 #ifdef PROFILE_PASSIVE_MONITOR
-    #define MODULE_NRF24
+    #define MODULE_SX1281
     #define MODULE_CC1101
+    #define MODULE_RX5808
+    #define MODULE_BATTERY_GAUGE
     #define MODULE_OLED
     #define MODULE_WEB_SERVER
     #define MODULE_REMOTE_ID
@@ -64,8 +65,8 @@
     #endif
 #endif
 
-// --- Tier: Pro & Juggernaut (adds GPS, SD, LoRa) ---
-#if defined(TIER_PRO) || defined(TIER_JUGGERNAUT)
+// --- Tier: Pro (adds GPS, SD, LoRa) ---
+#if defined(TIER_PRO)
     #ifndef MODULE_GPS
         #define MODULE_GPS                // GPS geolocation (NEO-6M/7M)
     #endif
@@ -77,12 +78,6 @@
     #endif
 #endif
 
-// --- Tier: Juggernaut (adds EW) ---
-#if defined(TIER_JUGGERNAUT)
-    #ifndef ENABLE_COUNTERMEASURES
-        #define ENABLE_COUNTERMEASURES    // Enable DAC VCO jamming
-    #endif
-#endif
 
 // --- Optional modules (enable manually in any tier) ---
 // #define MODULE_ACOUSTIC            // MEMS microphone acoustic detection (~$5)
@@ -163,7 +158,7 @@
 #define WEB_SERVER_PORT     80
 
 // ============================================================================
-// RSSI THRESHOLDS (Threat Assessment)
+// NORMALIZED ENERGY/RSSI ACTIVITY THRESHOLDS
 // ============================================================================
 
 #define RSSI_THRESHOLD_LOW          45
@@ -178,7 +173,7 @@
 #define RF_SCAN_INTERVAL_MS         100   // RF polling interval
 #define DISPLAY_UPDATE_INTERVAL_MS  500   // OLED refresh rate
 #define WEB_BROADCAST_INTERVAL_MS   500   // WebSocket update rate
-#define THREAT_TIMEOUT_MS           5000  // Threat clear timeout
+#define ACTIVITY_TIMEOUT_MS         5000  // Activity indicator clear timeout
 #define BLE_SCAN_INTERVAL_MS        5000  // Remote ID BLE scan
 #define REMOTE_ID_CLEANUP_MS        30000 // Remove stale detections
 
@@ -224,7 +219,6 @@
 
 #define TASK_STACK_RF_SCAN      4096
 #define TASK_STACK_PROTOCOL     3072
-#define TASK_STACK_THREAT       3072
 #define TASK_STACK_DISPLAY      2048
 #define TASK_STACK_WEBSERVER    8192
 #define TASK_STACK_REMOTE_ID    4096
@@ -236,7 +230,6 @@
 // Task priorities (higher = more important)
 #define TASK_PRIORITY_RF_SCAN   3
 #define TASK_PRIORITY_PROTOCOL  2
-#define TASK_PRIORITY_THREAT    3
 #define TASK_PRIORITY_DISPLAY   1
 #define TASK_PRIORITY_WEBSERVER 2
 #define TASK_PRIORITY_REMOTE_ID 1

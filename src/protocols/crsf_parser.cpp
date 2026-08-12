@@ -6,28 +6,22 @@ CRSFParser::CRSFParser() {
     memset(&currentPacket, 0, sizeof(CRSFPacket));
 }
 
-uint8_t CRSFParser::calculateCRC(uint8_t* data, uint8_t length) {
-    uint8_t crc = 0;
-    for (uint8_t i = 0; i < length; i++) {
-        crc = crc ^ data[i];
-        for (uint8_t j = 0; j < 8; j++) {
-            if (crc & 0x80) {
-                crc = (crc << 1) ^ 0xD5;
-            } else {
-                crc = crc << 1;
-            }
-        }
+static uint8_t crsfCrcAccumulate(uint8_t crc, uint8_t data) {
+    crc ^= data;
+    for (uint8_t bit = 0; bit < 8; bit++) {
+        crc = (crc & 0x80) ? static_cast<uint8_t>((crc << 1) ^ 0xD5)
+                           : static_cast<uint8_t>(crc << 1);
     }
     return crc;
 }
 
 bool CRSFParser::validateCRC(CRSFPacket* packet) {
-    uint8_t crcData[2 + packet->length - 2];
-    crcData[0] = packet->type;
-    memcpy(&crcData[1], packet->payload, packet->length - 2);
-    
-    uint8_t calculatedCRC = calculateCRC(crcData, packet->length - 1);
-    return (calculatedCRC == packet->crc);
+    uint8_t crc = crsfCrcAccumulate(0, packet->type);
+    const uint8_t payloadLength = packet->length - 2;
+    for (uint8_t i = 0; i < payloadLength; i++) {
+        crc = crsfCrcAccumulate(crc, packet->payload[i]);
+    }
+    return crc == packet->crc;
 }
 
 bool CRSFParser::parseByte(uint8_t byte) {
@@ -82,57 +76,6 @@ bool CRSFParser::parseBuffer(uint8_t* data, uint16_t length) {
     return false;
 }
 
-void CRSFParser::buildRCChannels(uint8_t* buffer, uint8_t* length, uint16_t* channels) {
-    buffer[0] = CRSF_ADDRESS_FLIGHT_CTRL;
-    buffer[1] = 24; // Length (type + 22 bytes payload + CRC)
-    buffer[2] = CRSF_FRAMETYPE_RC_CHANNELS;
-    
-    // Pack 16 channels (11-bit each) into 22 bytes
-    uint8_t* payload = &buffer[3];
-    memset(payload, 0, 22);
-    
-    for (uint8_t i = 0; i < 16; i++) {
-        uint16_t value = channels[i];
-        uint16_t bitOffset = i * 11;
-        uint8_t byteOffset = bitOffset / 8;
-        uint8_t bitInByte = bitOffset % 8;
-        
-        payload[byteOffset] |= (value << bitInByte) & 0xFF;
-        if (bitInByte + 11 > 8) {
-            payload[byteOffset + 1] |= (value >> (8 - bitInByte)) & 0xFF;
-        }
-        if (bitInByte + 11 > 16) {
-            payload[byteOffset + 2] |= (value >> (16 - bitInByte)) & 0xFF;
-        }
-    }
-    
-    uint8_t crc = calculateCRC(&buffer[2], 23);
-    buffer[25] = crc;
-    
-    *length = 26;
-}
-
-void CRSFParser::buildLinkStats(uint8_t* buffer, uint8_t* length, CRSFLinkStats* stats) {
-    buffer[0] = CRSF_ADDRESS_FLIGHT_CTRL;
-    buffer[1] = 12; // Length (type + 10 payload bytes + CRC)
-    buffer[2] = CRSF_FRAMETYPE_LINK_STATS;
-    
-    buffer[3] = stats->uplink_RSSI_1;
-    buffer[4] = stats->uplink_RSSI_2;
-    buffer[5] = stats->uplink_Link_quality;
-    buffer[6] = stats->uplink_SNR;
-    buffer[7] = stats->active_antenna;
-    buffer[8] = stats->rf_Mode;
-    buffer[9] = stats->uplink_TX_Power;
-    buffer[10] = stats->downlink_RSSI;
-    buffer[11] = stats->downlink_Link_quality;
-    buffer[12] = stats->downlink_SNR;
-    
-    uint8_t crc = calculateCRC(&buffer[2], 11);
-    buffer[13] = crc;
-    
-    *length = 14;
-}
 
 bool CRSFParser::isLinkStats(CRSFPacket* packet) {
     return packet->type == CRSF_FRAMETYPE_LINK_STATS;

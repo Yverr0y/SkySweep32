@@ -96,95 +96,89 @@ def pad_has_copper_peer(board: pcbnew.BOARD, reference: str, number: str) -> boo
     return any(pad.GetNetCode() == matches[0].GetNetCode() for pad in connected if pad != matches[0])
 
 
+def remove_track(
+    board: pcbnew.BOARD,
+    net_name: str,
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> None:
+    """Remove one exact router segment before replacing its topology."""
+    start_point, end_point = point(*start), point(*end)
+    matches = [
+        item for item in board.GetTracks()
+        if not isinstance(item, pcbnew.PCB_VIA)
+        and item.GetNetname() == net_name
+        and (
+            (item.GetStart() == start_point and item.GetEnd() == end_point)
+            or (item.GetStart() == end_point and item.GetEnd() == start_point)
+        )
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected one {net_name} track {start}->{end}, found {len(matches)}"
+        )
+    board.Remove(matches[0])
+
+
 def apply_reviewed_repairs(board: pcbnew.BOARD) -> None:
-    gps_supply_open = not pad_has_copper_peer(board, "GPS1", "17")
-    buck_bootstrap_open = not pad_has_copper_peer(board, "U3", "6")
-    # Replace the autorouted CC2 path with a serviceable two-layer escape above
-    # the data-pin fanout. CC2 is static configuration, not USB data.
-    for track in list(board.GetTracks()):
-        local_rf_ground = (
-            track.GetNetname() == "GND"
-            and max(track.GetStart().x, track.GetEnd().x) <= mm(9.0)
-            and mm(42.0) <= min(track.GetStart().y, track.GetEnd().y)
-            and max(track.GetStart().y, track.GetEnd().y) <= mm(47.0)
-        )
-        if track.GetNetname() in {"USB_CC2", "SUBGHZ_ANT"} or local_rf_ground:
-            board.Remove(track)
-    add_path(board, "USB_CC2", [(21.75, 77.645), (21.75, 79.0)], 0.2)
-    add_via(board, "USB_CC2", (21.75, 79.0), 0.6, 0.3)
+    """Repair the small set of deterministic pin-escape opens left by Freerouting."""
+    # AP63203 VOUT pads 2 and 3 are intentionally common; the router reaches
+    # pad 3, so bridge the 0.35 mm package gap at lead width.
+    add_path(board, "SYS_5V", [(77.8625, 69.0), (77.8625, 69.95)], 0.4)
+
+    # TPS61232 VOUT pads 4 and 7 sit on opposite sides of the exposed GND pad.
+    # Escape to B.Cu at lead width, then route around the thermal land.
+    add_path(board, "SYS_5V", [(53.475, 69.5), (54.5, 69.5)], 0.28)
+    add_path(board, "SYS_5V", [(50.24, 69.5), (49.5, 69.5)], 0.28)
+    add_via(board, "SYS_5V", (54.5, 69.5), 0.7, 0.3)
+    add_via(board, "SYS_5V", (49.5, 69.5), 0.7, 0.3)
     add_path(
-        board,
-        "USB_CC2",
-        [
-            (21.75, 79.0),
-            (23.0, 80.5),
-            (25.6, 80.5),
-            (31.175, 77.2),
-        ],
+        board, "SYS_5V",
+        [(54.5, 69.5), (54.5, 71.6), (49.5, 71.6), (49.5, 69.5)],
+        0.6, pcbnew.B_Cu,
+    )
+
+    # The router wraps U6 GND pads 1/4 around its left edge, trapping BAT pads
+    # 2/3. Replace that GND loop with two plane vias and leave a valid BAT exit.
+    remove_track(board, "GND", (13.0, 70.25), (12.5632, 70.25))
+    remove_track(board, "GND", (12.5632, 70.25), (12.2786, 70.5346))
+    remove_track(board, "GND", (12.2786, 70.5346), (12.2786, 71.4694))
+    remove_track(board, "GND", (12.2786, 71.4694), (12.5592, 71.75))
+    # Join GND pads 1/4 directly to the exposed GND land. Their 0.25 mm traces
+    # overlap the thermal pad by 0.025 mm without entering the BAT escape rows.
+    add_path(board, "GND", [(13.0, 70.25), (14.0, 70.25)], 0.25)
+    add_path(board, "GND", [(13.0, 71.75), (14.0, 71.75)], 0.25)
+    add_path(
+        board, "BAT_CELL",
+        [(13.0, 70.75), (11.5, 70.75), (11.5, 70.2127), (11.5315, 70.2127)],
         0.25,
-        pcbnew.B_Cu,
     )
-    add_via(board, "USB_CC2", (31.175, 77.2), 0.6, 0.3)
-    add_path(board, "USB_CC2", [(31.175, 77.2), (31.175, 78.0)], 0.25)
 
-    # Two dense-module escapes may be left open depending on route ordering.
-    if gps_supply_open:
-        add_path(board, "3V3", [(18.9, 26.125), (18.9, 27.1)], 0.25)
-        add_via(board, "3V3", (18.9, 27.1), 0.6, 0.3)
-    if buck_bootstrap_open:
+    # Escape both USB-C VBUS pad groups toward the connector body, change to
+    # B.Cu, pass between the upper/lower shell stakes, then return beside F1.
+    for pad_x, via_x in ((32.6, 33.2), (37.4, 36.8)):
         add_path(
-            board,
-            "BUCK_BST",
-            [(48.1375, 68.05), (49.0, 67.1875), (49.0, 65.225), (50.225, 64.0)],
-            0.25,
+            board, "VBUS_RAW",
+            [(pad_x, 87.645), (pad_x, 88.2), (via_x, 89.1)],
+            0.3,
         )
+        add_via(board, "VBUS_RAW", (via_x, 89.1), 0.8, 0.35)
+        add_path(board, "VBUS_RAW", [(via_x, 89.1), (via_x, 90.3)], 0.5, pcbnew.B_Cu)
+    add_path(board, "VBUS_RAW", [(33.2, 90.3), (42.0, 90.3), (42.0, 86.1375)], 0.8, pcbnew.B_Cu)
+    add_via(board, "VBUS_RAW", (42.0, 86.1375), 0.8, 0.35)
+    add_path(board, "VBUS_RAW", [(42.0, 86.1375), (43.0, 86.1375)], 0.8)
+    # Terminate residual router GND branches and both SAM-M10Q ground sides on
+    # the continuous In1.Cu reference plane.
+    for position in ((91.9595, 76.5193), (90.825, 80.1875)):
+        add_via(board, "GND", position, 0.8, 0.35)
+    add_path(board, "GND", [(14.2, 10.875), (13.3, 10.875)], 0.5)
+    add_path(board, "GND", [(21.8, 10.875), (22.7, 10.875)], 0.5)
+    add_via(board, "GND", (13.3, 10.875), 0.8, 0.35)
+    add_via(board, "GND", (22.7, 10.875), 0.8, 0.35)
 
-    # AP63203 feedback pin: short Kelvin escape to the continuous 3V3 plane.
-    # This avoids the adjacent switch-node routing and carries negligible load.
-    add_path(board, "3V3", [(45.8625, 68.05), (45.8625, 66.0)], 0.25)
-    add_via(board, "3V3", (45.8625, 66.0), 0.9, 0.4)
-
-    # AP63203 switch pin requires a fine-pitch neck before widening into the
-    # bootstrap/switch branch and inductor input.
-    add_path(board, "BUCK_SW", [(48.1375, 69.0), (49.2, 69.0)], 0.25)
-    add_path(
-        board,
-        "BUCK_SW",
-        [(49.2, 69.0), (51.775, 66.425), (51.775, 64.0)],
-        0.8,
-    )
-
-    # USB4105 duplicates VBUS on two fine-pitch pad groups. Neck down only for
-    # connector escape, then join both groups on B.Cu before the resettable fuse.
-    add_path(board, "VBUS_RAW", [(17.6, 77.645), (17.6, 75.7)], 0.2)
-    add_via(board, "VBUS_RAW", (17.6, 75.7), 0.9, 0.4)
-    # CC2 was rerouted above, leaving a straight fine-pitch escape.
-    add_path(board, "VBUS_RAW", [(22.4, 77.645), (22.4, 76.6)], 0.2)
-    add_via(board, "VBUS_RAW", (22.4, 76.6), 0.6, 0.3)
-    add_via(board, "VBUS_RAW", (31.0, 73.3))
-    add_path(
-        board,
-        "VBUS_RAW",
-        [(17.6, 75.7), (20.0, 73.3), (31.0, 73.3)],
-        0.8,
-        pcbnew.B_Cu,
-    )
-    add_path(
-        board,
-        "VBUS_RAW",
-        [(22.4, 76.6), (20.0, 73.3)],
-        0.8,
-        pcbnew.B_Cu,
-    )
-    add_path(board, "VBUS_RAW", [(31.0, 73.3), (33.0, 74.1375)], 0.8)
-
-    # E07-900M10S pin 21 is the 50-ohm RF port. The short edge launch uses the
-    # reviewed 0.30 mm nominal microstrip for the declared 0.18 mm prepreg.
-    add_path(board, "GND", [(8.25, 43.0), (9.0, 43.0)], 0.25)
-    add_via(board, "GND", (9.0, 43.0), 0.6, 0.3)
-    add_path(board, "GND", [(8.25, 45.54), (9.0, 45.54)], 0.25)
-    add_via(board, "GND", (9.0, 45.54), 0.6, 0.3)
-    add_path(board, "SUBGHZ_ANT", [(2.55, 44.27), (8.25, 44.27)], 0.30)
+    for zone in board.Zones():
+        zone.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+    board.BuildConnectivity()
 
 
 def remove_zones(board: pcbnew.BOARD) -> None:

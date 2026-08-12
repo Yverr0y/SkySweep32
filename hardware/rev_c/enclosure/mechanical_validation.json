@@ -10,34 +10,55 @@
   },
   "freecad_version": "1.1.3",
   "input_sha256": {
-    "pcba_step": "68db5ca84a23ffaf258e73f1bd801fdfe5cb79c538e6677f8db18770a415e2e4",
-    "oled_step": "fcde49024ba7f5203ff74825f90f262bfe309929d90d91833edaae0f6c70ecb0"
+    "hardware_manifest": "788f4e881ef4e8427b4746ca4b24c8afe4c0a7a466b013a9dd65bdd676e13ef8",
+    "pcba_step": "c61210c77da3fb64faf75e85fbbb2053e6041c37caad2f6a3200331a0d1ee2b1",
+    "oled_step": "f56744740a9d60170b0eda7c0a786ff5cd12d7026d636c148baed26ecf03384e",
+    "battery_step": "33aecdc23cf92a47d9270efd3855718572cdc7f65ab46e346ea5289dea6bb8b4"
   },
   "base_bbox_mm": [
-    -4.0,
-    124.0,
-    -89.0,
-    4.0,
-    -8.0,
+    -5.5,
+    155.5,
+    -107.5,
+    5.5,
+    -17.3,
     7.0
   ],
   "lid_bbox_mm": [
-    -6.2,
-    126.20000000000002,
-    -91.2,
-    6.200000000000003,
+    -7.7,
+    157.70000000000002,
+    -109.7,
+    7.700000000000003,
     1.6,
-    15.5
+    16.2
   ],
   "base_valid": true,
   "lid_valid": true,
   "button_valid": true,
   "screw_valid": true,
   "nut_valid": true,
+  "battery_valid": true,
+  "two4ghz_antenna_valid": true,
+  "two4ghz_cable_valid": true,
+  "oled_cable_valid": true,
   "pcba_base_collision_mm3": 0.0,
   "pcba_lid_collision_mm3": 0.0,
   "pcba_oled_collision_mm3": 0.0,
   "oled_lid_collision_mm3": 0.0,
+  "battery_base_collision_mm3": 0.0,
+  "battery_lid_collision_mm3": 0.0,
+  "battery_pcba_collision_mm3": 0.0,
+  "two4ghz_antenna_base_collision_mm3": 0.0,
+  "two4ghz_antenna_lid_collision_mm3": 0.0,
+  "two4ghz_antenna_pcba_collision_mm3": 0.0,
+  "two4ghz_cable_base_collision_mm3": 0.0,
+  "two4ghz_cable_lid_collision_mm3": 0.0,
+  "two4ghz_open_cable_base_collision_mm3": 0.0,
+  "two4ghz_open_cable_lid_collision_mm3": 0.0,
+  "oled_cable_base_collision_mm3": 0.0,
+  "oled_cable_lid_collision_mm3": 0.0,
+  "oled_open_cable_base_collision_mm3": 0.0,
+  "oled_open_cable_lid_collision_mm3": 0.0,
+  "battery_fastener_collision_mm3": 0.0,
   "pcba_button_collision_mm3": 0.0,
   "pressed_button_switch_contact_mm3": [
     1.1988317566098643,
@@ -51,25 +72,69 @@
   "service_envelope_collision_mm3": {
     "usb_cable": 0.0,
     "microsd_card": 0.0,
-    "e01_sma_plug": 0.0,
-    "e07_sma_body": 0.0
+    "five8ghz_sma_plug": 0.0,
+    "subghz_sma_plug": 0.0,
+    "five8ghz_antenna_swept": 0.0,
+    "subghz_antenna_swept": 0.0,
+    "battery_cable_and_plug": 0.0,
+    "oled_harness_bend": 0.0
   },
   "pcba_bbox_mm": [
     -12.770000005398,
-    122.7,
-    -85.00000000000001,
-    3.1086244689504383e-15,
+    162.770000005398,
+    -95.2,
+    2.220446049250313e-15,
     -3.410482016606,
-    10.615
+    11.615
   ],
-  "lid_ceiling_clearance_mm": 1.8849999999999998,
-  "board_edge_clearance_mm": 1.5,
+  "battery_bbox_mm": [
+    15.0,
+    65.0,
+    -77.5,
+    -17.5,
+    -10.3,
+    -3.000000000000001
+  ],
+  "two4ghz_antenna_bbox_mm": [
+    105.0,
+    145.0,
+    -19.0,
+    -11.0,
+    12.5,
+    13.0
+  ],
+  "two4ghz_cable_centerline_length_mm": {
+    "closed": 94.96392885873462,
+    "lid_open_30mm": 90.6176107339524,
+    "available": 100.0,
+    "closed_service_slack": 5.036071141265381,
+    "lid_open_30mm_service_slack": 9.382389266047596
+  },
+  "oled_cable_centerline_length_mm": {
+    "closed": 92.6021857567207,
+    "lid_open_30mm": 89.13748537193409,
+    "available": 100.0,
+    "closed_service_slack": 7.397814243279299,
+    "lid_open_30mm_service_slack": 10.86251462806591
+  },
+  "lid_ceiling_clearance_mm": 1.584999999999999,
+  "battery_to_pcba_clearance_mm": 3.000000000000001,
+  "battery_floor_clearance_mm": 0.5,
+  "board_edge_clearance_mm": {
+    "left_right_top": 3.0,
+    "bottom_service_edge": 10.0
+  },
+  "closed_outer_dimensions_mm": [
+    165.4,
+    117.4,
+    33.5
+  ],
   "base_lid_fit_clearance_mm": 0.3,
   "oled_lateral_clearance_mm": 0.2,
   "oled_vertical_clearance_mm": 0.1,
   "button_press_to_switch_mm": 0.65,
   "fastener_specification": {
-    "screw": "DIN 912 M3 x 20",
+    "screw": "DIN 912 M3 x 30",
     "screw_head_clearance_mm": 0.35,
     "nut": "DIN 934 M3",
     "nut_across_flats_clearance_mm": 0.3

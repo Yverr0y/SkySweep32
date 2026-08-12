@@ -16,27 +16,30 @@ USB, RF, or mechanical-service item blocks advancement beyond
 
 | ID | Observable contract | Result / evidence |
 |---|---|---|
-| A1 | PCB is 120.0 × 85.0 × 1.6 mm within supplier tolerance; four layers and ENIG verified from lot documents | |
-| A2 | Four Ø3.2 mm holes and 110 × 75 mm pattern measured | |
-| A3 | Impedance coupon/report records USB 90 Ω differential and J5 50 Ω result, or deviation is documented | |
+| A1 | PCB is 150.0 × 95.0 × 1.6 mm within supplier tolerance; four layers and ENIG verified from lot documents | |
+| A2 | Four Ø3.2 mm holes and 140 × 85 mm pattern measured | |
+| A3 | Impedance coupon/report records USB 90 Ω differential and J5/J7 50 Ω results, or deviations are documented | |
 | A4 | Fitted parts match every manufacturer/MPN row in `bom_fitted.csv`; substitutions listed and reviewed | |
-| A5 | X-ray/optical inspection covers SAM-M10Q, AP63203 exposed pad, USB ESD, modules, microSD, USB-C, and J5 | |
-| A6 | No shorts on VBUS_PROTECTED, 3V3, USB D+/D−, or adjacent fine-pitch pins | |
-| A7 | DNP R18/R19/Q2/D4/J4 are absent unless a separately reviewed vibration option is being tested | |
+| A5 | RX5808 supplier, lot, markings, 12-pad pattern, 28 × 23 × 3 mm envelope, and pin-function checks recorded before fitting | |
+| A6 | X-ray/optical inspection covers BQ24074, TPS61232, AP63203, SAM-M10Q, USB ESD, E28/E07/RX5808, microSD, USB-C, J5, and J7 | |
+| A7 | No shorts on VBUS_PROTECTED, SYS_5V, 3V3, BAT_CELL, USB D+/D−, or adjacent fine-pitch pins | |
+| A8 | DNP vibration parts are absent unless a separately reviewed option is being tested | |
 
 ## B. Power and USB
 
 | ID | Observable contract | Result / evidence |
 |---|---|---|
 | B1 | Stabilized unpowered TP1–TP3 and TP2–TP3 resistance recorded | |
-| B2 | 5.00 V / 100 mA limited first power does not current-limit or produce rapid heating | |
-| B3 | TP1 and TP2 values are within ±5%; startup waveforms attached | |
+| B2 | 5.00 V / 100 mA limited USB-only first power does not current-limit or produce rapid heating | |
+| B3 | Protected VBUS, SYS_5V, and 3V3 values are within ±5%; startup waveforms attached | |
 | B4 | Idle, radio-active, SD-write, display/buzzer, and combined peak current recorded | |
-| B5 | 3V3 ripple/droop under combined peak load is recorded with probe/bandwidth method and accepted by part limits | |
-| B6 | AP63203, inductor, fuse, TVS, MCU, RF modules, and GNSS temperatures recorded at 5, 15, and 30 min | |
+| B5 | 3V3 and SYS_5V ripple/droop under combined peak load are recorded with probe/bandwidth method and accepted by part limits | |
+| B6 | BQ24074, TPS61232, AP63203, inductors, fuse, TVS, MCU, RF modules, battery, and GNSS temperatures recorded at 5, 15, and 30 min | |
 | B7 | USB-C works in both plug orientations with two known-good cables | |
 | B8 | Native USB enumerates, uploads, and reconnects ten times without reset-loop or data error | |
-| B9 | CC1/CC2 source behavior tested against at least two standards-compliant 5 V sources; no >5 V PD mode requested | |
+| B9 | CC1/CC2 behavior tested against two standards-compliant 5 V sources; no >5 V PD mode requested | |
+| B10 | Specified protected PID 328 polarity/protection verified; battery-only startup and fuel-gauge reading recorded | |
+| B11 | Charge current, input limit, termination, USB/battery handover, pack temperature, and rail continuity pass against BQ24074 configuration | |
 
 ## C. Firmware and local interfaces
 
@@ -59,28 +62,31 @@ calibration date, firmware configuration, and raw response.
 
 | ID | Observable contract | Result / evidence |
 |---|---|---|
-| D1 | E01-ML01DP5/nRF24 register identity and SPI operation verified | |
-| D2 | nRF24 RPD remains inactive below its specified threshold and changes under controlled 2.4 GHz energy; no RSSI/protocol claim is inferred | |
+| D1 | E28-2G4M12SX/SX1281 register identity and SPI operation verified | |
+| D2 | SX1281 instantaneous RSSI is measured over the configured 2400–2500 MHz sweep at multiple controlled levels; no protocol/transmitter identity is inferred | |
 | D3 | E07-900M10S/CC1101 register identity and SPI operation verified | |
-| D4 | CC1101 RSSI response measured at multiple levels on the configured 868 or 915 MHz channel; 433 MHz command is rejected/not emitted | |
-| D5 | Simultaneous 2.4 GHz, sub-GHz, Wi-Fi/BLE, SD, GNSS, and display operation shows no unexplained resets, bus corruption, or GNSS loss | |
-| D6 | J5 return loss/insertion behavior and RF1 antenna connection inspected or measured with the selected antennas | |
-| D7 | Emissions/pre-compliance scan records unintended clocks/spurs; failures are corrected before broader use | |
+| D4 | CC1101 RSSI response measured at multiple levels on configured 868 or 915 MHz channels; 433 MHz command is rejected/not emitted | |
+| D5 | RX5808 three-bit selection maps to all eight documented channels (5645–5945 MHz); analog RSSI response/noise floor recorded | |
+| D6 | Simultaneous 2.4 GHz, sub-GHz, 5.8 GHz, Wi-Fi/BLE, SD, GNSS, and display operation shows no unexplained resets, bus corruption, or GNSS loss | |
+| D7 | J5/J7 return loss or receive comparison and E28/PID 2308 connection are measured with the exact assembly antennas | |
+| D8 | Emissions/pre-compliance scan records unintended clocks/spurs; failures are corrected before broader use | |
 
 ## E. Enclosure fit and service
 
 | ID | Observable contract | Result / evidence |
 |---|---|---|
-| E1 | Printed base/lid outer dimensions and critical openings measured; material, printer, orientation, and slicer settings recorded | |
-| E2 | PCB seats on four supports without bending; all four M3 screws/nuts fit and retain after five assembly cycles | |
-| E3 | No visible contact between PCBA and base/lid except designed supports/compression posts | |
-| E4 | OLED snaps in/out without damage, aperture is aligned, and cable is neither pinched nor routed over antenna keepouts | |
-| E5 | RESET/BOOT/USER plungers return freely, operate only their switches, and pass 100 actuations | |
-| E6 | USB-C cable inserts/removes without case load on connector; both plug orientations work | |
-| E7 | microSD can be removed by finger and passes ten closed-case cycles without ejection obstruction | |
-| E8 | RF1 antenna and J5 antenna fit, rotate as intended, and do not collide with case, cable, or each other | |
-| E9 | LED is visible; buzzer sound is usable; enclosure temperature after 30 min remains within every component/material limit | |
-| E10 | PCB, display, buttons, and nuts can be removed without destructive case modification | |
+| E1 | Printed 165.4 × 117.4 × 33.5 mm nominal closed envelope and every critical opening measured; material, printer, orientation, and slicer settings recorded | |
+| E2 | PCB seats on four supports without bending; four M3 × 30 screws/nuts fit and retain after five assembly cycles | |
+| E3 | Specified battery fits its bay without preload or fastener contact; connector/lead can be inserted and removed without damage | |
+| E4 | No visible contact between PCBA and base/lid except designed supports/compression posts | |
+| E5 | OLED snaps in/out without damage, aperture aligns, and PID 4210 cable is neither pinched nor routed over antenna keepouts | |
+| E6 | PID 2308 antenna adheres at the defined lid position; its U.FL cable is unpinched through five 30 mm lid-opening cycles | |
+| E7 | RESET/BOOT/USER plungers return freely, operate only their switches, and pass 100 actuations | |
+| E8 | USB-C cable inserts/removes without case load on connector; both plug orientations work | |
+| E9 | microSD can be removed by finger and passes ten closed-case cycles without ejection obstruction | |
+| E10 | Regional J5 antenna and Taoglas TG.59.0113 on J7 fit, rotate, and do not block each other, USB-C, or microSD | |
+| E11 | LED is visible; buzzer is usable; enclosure temperature after 30 min remains within all component/material limits | |
+| E12 | PCB, battery, display, antennas, cables, buttons, and nuts can be removed without destructive case modification | |
 
 ## F. Reliability and maturity decision
 

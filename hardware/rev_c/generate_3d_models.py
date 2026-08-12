@@ -38,15 +38,14 @@ def export(name: str, shape: Part.Shape) -> None:
 def generate() -> None:
     MODELS.mkdir(parents=True, exist_ok=True)
 
-    # E01 carrier PCB plus a bounding body for its shield and edge SMA jack.
-    # The resulting 22 x 33.4 x 9 mm solid matches the reviewed maximum extent.
-    e01 = box(18.0, 33.4, 1.6, -9.0, -16.7)
-    e01 = e01.fuse(box(13.0, 22.0, 4.0, -5.0, -11.0, 1.6))
-    e01 = e01.fuse(box(8.0, 14.0, 7.4, 5.0, -7.0, 1.6))
-    export("Ebyte_E01_ML01DP5_ENVELOPE.step", e01)
+    # E28-2G4M12SX drawing: 15.0 x 17.8 x 2.85 mm IPEX module.
+    export("Ebyte_E28_2G4M12SX_ENVELOPE.step", box(15.0, 17.8, 2.85, -7.5, -8.9))
 
     # E07 drawing: castellated 14 x 20 mm module, bounded to 2.4 mm high.
     export("Ebyte_E07_900M10S_ENVELOPE.step", box(14.0, 20.0, 2.4, -7.0, -10.0))
+
+    # RX5808 V1.0 2010-09-02 drawing: 28 x 23 x 3 mm shielded module.
+    export("RX5808_2012_12P_ENVELOPE.step", box(28.0, 23.0, 3.0, -14.0, -11.5))
 
     # SAM-M10Q-00B: 15.9 mm square antenna module, 6.3 mm maximum height.
     export("UBlox_SAM_M10Q_ENVELOPE.step", box(15.9, 15.9, 6.3, -7.95, -7.95))
@@ -71,6 +70,26 @@ def generate() -> None:
 
     # Bourns SRN6028 tolerance maximum 6.3 x 6.3 mm, 2.8 mm seated height.
     export("Bourns_SRN6028_3R9M_ENVELOPE.step", box(6.3, 6.3, 2.8, -3.15, -3.15))
+
+    # Bourns SRN6028C package uses the same conservative 6.3 mm square,
+    # 2.8 mm seated envelope as the qualified SRN6028 series land pattern.
+    export("Bourns_SRN6028C_1R0Y_ENVELOPE.step", box(6.3, 6.3, 2.8, -3.15, -3.15))
+
+    # Adafruit PID 328 / LP785060 protected pack, including published maximum
+    # battery body envelope. Cable bend and plug are checked in enclosure CAD.
+    export("Adafruit_PID328_LP785060_BATTERY_ENVELOPE.step", box(50.0, 60.0, 7.3, -25.0, -30.0))
+
+    # TI BQ24074 RGT 16-pin VQFN: 3.0 mm nominal body, 1.0 mm maximum
+    # seated height. The 3.1 mm XY envelope includes package tolerance.
+    export("TI_BQ24074_RGT_ENVELOPE.step", box(3.1, 3.1, 1.0, -1.55, -1.55))
+
+    # Analog Devices MAX17048 TDFN-8: 2.0 mm nominal body and 0.8 mm maximum
+    # seated height; XY includes the package tolerance bound.
+    export("ADI_MAX17048_TDFN8_ENVELOPE.step", box(2.1, 2.1, 0.8, -1.05, -1.05))
+
+    # JST S2B-PH-SM4-TB(LF)(SN) right-angle board header. The envelope follows
+    # the official 7.9 x 7.6 mm footprint/body drawing and 4.5 mm body height.
+    export("JST_S2B_PH_SM4_TB_ENVELOPE.step", box(7.9, 7.6, 4.5, -3.95, -3.2))
 
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ public:
     // Data broadcast to all WebSocket clients
     void broadcastRFData(const char* moduleName, int rssi, bool active);
     void broadcastDroneDetection(const char* droneID, double lat, double lon, float alt);
-    void broadcastThreatLevel(const char* level, const char* protocol);
+    void broadcastActivityLevel(const char* level, const char* source);
     void broadcastSystemStatus(const char* status);
     
     IPAddress getIPAddress() const;

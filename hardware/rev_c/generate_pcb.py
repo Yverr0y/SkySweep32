@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -15,6 +16,10 @@ from tool_discovery import discover_kicad_cli, discover_kicad_root
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 
+MANIFEST_PATH = HERE / "hardware_manifest.json"
+MANIFEST = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+BOARD_WIDTH, BOARD_HEIGHT = MANIFEST["mechanical"]["board_dimensions_mm"]
+MOUNTING_HOLES = tuple(tuple(hole[:2]) for hole in MANIFEST["mechanical"]["mounting_holes"])
 KICAD_ROOT = discover_kicad_root()
 KICAD_BIN = KICAD_ROOT / "bin"
 if os.name == "nt":
@@ -122,6 +127,10 @@ MODEL_OVERRIDES = {
     "J2": "Molex_104031_0811_WITH_CARD_ENVELOPE.step",
     "F1": "Bourns_MF_MSMF200_2_ENVELOPE.step",
     "L1": "Bourns_SRN6028_3R9M_ENVELOPE.step",
+    "L2": "Bourns_SRN6028C_1R0Y_ENVELOPE.step",
+    "U4": "TI_BQ24074_RGT_ENVELOPE.step",
+    "U6": "ADI_MAX17048_TDFN8_ENVELOPE.step",
+    "J6": "JST_S2B_PH_SM4_TB_ENVELOPE.step",
 }
 
 
@@ -137,77 +146,116 @@ def natural_reference(reference: str) -> tuple[str, int]:
 # so the same file coordinates are described as upper-left in plots.
 PLACEMENT: dict[str, tuple[float, float, float]] = {
     # Mechanically constrained external/service interfaces.
-    "J1": (20.0, 81.325, 0),       # USB-C mouth at bottom board edge
-    "J2": (113.0, 59.0, 90),      # microSD insertion through right wall
-    "J5": (2.55, 44.27, 180),     # 2.54 mm footprint edge + 0.01 mm fab margin
-    "J3": (63.0, 79.0, 0),        # keyed STEMMA QT lid harness
-    "J4": (80.0, 69.0, 0),        # optional vibration motor harness
-    "SW1": (82.0, 80.0, 0),
-    "SW2": (93.0, 80.0, 0),
-    "SW3": (104.0, 80.0, 0),
-    # RF/GNSS modules fixed before the supporting circuitry.
-    "GPS1": (17.0, 19.0, 0),
-    "U1": (60.0, 28.0, 0),
-    "RF1": (106.0, 28.0, 0),
+    "J1": (35.0, 91.325, 0),      # USB-C mouth at lower board edge
+    "J2": (143.0, 70.0, 90),      # microSD insertion through right wall
+    "J3": (78.0, 89.0, 0),        # keyed STEMMA QT lid harness
+    "J4": (92.0, 88.0, 0),        # optional vibration motor harness
+    "J5": (2.55, 50.0, 180),      # sub-GHz edge-launch SMA
+    "J6": (18.0, 89.8, 0),        # protected battery harness
+    "J7": (147.45, 40.64, 0),     # 5.8-GHz edge-launch SMA aligned to RF3.2
+    "SW1": (111.0, 90.0, 0),
+    "SW2": (123.0, 90.0, 0),
+    "SW3": (135.0, 90.0, 0),
+    "SW4": (58.0, 89.0, 0),
+    # RF/GNSS modules fixed before supporting circuitry. U1's 48 x 21 mm
+    # antenna courtyard is intentionally empty.
+    "GPS1": (18.0, 18.0, 0),
+    "U1": (72.0, 29.0, 0),
+    "RF1": (132.0, 18.0, 0),
     "RF2": (15.0, 52.0, 0),
-    # Power and USB functional block.
-    "R1": (29.0, 78.0, 0),
-    "R2": (32.0, 78.0, 0),
-    "F1": (33.0, 72.0, 90),
-    "D1": (39.0, 76.0, 90),
-    "C1": (45.0, 76.0, 0),
-    "U2": (32.0, 63.0, 0),
-    "R3": (38.0, 61.0, 0),
-    "R4": (38.0, 64.0, 0),
-    "U3": (47.0, 69.0, 0),
-    "L1": (57.0, 69.0, 0),
-    "C2": (51.0, 64.0, 0),
-    "C3": (64.0, 66.0, 0),
-    "C4": (64.0, 72.0, 0),
+    "RF3": (128.0, 48.0, 0),
+    # USB-C protection and data entry.
+    "R1": (27.0, 82.0, 0),
+    "R2": (31.0, 82.0, 0),
+    "F1": (43.0, 84.0, 90),
+    "D1": (49.0, 87.0, 90),
+    "C1": (55.0, 82.0, 0),
+    "U2": (40.0, 77.0, 0),
+    "R3": (45.0, 75.5, 0),
+    "R4": (45.0, 78.5, 0),
+    # Charger, battery gauge and power-path programming.
+    "U4": (29.0, 70.0, 0),
+    "U6": (14.0, 71.0, 0),
+    "C17": (25.0, 77.0, 0),
+    "C18": (27.0, 62.0, 0),
+    "C19": (36.0, 63.0, 0),
+    "C29": (14.0, 75.0, 0),
+    "D5": (22.0, 81.0, 0),
+    "R20": (21.0, 67.0, 0),
+    "R21": (25.0, 65.0, 0),
+    "R22": (28.0, 64.0, 0),
+    "R23": (33.0, 65.0, 0),
+    "R24": (35.0, 70.0, 0),
+    "R25": (26.0, 86.0, 0),
+    "R26": (12.0, 80.0, 0),
+    "R27": (16.0, 80.0, 0),
+    # 5 V boost, switched system rail and 3.3 V buck.
+    "U5": (52.0, 69.0, 0),
+    "L2": (62.0, 69.0, 0),
+    "C20": (44.0, 64.0, 0),
+    "C21": (44.0, 69.0, 0),
+    "C22": (69.0, 64.0, 0),
+    "C23": (69.0, 69.0, 0),
+    "U3": (79.0, 69.0, 0),
+    "L1": (89.0, 69.0, 0),
+    "C2": (83.0, 64.0, 0),
+    "C3": (96.0, 62.0, 0),
+    "C4": (96.0, 66.0, 0),
     # MCU local support and controls.
-    "C5": (54.0, 44.0, 0),
-    "C6": (58.0, 44.0, 0),
-    "R5": (46.0, 47.0, 0),
-    "C7": (50.0, 47.0, 0),
-    "R6": (93.0, 75.0, 0),
-    "R7": (101.0, 75.0, 0),
-    # RF module local decoupling.
-    "C8": (94.0, 25.0, 0),
-    "C9": (94.0, 29.0, 0),
-    "C10": (26.0, 48.0, 0),
-    "C11": (26.0, 53.0, 0),
+    "C5": (62.0, 46.0, 0),
+    "C6": (66.0, 46.0, 0),
+    "R5": (72.0, 46.0, 0),
+    "C7": (76.0, 46.0, 0),
+    "R6": (121.0, 85.0, 0),
+    "R7": (133.0, 85.0, 0),
+    # RF module support and RSSI conditioning.
+    "C8": (121.0, 16.0, 0),
+    "C9": (121.0, 20.0, 0),
+    "C10": (27.0, 49.0, 0),
+    "C11": (27.0, 53.0, 0),
+    "C24": (104.0, 43.0, 0),
+    "C25": (104.0, 47.0, 0),
+    "C26": (107.5, 61.5, 0),
+    "R28": (109.0, 42.0, 0),
+    "R29": (109.0, 46.0, 0),
+    "R30": (109.0, 50.0, 0),
+    "R31": (105.0, 53.0, 0),
+    "C30": (101.0, 53.0, 0),
     # GNSS support, including optional 0-ohm I2C links.
-    "R8": (28.0, 15.0, 0),
-    "R9": (28.0, 20.0, 0),
-    "R10": (28.0, 25.0, 0),
-    "C12": (17.0, 30.0, 0),
-    "C13": (22.0, 30.0, 0),
+    "R8": (30.0, 14.0, 0),
+    "R9": (30.0, 20.0, 0),
+    "R10": (30.0, 25.0, 0),
+    "C12": (18.0, 31.0, 0),
+    "C13": (23.0, 31.0, 0),
     # microSD pull-ups and local energy storage.
-    "R11": (96.0, 51.0, 0),
-    "R12": (96.0, 55.0, 0),
-    "R13": (96.0, 59.0, 0),
-    "R14": (96.0, 63.0, 0),
-    "C14": (104.0, 68.0, 0),
-    "C15": (109.0, 68.0, 0),
-    "C16": (68.0, 72.0, 0),
+    "R11": (132.0, 66.0, 0),
+    "R12": (132.0, 70.0, 0),
+    "R13": (132.0, 74.0, 0),
+    "R14": (132.0, 78.0, 0),
+    "C14": (140.0, 82.0, 0),
+    "C15": (145.0, 82.0, 0),
+    "C16": (80.0, 82.0, 0),
     # Audible/visual/haptic alert block.
-    "BZ1": (79.0, 58.0, 0),
-    "Q1": (89.0, 58.0, 0),
-    "R15": (89.0, 53.0, 0),
-    "R16": (90.0, 62.0, 0),
-    "D2": (68.5, 58.0, 0),
-    "D3": (71.0, 76.0, 0),
-    "R17": (67.0, 76.0, 0),
-    "Q2": (94.0, 70.0, 0),
-    "R18": (97.0, 66.0, 0),
-    "R19": (98.0, 70.0, 0),
-    "D4": (74.0, 70.0, 90),
-    # Accessible diagnostic pads, not hidden beneath modules or the display.
-    "TP1": (68.0, 48.0, 0),
-    "TP2": (73.0, 48.0, 0),
-    "TP3": (78.0, 48.0, 0),
-    "TP4": (83.0, 48.0, 0),
-    "TP5": (88.0, 48.0, 0),
+    "BZ1": (104.0, 76.0, 0),
+    "Q1": (115.0, 72.0, 0),
+    "R15": (115.0, 67.0, 0),
+    "R16": (120.0, 75.0, 0),
+    "D2": (116.0, 82.0, 0),
+    "D3": (106.0, 84.0, 0),
+    "R17": (110.0, 84.0, 0),
+    "Q2": (92.0, 79.0, 0),
+    "R18": (88.0, 79.0, 0),
+    "R19": (90.0, 83.0, 0),
+    "D4": (84.0, 86.0, 90),
+    # Accessible diagnostic pads in the open center service corridor.
+    "TP1": (51.0, 52.0, 0),
+    "TP2": (57.0, 52.0, 0),
+    "TP3": (63.0, 52.0, 0),
+    "TP4": (69.0, 52.0, 0),
+    "TP5": (75.0, 52.0, 0),
+    "TP6": (81.0, 52.0, 0),
+    "TP7": (87.0, 52.0, 0),
+    "TP8": (93.0, 52.0, 0),
 }
 
 
@@ -234,7 +282,7 @@ def configure_board(board: pcbnew.BOARD) -> None:
     power.SetViaDiameter(mm(0.90))
     power.SetViaDrill(mm(0.40))
     settings.SetNetclass("Power", power)
-    for pattern in ("VBUS*", "3V3", "BUCK_SW", "BUCK_BST"):
+    for pattern in ("VBUS*", "BAT_CELL", "VSYS_BAT", "SYS_5V", "3V3", "BUCK_SW", "BUCK_BST", "BOOST_SW"):
         settings.SetNetclassPatternAssignment(pattern, "Power")
 
     usb = pcbnew.NETCLASS("USB")
@@ -254,12 +302,13 @@ def configure_board(board: pcbnew.BOARD) -> None:
     rf.SetViaDiameter(mm(0.70))
     rf.SetViaDrill(mm(0.30))
     settings.SetNetclass("RF_50R", rf)
-    settings.SetNetclassPatternAssignment("SUBGHZ_ANT", "RF_50R")
+    for pattern in ("SUBGHZ_ANT", "RX5808_RF_IN"):
+        settings.SetNetclassPatternAssignment(pattern, "RF_50R")
     settings.RecomputeEffectiveNetclasses()
 
 
 def add_outline(board: pcbnew.BOARD) -> None:
-    x0, y0, x1, y1, radius = 0.0, 0.0, 120.0, 85.0, 3.0
+    x0, y0, x1, y1, radius = 0.0, 0.0, BOARD_WIDTH, BOARD_HEIGHT, 3.0
     for start, end in (
         ((radius, y0), (x1 - radius, y0)),
         ((x1, radius), (x1, y1 - radius)),
@@ -380,28 +429,29 @@ def generate() -> pcbnew.BOARD:
                 pad.SetNet(net)
         board.Add(footprint)
 
-    for index, (x, y) in enumerate(((5, 5), (115, 5), (115, 80), (5, 80)), 1):
+    for index, (x, y) in enumerate(MOUNTING_HOLES, 1):
         add_mounting_hole(board, f"H{index}", x, y)
 
-    add_text(board, "SKYSWEEP32 REV C", 60, 83, 1.25)
-    add_text(board, "PASSIVE MONITOR", 60, 5.0, 0.9)
-    add_text(board, "PROTOTYPE C / NOT PRODUCTION", 60, 3.0, 1.0)
-    add_text(board, "J1 USB", 20, 75.2, 0.8)
-    add_text(board, "RF2 SUB-G", 6.0, 65.0, 0.8)
-    add_text(board, "RF1 2.4G", 106, 47, 0.8)
-    add_text(board, "J5 SUB-G SMA", 7.0, 38.0, 0.8)
-    add_text(board, "GPS1", 17, 7.5, 0.8)
-    add_text(board, "J2 SD", 116, 59, 0.8)
-    add_text(board, "RESET", 82, 76.3, 0.8)
-    add_text(board, "BOOT", 93, 76.3, 0.8)
-    add_text(board, "USER", 104, 76.3, 0.8)
-    add_text(board, "GPL-3.0-only | github.com/bobberdolle1/SkySweep32", 60, 1.2, 0.8, pcbnew.B_SilkS)
+    add_text(board, "SKYSWEEP32 REV C", BOARD_WIDTH / 2, BOARD_HEIGHT - 2.0, 1.25)
+    add_text(board, "PASSIVE RF MONITOR", BOARD_WIDTH / 2, 5.0, 0.9)
+    add_text(board, "PROTOTYPE C / NOT PRODUCTION", BOARD_WIDTH / 2, 3.0, 1.0)
+    add_text(board, "J1 USB-C", 35, 93.5, 0.8)
+    add_text(board, "RF2 SUB-G", 7.0, 64.0, 0.8)
+    add_text(board, "RF1 2.4G RSSI", 132, 29.0, 0.8)
+    add_text(board, "RF3 5.8G RSSI", 128, 34.0, 0.8)
+    add_text(board, "J5 SUB-G", 7.0, 38.0, 0.8)
+    add_text(board, "J7 5.8G", 143.0, 33.0, 0.8)
+    add_text(board, "GPS1", 18, 7.5, 0.8)
+    add_text(board, "J2 SD", 145, 62, 0.8)
+    add_text(board, "RESET", 111, 86.0, 0.8)
+    add_text(board, "BOOT", 123, 86.0, 0.8)
+    add_text(board, "USER", 135, 86.0, 0.8)
+    add_text(board, "POWER", 58, 84.0, 0.8)
+    add_text(board, "GPL-3.0-only | github.com/bobberdolle1/SkySweep32", BOARD_WIDTH / 2, 1.2, 0.8, pcbnew.B_SilkS)
 
-    perimeter = [(0.6, 0.6), (119.4, 0.6), (119.4, 84.4), (0.6, 84.4)]
+    perimeter = [(0.6, 0.6), (BOARD_WIDTH - 0.6, 0.6), (BOARD_WIDTH - 0.6, BOARD_HEIGHT - 0.6), (0.6, BOARD_HEIGHT - 0.6)]
     add_zone(board, "GND", pcbnew.In1_Cu, perimeter, 0.30)
     add_zone(board, "3V3", pcbnew.In2_Cu, perimeter, 0.30)
-    add_zone(board, "GND", pcbnew.F_Cu, perimeter, 0.30)
-    add_zone(board, "GND", pcbnew.B_Cu, perimeter, 0.30)
 
     validate_net_contract(board, member_names)
     pcbnew.SaveBoard(str(BASE_BOARD), board)
@@ -414,10 +464,29 @@ def generate() -> pcbnew.BOARD:
     return board
 
 
+def refresh_model_overrides() -> None:
+    """Refresh enclosure-critical model links without touching copper routing."""
+    if not BOARD.is_file():
+        raise FileNotFoundError(f"board not found: {BOARD}")
+    board = pcbnew.LoadBoard(str(BOARD))
+    footprints = {footprint.GetReference(): footprint for footprint in board.GetFootprints()}
+    missing = sorted(set(MODEL_OVERRIDES) - set(footprints))
+    if missing:
+        raise ValueError(f"model override references absent from board: {missing}")
+    for reference, filename in MODEL_OVERRIDES.items():
+        replace_3d_model(footprints[reference], filename)
+    pcbnew.SaveBoard(str(BOARD), board)
+    print(f"[OK] Refreshed {len(MODEL_OVERRIDES)} model overrides in {BOARD}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--placed-only", action="store_true", help="Generate the reviewed placed, unrouted board")
-    parser.parse_args()
+    parser.add_argument("--models-only", action="store_true", help="Refresh 3D model links without changing copper")
+    args = parser.parse_args()
+    if args.models_only:
+        refresh_model_overrides()
+        return 0
     generate()
     return 0
 

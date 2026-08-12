@@ -22,14 +22,16 @@ process, so the "malicious frame" cases double as overflow regression guards.
 Coverage includes:
 
 - CRSF: hostile length bytes (`0xFE`/`0xFF`) and over-max payloads are rejected
-  without overflowing the 60-byte payload buffer; a valid built frame round-trips
-  (verifying the CRC-offset and frame-length fixes).
-- MAVLink: a valid heartbeat round-trips; a 250-byte-payload frame validates
-  (verifying the widened `expectedLength`); a truncated frame is not accepted;
-  `parseHeartbeat` zero-initializes on short payloads.
-- Field helpers: CRSF RC-channel build↔parse round-trip (11-bit pack/unpack),
-  and the CRSF/MAVLink GPS + heartbeat `parse*` helpers decode full payloads
-  correctly while returning zeroed structs on short (out-of-bounds) payloads.
+  without overflowing the 60-byte payload buffer; known-good receive fixtures
+  validate CRC handling and field offsets.
+- MAVLink: a valid heartbeat fixture parses; a maximum 255-byte-payload frame
+  validates without length wrap; message IDs lacking a known CRC_EXTRA entry
+  and truncated frames are rejected; `parseHeartbeat` zero-initializes on short
+  payloads.
+- Field helpers: a known-good CRSF RC-channel fixture validates 11-bit
+  unpacking, and the CRSF/MAVLink GPS + heartbeat `parse*` helpers decode full
+  payloads correctly while returning zeroed structs on short (out-of-bounds)
+  payloads.
 - Fuzz: ~460k random and adversarial frames (valid sync + random length byte,
   hitting every boundary incl. `0xFE`/`0xFF`) fed to both parsers — the
   sanitizers turn any out-of-bounds access into a hard failure. Deterministic

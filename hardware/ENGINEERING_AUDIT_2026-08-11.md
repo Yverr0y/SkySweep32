@@ -207,3 +207,21 @@ reports were not overwritten during forensics.
 Commit `3d3b438` replaced the false 22/22 validation report and added an
 `EXPERIMENTAL / UNVERIFIED / DO NOT ORDER` warning to Rev B. This is a safety
 correction, not a redesign or validation result.
+
+## Resolution implemented on the engineering branch
+
+- Rev B remains archived and explicitly non-orderable. Rev C is the sole
+  canonical current design and is limited to `READY_FOR_FIRST_PROTOTYPE`.
+- The Rev C schematic, PCB, exact fitted/DNP BOM, four-layer fabrication data,
+  complete PCBA STEP, enclosure, fasteners, service envelopes, and firmware pin
+  map now derive from the reviewed Rev C sources and manifest.
+- Rebuilt evidence records zero unexcluded ERC errors/warnings, zero unexcluded
+  DRC violations and zero unconnected pads, checked mechanical
+  collisions/service clearances, a compiling canonical firmware target, and
+  host behavior tests. Eight stock-symbol footprint-filter ERC exceptions and
+  one TPS61232 mixed-pad DRC exception are explicit and machine-audited. None of
+  this replaces a physical prototype.
+- Fictional RSSI-to-drone signature matching, the active countermeasure source,
+  the fake noise-calibration endpoint, and current public tier/jammer marketing
+  were removed. Current UI and mesh messages report only relative normalized
+  energy/RSSI activity unless an actual Remote ID message was received.

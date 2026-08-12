@@ -48,25 +48,29 @@ def write(name: str, rows: list[str]) -> None:
 def generate() -> None:
     LIB.mkdir(parents=True, exist_ok=True)
 
-    # E01-ML01DP5: 18.0 x 33.4 mm PCB, single 1x8 2.54 mm row.
-    # The courtyard includes the edge SMA body documented by Ebyte.
-    name = "Module_Ebyte_E01_ML01DP5"
-    rows = header(name, "Ebyte E01-ML01DP5 nRF24L01P PA/LNA module; Ebyte mechanical drawing", "through_hole")
+    # E28-2G4M12SX: 15.0 x 17.8 mm IPEX module with fourteen castellated
+    # 1.27 mm-pitch pads. Dimensions and numbering follow Ebyte manual section 3.
+    name = "Module_Ebyte_E28_2G4M12SX"
+    rows = header(name, "Ebyte E28-2G4M12SX SX1281 2.4 GHz IPEX module; Ebyte manual section 3", "smd")
     rows += [
-        rect("F.SilkS", -9, -16.7, 9, 16.7, 0.25),
-        rect("F.CrtYd", -9.5, -17.2, 13.5, 17.2, 0.05),
-        rect("F.Fab", -9, -16.7, 9, 16.7, 0.1),
-        rect("F.Fab", 5, -7, 13, 7, 0.1),
-        '  (fp_text user "SMA OVERHANG" (at 9 0 90) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))',
+        rect("F.CrtYd", -8.0, -9.4, 8.0, 9.4, 0.05),
+        rect("F.Fab", -7.5, -8.9, 7.5, 8.9, 0.1),
+        '  (fp_text user "IPEX" (at 4.2 5.6) (layer "F.Fab") (effects (font (size 0.9 0.9) (thickness 0.12))))',
+        '  (fp_text user "1" (at -6.2 -7.5) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))',
     ]
-    for pin in range(1, 9):
-        shape = "rect" if pin == 1 else "circle"
-        y = (pin - 4.5) * 2.54
+    pad_y = [-7.49 + index * 1.27 for index in range(7)]
+    for pin, y in enumerate(pad_y, 1):
         rows.append(
-            f'  (pad "{pin}" thru_hole {shape} (at -7.25 {y:g}) (size 1.8 1.8) '
-            '(drill 1) (layers "*.Cu" "*.Mask"))'
+            f'  (pad "{pin}" smd {"rect" if pin == 1 else "roundrect"} (at -7.5 {y:g}) '
+            f'(size 1.0 0.8) (layers "F.Cu" "F.Paste" "F.Mask")'
+            f'{" (roundrect_rratio 0.2)" if pin != 1 else ""})'
         )
-    rows += model("Ebyte_E01_ML01DP5_ENVELOPE.step")
+    for pin, y in zip(range(14, 7, -1), pad_y):
+        rows.append(
+            f'  (pad "{pin}" smd roundrect (at 7.5 {y:g}) (size 1.0 0.8) '
+            '(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2))'
+        )
+    rows += model("Ebyte_E28_2G4M12SX_ENVELOPE.step")
     write(name, rows)
 
     # E07-900M10S: 14 x 20 x 3 mm. Pin numbering is transcribed from
@@ -92,6 +96,30 @@ def generate() -> None:
             '(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2))'
         )
     rows += model("Ebyte_E07_900M10S_ENVELOPE.step")
+    write(name, rows)
+
+    # RX5808 2012-format 12-pad receiver module. Body, pad numbering and
+    # castellated-pad positions follow RX5808 Specification V1.0 (2010-09-02).
+    name = "Module_RX5808_2012_12P"
+    rows = header(name, "RX5808 2012 12-pad 28 x 23 mm 5.8 GHz receiver; RX5808 V1.0 drawing", "smd")
+    rows += [
+        rect("F.CrtYd", -14.5, -12.0, 14.5, 12.0, 0.05),
+        rect("F.Fab", -14.0, -11.5, 14.0, 11.5, 0.1),
+        '  (fp_text user "1" (at 12.2 -9.9) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))',
+    ]
+    for pin in range(1, 10):
+        y = -9.9 + (pin - 1) * 2.54
+        rows.append(
+            f'  (pad "{pin}" smd {"rect" if pin == 1 else "roundrect"} (at 13.8 {y:g}) '
+            f'(size 2.0 1.6) (layers "F.Cu" "F.Paste" "F.Mask")'
+            f'{" (roundrect_rratio 0.2)" if pin != 1 else ""})'
+        )
+    for pin, y in ((10, 5.32), (11, 7.86), (12, 10.4)):
+        rows.append(
+            f'  (pad "{pin}" smd roundrect (at -13.8 {y:g}) (size 2.0 1.6) '
+            '(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2))'
+        )
+    rows += model("RX5808_2012_12P_ENVELOPE.step")
     write(name, rows)
 
     # SAM-M10Q-00B: official 20-pad LGA land pattern. Pad positions and sizes

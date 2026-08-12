@@ -76,9 +76,9 @@ void AlertManager::update() {
         
         switch (currentAlert) {
             case ALERT_INFO:           blinkRate = 500; break;
-            case ALERT_DRONE_DETECTED: blinkRate = 250; break;
-            case ALERT_THREAT_HIGH:    blinkRate = 100; break;
-            case ALERT_THREAT_CRITICAL:blinkRate = 50;  break;
+            case ALERT_ACTIVITY_MEDIUM: blinkRate = 250; break;
+            case ALERT_ACTIVITY_HIGH:    blinkRate = 100; break;
+            case ALERT_ACTIVITY_CRITICAL:blinkRate = 50;  break;
             case ALERT_BATTERY_LOW:    blinkRate = 1000; break;
             case ALERT_MESH_ALERT:     blinkRate = 300; break;
             default:                   blinkRate = 500; break;
@@ -91,7 +91,7 @@ void AlertManager::update() {
         }
         
         // Auto-clear alerts after timeout
-        if (currentAlert != ALERT_THREAT_CRITICAL && 
+        if (currentAlert != ALERT_ACTIVITY_CRITICAL && 
             now - alertStartTime > 10000) {
             clearAlert();
         }
@@ -106,13 +106,13 @@ void AlertManager::alert(AlertType type) {
         case ALERT_INFO:
             startPattern(TONE_INFO, 1, 100, 0);
             break;
-        case ALERT_DRONE_DETECTED:
+        case ALERT_ACTIVITY_MEDIUM:
             startPattern(TONE_DETECT, 2, 80, 80);
             break;
-        case ALERT_THREAT_HIGH:
+        case ALERT_ACTIVITY_HIGH:
             startPattern(TONE_HIGH, 3, 100, 50);
             break;
-        case ALERT_THREAT_CRITICAL:
+        case ALERT_ACTIVITY_CRITICAL:
             startPattern(TONE_CRITICAL, 5, 150, 50);
             break;
         case ALERT_BATTERY_LOW:

@@ -10,6 +10,7 @@
 #include "crsf_parser.h"
 #include "mavlink_parser.h"
 #include "rx5808_protocol.h"
+#include "activity_classifier.h"
 
 #include <cstdio>
 #include <cstdint>
@@ -45,16 +46,87 @@ static bool feedMAV(MAVLinkParser& p, const uint8_t* data, size_t n) {
     return any;
 }
 
-// Reference MAVLink v1 CRC (X.25), matching the parser's calculateCRC for
-// message IDs >= 100 (no CRC_EXTRA in the parser's 100-entry table).
-static uint16_t mavCrcNoExtra(const uint8_t* data, uint8_t len) {
-    uint16_t crc = 0xFFFF;
-    for (uint8_t i = 0; i < len; i++) {
-        uint8_t tmp = data[i] ^ (uint8_t)(crc & 0xFF);
-        tmp ^= (tmp << 4);
-        crc = (crc >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4);
+static uint8_t crsfCrc(const uint8_t* data, size_t length) {
+    uint8_t crc = 0;
+    for (size_t i = 0; i < length; i++) {
+        crc ^= data[i];
+        for (uint8_t bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x80) ? static_cast<uint8_t>((crc << 1) ^ 0xD5)
+                               : static_cast<uint8_t>(crc << 1);
+        }
     }
     return crc;
+}
+
+static size_t makeLinkStatsFixture(uint8_t* frame, const CRSFLinkStats& stats) {
+    frame[0] = CRSF_SYNC_BYTE;
+    frame[1] = 12;
+    frame[2] = CRSF_FRAMETYPE_LINK_STATS;
+    frame[3] = stats.uplink_RSSI_1;
+    frame[4] = stats.uplink_RSSI_2;
+    frame[5] = stats.uplink_Link_quality;
+    frame[6] = static_cast<uint8_t>(stats.uplink_SNR);
+    frame[7] = stats.active_antenna;
+    frame[8] = stats.rf_Mode;
+    frame[9] = stats.uplink_TX_Power;
+    frame[10] = stats.downlink_RSSI;
+    frame[11] = stats.downlink_Link_quality;
+    frame[12] = static_cast<uint8_t>(stats.downlink_SNR);
+    frame[13] = crsfCrc(&frame[2], 11);
+    return 14;
+}
+
+static size_t makeRcChannelsFixture(uint8_t* frame, const uint16_t* channels) {
+    frame[0] = CRSF_SYNC_BYTE;
+    frame[1] = 24;
+    frame[2] = CRSF_FRAMETYPE_RC_CHANNELS;
+    memset(&frame[3], 0, 22);
+    for (uint8_t i = 0; i < 16; i++) {
+        const uint16_t value = channels[i];
+        const uint16_t bitOffset = i * 11;
+        const uint8_t byteOffset = bitOffset / 8;
+        const uint8_t bitInByte = bitOffset % 8;
+        frame[3 + byteOffset] |= static_cast<uint8_t>(value << bitInByte);
+        if (bitInByte + 11 > 8) {
+            frame[4 + byteOffset] |= static_cast<uint8_t>(value >> (8 - bitInByte));
+        }
+        if (bitInByte + 11 > 16) {
+            frame[5 + byteOffset] |= static_cast<uint8_t>(value >> (16 - bitInByte));
+        }
+    }
+    frame[25] = crsfCrc(&frame[2], 23);
+    return 26;
+}
+
+static uint16_t mavCrc(const uint8_t* data, size_t length, int crcExtra = -1) {
+    uint16_t crc = 0xFFFF;
+    auto accumulate = [&crc](uint8_t byte) {
+        uint8_t tmp = byte ^ static_cast<uint8_t>(crc & 0xFF);
+        tmp ^= static_cast<uint8_t>(tmp << 4);
+        crc = static_cast<uint16_t>(
+            (crc >> 8) ^ (static_cast<uint16_t>(tmp) << 8) ^
+            (static_cast<uint16_t>(tmp) << 3) ^ (tmp >> 4));
+    };
+    for (size_t i = 0; i < length; i++) accumulate(data[i]);
+    if (crcExtra >= 0) accumulate(static_cast<uint8_t>(crcExtra));
+    return crc;
+}
+
+static size_t makeHeartbeatFixture(uint8_t* frame, uint8_t sysid, uint8_t compid) {
+    const uint8_t payloadLength = 9;
+    const uint8_t messageId = MAVLINK_MSG_ID_HEARTBEAT;
+    frame[0] = MAVLINK_STX_V1;
+    frame[1] = payloadLength;
+    frame[2] = 0;
+    frame[3] = sysid;
+    frame[4] = compid;
+    frame[5] = messageId;
+    const uint8_t payload[payloadLength] = {6, 8, 0, 0, 0, 0, 0, 4, 3};
+    memcpy(&frame[6], payload, payloadLength);
+    const uint16_t crc = mavCrc(&frame[1], 5 + payloadLength, 50);
+    frame[15] = static_cast<uint8_t>(crc);
+    frame[16] = static_cast<uint8_t>(crc >> 8);
+    return 17;
 }
 
 static void testCRSF() {
@@ -94,86 +166,89 @@ static void testCRSF() {
         CHECK(!v, "payload length above 60 rejected");
     }
 
-    // 4) Valid round-trip: build a LINK_STATS frame, parse it back. This exercises
-    //    the buildLinkStats length fix (12) and the CRC-offset fix together — a
-    //    correctly built frame only validates if the CRC is read at the right byte.
+    // 4) A valid receive-only LINK_STATS fixture exercises CRC and field offsets.
     {
         CRSFLinkStats stats;
         memset(&stats, 0, sizeof(stats));
         stats.uplink_RSSI_1 = 42;
         stats.downlink_SNR = -7;
 
-        CRSFParser builder;
         uint8_t buf[64];
-        uint8_t len = 0;
-        builder.buildLinkStats(buf, &len, &stats);
-
-        CHECK(len == 14, "buildLinkStats total frame length == 14");
-        CHECK(buf[1] == 12, "buildLinkStats frame-length byte == 12");
+        const size_t len = makeLinkStatsFixture(buf, stats);
 
         CRSFParser p;
         bool v = feedCRSF(p, buf, len);
-        CHECK(v, "valid built frame parses & validates (CRC offset fix)");
+        CHECK(v, "valid LINK_STATS fixture parses and validates");
 
         CRSFPacket pkt = p.getPacket();
         CHECK(pkt.valid, "parsed packet flagged valid");
         CHECK(pkt.type == CRSF_FRAMETYPE_LINK_STATS, "parsed type == LINK_STATS");
 
         CRSFLinkStats out = p.parseLinkStats(&pkt);
-        CHECK(out.uplink_RSSI_1 == 42, "payload round-trips (uplink_RSSI_1 == 42)");
+        CHECK(out.uplink_RSSI_1 == 42, "payload parses (uplink_RSSI_1 == 42)");
     }
 }
 
 static void testMAVLink() {
     printf("MAVLink parser:\n");
 
-    // 1) Valid round-trip: build a HEARTBEAT frame and parse it back.
+    // 1) Valid receive-only HEARTBEAT fixture.
     {
-        MAVLinkParser builder;
         uint8_t buf[64];
-        uint8_t len = 0;
-        builder.buildHeartbeat(buf, &len, 1, 1);
+        const size_t len = makeHeartbeatFixture(buf, 1, 1);
 
         MAVLinkParser p;
         bool v = feedMAV(p, buf, len);
-        CHECK(v, "valid built heartbeat parses & validates");
+        CHECK(v, "valid heartbeat fixture parses and validates");
 
         MAVLinkPacket pkt = p.getPacket();
         CHECK(pkt.valid, "heartbeat flagged valid");
         CHECK(pkt.msgid == MAVLINK_MSG_ID_HEARTBEAT, "msgid == HEARTBEAT");
     }
 
-    // 2) Large payload (len 250): pre-fix, expectedLength was uint8_t and wrapped
-    //    (8+250 = 258 -> 2), completing the frame after ~6 bytes on garbage. With
-    //    the uint16_t fix the parser buffers the whole 258-byte frame and validates
-    //    the real CRC. Build a valid frame with msgid 200 (no CRC_EXTRA).
+    // 2) Maximum payload (len 255): expectedLength and checksum iteration must
+    //    remain wide enough for the complete 263-byte frame.
     {
-        const uint8_t payloadLen = 250;
-        const uint8_t msgid = 200;
-        uint8_t frame[8 + 250];
+        const uint8_t payloadLen = 255;
+        const uint8_t msgid = MAVLINK_MSG_ID_HEARTBEAT;
+        uint8_t frame[8 + 255];
         frame[0] = MAVLINK_STX_V1;
         frame[1] = payloadLen;
-        frame[2] = 7;    // seq
-        frame[3] = 42;   // sysid
-        frame[4] = 1;    // compid
+        frame[2] = 7;
+        frame[3] = 42;
+        frame[4] = 1;
         frame[5] = msgid;
-        for (uint8_t i = 0; i < payloadLen; i++) frame[6 + i] = (uint8_t)(i * 3 + 1);
+        for (uint16_t i = 0; i < payloadLen; i++) {
+            frame[6 + i] = static_cast<uint8_t>(i * 3 + 1);
+        }
 
-        // CRC covers [len, seq, sysid, compid, msgid, payload...] == 5 + payloadLen bytes.
-        uint16_t crc = mavCrcNoExtra(&frame[1], (uint8_t)(5 + payloadLen));
-        frame[6 + payloadLen] = crc & 0xFF;
-        frame[7 + payloadLen] = (crc >> 8) & 0xFF;
+        const uint16_t crc = mavCrc(&frame[1], 5 + payloadLen, 50);
+        frame[6 + payloadLen] = static_cast<uint8_t>(crc);
+        frame[7 + payloadLen] = static_cast<uint8_t>(crc >> 8);
 
         MAVLinkParser p;
         bool v = feedMAV(p, frame, sizeof(frame));
-        CHECK(v, "len=250 frame validates (expectedLength uint16 fix)");
+        CHECK(v, "len=255 frame validates without length wrap");
 
         MAVLinkPacket pkt = p.getPacket();
-        CHECK(pkt.len == 250, "parsed len == 250");
-        CHECK(pkt.msgid == 200, "parsed msgid == 200");
+        CHECK(pkt.len == 255, "parsed len == 255");
+        CHECK(pkt.msgid == MAVLINK_MSG_ID_HEARTBEAT, "parsed supported msgid");
     }
 
-    // 3) Truncated large frame must not be accepted or over-read.
+    // 3) Message IDs without a CRC_EXTRA table entry are unsupported. A frame
+    //    that omits CRC_EXTRA must not be accepted as valid MAVLink.
+    {
+        uint8_t frame[9] = {MAVLINK_STX_V1, 1, 9, 1, 1, 200, 0x5A, 0, 0};
+        const uint16_t crc = mavCrc(&frame[1], 6);
+        frame[7] = static_cast<uint8_t>(crc);
+        frame[8] = static_cast<uint8_t>(crc >> 8);
+
+        MAVLinkParser p;
+        CHECK(!feedMAV(p, frame, sizeof(frame)),
+              "unsupported msgid without CRC_EXTRA is rejected");
+    }
+
+    // 4) Truncated large frame must not be accepted or over-read.
     {
         MAVLinkParser p;
         uint8_t frag[12];
@@ -184,7 +259,7 @@ static void testMAVLink() {
         CHECK(!v, "12-byte fragment of a 263-byte frame is not accepted");
     }
 
-    // 4) parseHeartbeat must zero-initialize its result on a short payload
+    // 5) parseHeartbeat must zero-initialize its result on a short payload
     //    (previously returned an uninitialized struct).
     {
         MAVLinkPacket pkt;
@@ -205,28 +280,23 @@ static void testMAVLink() {
 static void testParseHelpers() {
     printf("Parse helpers (bounds + extraction):\n");
 
-    // CRSF RC-channel round trip through build -> parse (11-bit pack/unpack + CRC).
+    // CRSF RC-channel fixture through parse (11-bit pack/unpack + CRC).
     {
         uint16_t in[16];
-        for (int i = 0; i < 16; i++) in[i] = (uint16_t)(172 + i * 20);  // all < 2048
+        for (int i = 0; i < 16; i++) in[i] = static_cast<uint16_t>(172 + i * 20);
 
-        CRSFParser builder;
         uint8_t buf[64];
-        uint8_t len = 0;
-        builder.buildRCChannels(buf, &len, in);
-        CHECK(len == 26, "buildRCChannels total length == 26");
-        CHECK(buf[1] == 24, "buildRCChannels frame-length byte == 24");
+        const size_t len = makeRcChannelsFixture(buf, in);
 
         CRSFParser p;
-        bool v = false;
-        for (uint8_t i = 0; i < len; i++) if (p.parseByte(buf[i])) v = true;
-        CHECK(v, "built RC-channels frame parses & validates");
+        bool v = feedCRSF(p, buf, len);
+        CHECK(v, "RC-channels fixture parses and validates");
 
         CRSFPacket pkt = p.getPacket();
         CRSFRCChannels rc = p.parseRCChannels(&pkt);
         bool allMatch = true;
         for (int i = 0; i < 16; i++) if (rc.channels[i] != in[i]) allMatch = false;
-        CHECK(allMatch, "RC channels round-trip losslessly (11-bit pack/unpack)");
+        CHECK(allMatch, "RC channels parse losslessly (11-bit pack/unpack)");
     }
 
     // CRSF GPS: extracts on length >= 17, zeroed on short length.
@@ -369,12 +439,35 @@ static void testFuzz() {
     CHECK(true, "fuzz completed without a sanitizer abort");
 }
 
+static void testActivityClassification() {
+    printf("Passive activity classification:\n");
+    const ActivityThresholds thresholds = {35, 50, 70, 85};
+
+    CHECK(classifyActivityLevel(0, thresholds) == ACTIVITY_NONE,
+          "below low threshold is NONE");
+    CHECK(classifyActivityLevel(34, thresholds) == ACTIVITY_NONE,
+          "value immediately below low threshold is NONE");
+    CHECK(classifyActivityLevel(35, thresholds) == ACTIVITY_LOW,
+          "low threshold is inclusive");
+    CHECK(classifyActivityLevel(49, thresholds) == ACTIVITY_LOW,
+          "value below medium remains LOW");
+    CHECK(classifyActivityLevel(50, thresholds) == ACTIVITY_MEDIUM,
+          "medium threshold is inclusive");
+    CHECK(classifyActivityLevel(70, thresholds) == ACTIVITY_HIGH,
+          "high threshold is inclusive");
+    CHECK(classifyActivityLevel(85, thresholds) == ACTIVITY_CRITICAL,
+          "critical threshold is inclusive");
+    CHECK(classifyActivityLevel(100, thresholds) == ACTIVITY_CRITICAL,
+          "value above critical remains CRITICAL");
+}
+
 int main() {
     printf("== SkySweep32 host parser tests ==\n");
     testCRSF();
     testMAVLink();
     testParseHelpers();
     testRX5808Protocol();
+    testActivityClassification();
     testFuzz();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

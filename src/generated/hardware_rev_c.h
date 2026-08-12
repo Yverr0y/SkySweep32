@@ -8,18 +8,21 @@
 #define PIN_I2C_SDA            1  // I2C_SDA
 #define PIN_I2C_SCL            2  // I2C_SCL
 #define PIN_SD_DETECT          4  // SD_DETECT
-#define PIN_NRF24_CE           8  // NRF24_CE
-#define PIN_NRF24_CS           9  // NRF24_CSN
+#define PIN_RX5808_RSSI        5  // RX5808_RSSI
+#define PIN_RX5808_CH1         6  // RX5808_CH1
+#define PIN_RX5808_CH2         7  // RX5808_CH2
+#define PIN_SX1281_BUSY        8  // SX1281_BUSY
+#define PIN_SX1281_CS          9  // SX1281_CSN
 #define PIN_CC1101_CS          10 // CC1101_CSN
 #define PIN_SPI_MOSI           11 // RF_SPI_MOSI
 #define PIN_SPI_SCK            12 // RF_SPI_SCK
 #define PIN_SPI_MISO           13 // RF_SPI_MISO
+#define PIN_RX5808_CH3         14 // RX5808_CH3
 #define PIN_CC1101_GDO0        15 // CC1101_GDO0
 #define PIN_CC1101_GDO2        16 // CC1101_GDO2
+#define PIN_SX1281_RESET       17 // SX1281_RESET
+#define PIN_SX1281_DIO1        18 // SX1281_DIO1
 #define PIN_GPS_PPS            21 // GPS_PPS
-#define PIN_SD_MOSI            35 // SD_SPI_MOSI
-#define PIN_SD_SCK             36 // SD_SPI_SCK
-#define PIN_SD_MISO            37 // SD_SPI_MISO
 #define PIN_SD_CS              38 // SD_CSN
 #define PIN_BUZZER             39 // ALERT_BUZZER
 #define PIN_ALERT_LED          40 // ALERT_LED
@@ -27,6 +30,9 @@
 #define PIN_USER_BUTTON        42 // USER_BUTTON
 #define PIN_GPS_RX             47 // GPS_RX
 #define PIN_GPS_TX             48 // GPS_TX
+#define PIN_SD_MOSI           PIN_SPI_MOSI // shared SPI data
+#define PIN_SD_MISO           PIN_SPI_MISO // shared SPI data
+#define PIN_SD_SCK            PIN_SPI_SCK  // shared SPI clock
 
 #define GPS_BAUD_RATE          9600
 #define GPS_UPDATE_INTERVAL    1000
@@ -34,8 +40,8 @@
 #if defined(TIER_JUGGERNAUT) || defined(ENABLE_COUNTERMEASURES)
 #error "Rev C is passive-only and has no countermeasure hardware"
 #endif
-#if defined(MODULE_RX5808) || defined(MODULE_LORA) || defined(MODULE_ML)
-#error "Rev C does not implement RX5808, LoRa, or TinyML hardware/features"
+#if defined(MODULE_NRF24) || defined(MODULE_LORA) || defined(MODULE_ML)
+#error "Rev C does not implement nRF24L01+, LoRa, or TinyML hardware/features"
 #endif
 #ifdef MODULE_ACOUSTIC
 #error "Rev C does not route an I2S acoustic input"

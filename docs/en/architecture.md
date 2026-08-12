@@ -21,23 +21,23 @@ Core 0 (Protocol CPU)              Core 1 (Application CPU)
 │ Stack: 4096         │            │ Stack: 2048         │
 │ • CC1101 polling    │            │ • OLED refresh @2Hz │
 │ • NRF24 polling     │            │ • Signal bars       │
-│ • RX5808 polling    │            │ • Threat indicator  │
-│ • Protocol parsing  │            └─────────────────────┘
-│ • Threat assessment │            ┌─────────────────────┐
-│ • ML classification │            │ taskWebServer       │
-└─────────────────────┘            │ Priority: 2         │
-┌─────────────────────┐            │ Stack: 8192         │
-│ taskRemoteID        │            │ • WiFi AP           │
-│ Priority: 1         │            │ • HTTP server       │
-│ Stack: 4096         │            │ • WebSocket         │
-│ • BLE scanning      │            │ • Status broadcast  │
-└─────────────────────┘            └─────────────────────┘
+│ • Activity indicator│            └─────────────────────┘
+│ • Protocol parsing  │            ┌─────────────────────┐
+│ • Relative activity │            │ taskWebServer       │
+│ • No source identity│            │ Priority: 2         │
+└─────────────────────┘            │ Stack: 8192         │
+┌─────────────────────┐            │ • WiFi AP           │
+│ taskRemoteID        │            │ • HTTP server       │
+│ Priority: 1         │            │ • WebSocket         │
+│ Stack: 4096         │            │ • Status broadcast  │
+│ • BLE scanning      │            └─────────────────────┘
+└─────────────────────┘
 ┌─────────────────────┐            ┌─────────────────────┐
 │ taskLoRaMesh        │            │ taskGPS             │
 │ Priority: 1         │            │ Priority: 1         │
 │ Stack: 4096         │            │ Stack: 2048         │
 │ • LoRa RX/TX        │            │ • UART2 polling     │
-│ • Alert broadcast   │            │ • NMEA parsing      │
+│ • Experimental code │            │ • NMEA parsing      │
 └─────────────────────┘            │ • Geofence check    │
 ┌─────────────────────┐            └─────────────────────┘
 │ taskAcoustic        │
@@ -60,7 +60,7 @@ Core 0 (Protocol CPU)              Core 1 (Application CPU)
                     │   taskRFScanning     │
                     │  • Read RSSI         │
                     │  • Parse protocols   │
-                    │  • Assess threats    │
+                    │  • Relative activity  │
                     └──────────┬───────────┘
                                │
           ┌────────────────────┼────────────────────┐
@@ -69,13 +69,6 @@ Core 0 (Protocol CPU)              Core 1 (Application CPU)
 │  Web Dashboard │  │   OLED Display  │  │  SD Card Log   │
 │  (WebSocket)   │  │   (taskDisplay) │  │  (DataLogger)  │
 └────────────────┘  └─────────────────┘  └────────────────┘
-          │
-          │  (on CRITICAL threat)
-          │
-┌─────────▼──────────┐     ┌──────────────────┐
-│  LoRa Mesh Alert   │     │  BLE/WiFi Scan   │
-│  (taskLoRaMesh)    │     │  (taskRemoteID)  │
-└────────────────────┘     └──────────────────┘
 ```
 
 ## SPI Bus Sharing

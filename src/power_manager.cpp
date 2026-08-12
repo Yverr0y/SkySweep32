@@ -1,8 +1,33 @@
 #include "power_manager.h"
+#ifdef MODULE_BATTERY_GAUGE
+#include <Wire.h>
+#endif
 #include <esp_wifi.h>
 #include <esp_bt.h>
 
 PowerManager powerManager;
+
+#ifdef MODULE_BATTERY_GAUGE
+namespace {
+constexpr uint8_t kMax17048Address = 0x36;
+constexpr uint8_t kMax17048VCellRegister = 0x02;
+constexpr uint8_t kMax17048SocRegister = 0x04;
+
+bool readMax17048Register(uint8_t reg, uint16_t& value) {
+    Wire.beginTransmission(kMax17048Address);
+    Wire.write(reg);
+    if (Wire.endTransmission(false) != 0) {
+        return false;
+    }
+    if (Wire.requestFrom(kMax17048Address, static_cast<uint8_t>(2)) != 2) {
+        return false;
+    }
+    value = static_cast<uint16_t>(Wire.read()) << 8;
+    value |= Wire.read();
+    return true;
+}
+}  // namespace
+#endif
 
 PowerManager::PowerManager()
     : currentMode(POWER_FULL),
@@ -19,12 +44,18 @@ void PowerManager::begin() {
         Serial.println("[PWR] Woke from deep sleep");
     }
     
-    // Configure ADC for battery measurement (ADC1_CHANNEL_0 = GPIO36)
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_12);
+    #ifdef MODULE_BATTERY_GAUGE
+    Wire.beginTransmission(kMax17048Address);
+    batteryMonitoring = Wire.endTransmission() == 0;
+    if (!batteryMonitoring) {
+        Serial.println("[PWR] MAX17048 fuel gauge not detected");
+    }
+    #else
+    pinMode(PIN_VBAT_ADC, INPUT);
     batteryMonitoring = true;
-    
-    // Initial battery read
+    #endif
+
+    // Initial battery read.
     getBatteryVoltage();
     
     Serial.printf("[PWR] Battery: %.2fV (%d%%)\n", batteryVoltage, batteryPercent);
@@ -39,7 +70,7 @@ void PowerManager::update() {
         
         // Auto-switch to low power if battery critical
         if (isBatteryCritical() && currentMode != POWER_SLEEP) {
-            Serial.println("[PWR] ⚠️ Battery critical! Switching to LOW power mode");
+            Serial.println("[PWR] Battery critical; switching to LOW power mode");
             setMode(POWER_LOW);
         }
     }
@@ -90,28 +121,39 @@ const char* PowerManager::getModeName() const {
 
 float PowerManager::getBatteryVoltage() {
     if (!batteryMonitoring) return 0.0f;
-    
-    // Multi-sample averaging for stability
-    uint32_t sum = 0;
-    for (int i = 0; i < 16; i++) {
-        sum += adc1_get_raw(ADC1_CHANNEL_0);
+
+    #ifdef MODULE_BATTERY_GAUGE
+    uint16_t rawVCell = 0;
+    uint16_t rawSoc = 0;
+    if (!readMax17048Register(kMax17048VCellRegister, rawVCell) ||
+        !readMax17048Register(kMax17048SocRegister, rawSoc)) {
+        return batteryVoltage;
     }
-    uint32_t rawADC = sum / 16;
-    
-    // Convert ADC reading to voltage
-    // ESP32 ADC: 0-4095 maps to ~0-2.5V at the pin (with 12dB attenuation)
-    float measuredVoltage = (rawADC / 4095.0f) * 3.3f;
+
+    // MAX17048 VCELL register LSB is 78.125 uV; its low nibble is always zero.
+    batteryVoltage = static_cast<float>(rawVCell) * 0.000078125f;
+    const float stateOfCharge = static_cast<float>(rawSoc) / 256.0f;
+    batteryPercent = static_cast<uint8_t>(
+        constrain(stateOfCharge, 0.0f, 100.0f) + 0.5f);
+    #else
+    uint32_t sum = 0;
+    for (int sample = 0; sample < 16; ++sample) {
+        sum += analogRead(PIN_VBAT_ADC);
+    }
+    const uint32_t rawADC = sum / 16;
+    const float measuredVoltage = (rawADC / 4095.0f) * 3.3f;
     batteryVoltage = measuredVoltage * VBAT_DIVIDER_RATIO;
-    
-    // Calculate percentage
     if (batteryVoltage >= VBAT_FULL) {
         batteryPercent = 100;
     } else if (batteryVoltage <= VBAT_EMPTY) {
         batteryPercent = 0;
     } else {
-        batteryPercent = (uint8_t)(((batteryVoltage - VBAT_EMPTY) / (VBAT_FULL - VBAT_EMPTY)) * 100.0f);
+        batteryPercent = static_cast<uint8_t>(
+            ((batteryVoltage - VBAT_EMPTY) / (VBAT_FULL - VBAT_EMPTY)) *
+            100.0f);
     }
-    
+    #endif
+
     return batteryVoltage;
 }
 

@@ -6,9 +6,8 @@
 #include "config_manager.h"
 #include "power_manager.h"
 #include "spi_manager.h"
-#include "countermeasures.h"
+#include "activity_classifier.h"
 #include "alert_manager.h"
-#include "signal_database.h"
 #include "espnow_mesh.h"
 #ifdef MODULE_ATAK
 #include "atak_client.h"
@@ -21,6 +20,9 @@
 #endif
 #ifdef MODULE_NRF24
 #include "drivers/nrf24l01.h"
+#endif
+#ifdef MODULE_SX1281
+#include "drivers/sx1281.h"
 #endif
 #ifdef MODULE_RX5808
 #include "drivers/rx5808.h"
@@ -68,8 +70,15 @@ CC1101Driver cc1101(PIN_CC1101_CS);
 #ifdef MODULE_NRF24
 NRF24L01Driver nrf24(PIN_NRF24_CS, PIN_NRF24_CE);
 #endif
+#ifdef MODULE_SX1281
+SX1281Driver sx1281;
+#endif
 #ifdef MODULE_RX5808
-#ifdef BOARD_SKYSWEEP32_REV_B
+#ifdef BOARD_SKYSWEEP32_REV_C
+RX5808Driver rx5808(RX5808Driver::THREE_BIT_STRAP,
+                     PIN_RX5808_CH1, PIN_RX5808_CH2,
+                     PIN_RX5808_CH3, PIN_RX5808_RSSI);
+#elif defined(BOARD_SKYSWEEP32_REV_B)
 RX5808Driver rx5808(PIN_RX5808_DATA, PIN_RX5808_CLOCK,
                      PIN_RX5808_SELECT, PIN_RX5808_RSSI);
 #else
@@ -84,7 +93,7 @@ CRSFParser crsfParser;
 // ============================================================================
 // FEATURE MODULE INSTANCES
 // ============================================================================
-CountermeasureSystem counterMeasures;
+ActivityClassifier activityClassifier;
 
 #ifdef MODULE_REMOTE_ID
 RemoteIDDetector remoteIDDetector;
@@ -124,12 +133,18 @@ struct RFModuleData {
 // RF data accessible from multiple tasks. Disabled slots remain addressable so
 // the fixed band indices used by telemetry do not drift between build profiles.
 volatile RFModuleData rfModules[3] = {
-    {"CC1101",    PIN_CC1101_CS, 0, false, false, false},
-    {"NRF24L01+", PIN_NRF24_CS,  0, false, false, false},
-#ifdef MODULE_RX5808
-    {"RX5808",    PIN_RX5808_CONTROL, 0, false, false, false}
+    {"CC1101", PIN_CC1101_CS, 0, false, false, false},
+#ifdef MODULE_SX1281
+    {"SX1281", PIN_SX1281_CS, 0, false, false, false},
+#elif defined(MODULE_NRF24)
+    {"NRF24L01+", PIN_NRF24_CS, 0, false, false, false},
 #else
-    {"RX5808",    UINT8_MAX, 0, false, false, false}
+    {"2.4 GHz", UINT8_MAX, 0, false, false, false},
+#endif
+#ifdef MODULE_RX5808
+    {"RX5808", PIN_RX5808_CH1, 0, false, false, false}
+#else
+    {"RX5808", UINT8_MAX, 0, false, false, false}
 #endif
 };
 
@@ -151,9 +166,8 @@ TaskHandle_t taskHandleATAK = NULL;
 // RF SCANNING TASK (Core 0)
 // ============================================================================
 
-// Returns true if the RF module at the given index (0=CC1101, 1=NRF24L01+,
-// 2=RX5808) is compiled into this build. Centralizes the per-tier module
-// gating so the task loops don't repeat #ifndef blocks.
+// Returns true if the RF module at the given index (0=CC1101, 1=SX1281 or
+// legacy nRF24L01+, 2=RX5808) is compiled into this build.
 static inline bool rfModuleEnabled(uint8_t moduleIndex) {
     switch (moduleIndex) {
         case 0:
@@ -163,7 +177,7 @@ static inline bool rfModuleEnabled(uint8_t moduleIndex) {
             return false;
             #endif
         case 1:
-            #ifdef MODULE_NRF24
+            #if defined(MODULE_SX1281) || defined(MODULE_NRF24)
             return true;
             #else
             return false;
@@ -190,7 +204,7 @@ static inline bool cc1101BlankedByLocalLoRa() {
 int readModuleRSSI(uint8_t moduleIndex) {
     if (moduleIndex == 2) {
         #ifdef MODULE_RX5808
-        return constrain(rx5808.readRSSI(), 0, 100);
+        return constrain(rx5808.scanNextChannel(), 0, 100);
         #else
         return 0;
         #endif
@@ -211,7 +225,9 @@ int readModuleRSSI(uint8_t moduleIndex) {
             #endif
             break;
         case 1:
-            #ifdef MODULE_NRF24
+            #ifdef MODULE_SX1281
+            rssiValue = sx1281.readRSSI();
+            #elif defined(MODULE_NRF24)
             rssiValue = nrf24.readRSSI();
             rssiValue = map(rssiValue, -90, -40, 0, 100);
             #endif
@@ -285,75 +301,39 @@ void taskRFScanning(void* parameter) {
                 }
             }
             
-            // Threat assessment
-            ThreatLevel threat = counterMeasures.assessThreat(i, rfModules[i].rssiValue);
-            
-            // Trigger alerts
-            if (threat >= THREAT_MEDIUM) {
-                AlertType requiredAlert = (threat == THREAT_CRITICAL) ? ALERT_THREAT_CRITICAL :
-                                          (threat == THREAT_HIGH) ? ALERT_THREAT_HIGH : ALERT_DRONE_DETECTED;
-                if (alertManager.getCurrentAlert() < requiredAlert || alertManager.getCurrentAlert() == ALERT_NONE) {
+            // Relative activity only: normalized receiver energy is not identity,
+            // distance, intent, or evidence that a drone is present.
+            ActivityLevel activity =
+                activityClassifier.assessActivity(i, rfModules[i].rssiValue);
+
+            if (activity >= ACTIVITY_MEDIUM) {
+                AlertType requiredAlert =
+                    (activity == ACTIVITY_CRITICAL) ? ALERT_ACTIVITY_CRITICAL :
+                    (activity == ACTIVITY_HIGH) ? ALERT_ACTIVITY_HIGH :
+                                                  ALERT_ACTIVITY_MEDIUM;
+                if (alertManager.getCurrentAlert() < requiredAlert ||
+                    alertManager.getCurrentAlert() == ALERT_NONE) {
                     alertManager.alert(requiredAlert);
                 }
             }
             
-            // Signal Signature Matching
-            bool bands[5] = {false};
-            if (i == 0) bands[RF_BAND_915] = true;  // Simplified mapping
-            if (i == 1) bands[RF_BAND_2400] = true;
-            if (i == 2) bands[RF_BAND_5800] = true;
             
-            SignatureMatch sigMatch = signalDB.matchSignal(bands, rfModules[i].rssiValue, 5.0f, 
-                                                           rfModules[i].protocolMAVLink, 
-                                                           rfModules[i].protocolCRSF, false);
-            
-            if (sigMatch.confidence > 0.6f && threat >= THREAT_LOW) {
-                Serial.printf("[SIGDB] Match: %s (%.0f%%)\n", sigMatch.name, sigMatch.confidence * 100.0f);
+            // Share coarse activity with nearby SkySweep nodes. The payload
+            // deliberately carries no inferred transmitter protocol or identity.
+            if (activity >= ACTIVITY_HIGH) {
+                espNowMesh.sendActivityAlert(
+                    rfModules[i].rssiValue,
+                    i == 0 ? 2 : (i == 1 ? 3 : 4),
+                    static_cast<uint8_t>(activity),
+                    0.0f,
+                    0.0f);
             }
             
-            // ESP-NOW Mesh: Broadcast threats to nearby nodes
-            if (threat >= THREAT_HIGH) {
-                espNowMesh.sendThreatAlert(rfModules[i].rssiValue,
-                                           i == 0 ? 2 : (i == 1 ? 3 : 4), // 915=2, 2.4=3, 5.8=4
-                                           rfModules[i].protocolMAVLink ? 1 : rfModules[i].protocolCRSF ? 2 : 0,
-                                           0.0, 0.0);
-            }
             
-            // ATAK Broadcast
-            #ifdef MODULE_ATAK
-            if (threat >= THREAT_LOW) {
-                float lat = 0.0, lon = 0.0, alt = 0.0;
-                float course = 0.0;
-                #ifdef MODULE_GPS
-                if (gpsModule.isFixValid()) {
-                    GPSData g = gpsModule.getData();
-                    lat = g.latitude;
-                    lon = g.longitude;
-                    alt = g.altitude;
-                }
-                #endif
-                
-                #ifdef MODULE_COMPASS
-                if (compassModule.isValid()) {
-                    course = (float)compassModule.getAzimuth();
-                }
-                #endif
-                
-                char threatId[32];
-                snprintf(threatId, sizeof(threatId), "Threat-%s", rfModules[i].moduleName);
-                
-                const char* type = "a-u-A"; // unknown aerial
-                if (rfModules[i].protocolMAVLink || rfModules[i].protocolCRSF || threat >= THREAT_HIGH) {
-                    type = "a-h-A"; // hostile aerial
-                }
-                
-                atakClient.sendThreat(threatId, lat, lon, alt, type, rfModules[i].moduleName, course);
-            }
-            #endif
-            
-            // ML classification on high threat (optional, kept from previous)
+            // Experimental legacy classifier remains opt-in and is forbidden by
+            // the Rev C hardware contract.
             #ifdef MODULE_ML
-            if (threat >= THREAT_HIGH) {
+            if (activity >= ACTIVITY_HIGH) {
                 ClassificationResult mlResult = mlClassifier.classifyFromRSSI(
                     rssiHistory, RSSI_HISTORY_SIZE,
                     rfModules[i].protocolMAVLink,
@@ -373,55 +353,37 @@ void taskRFScanning(void* parameter) {
             // Broadcast to web clients
             #ifdef MODULE_WEB_SERVER
             webServer.broadcastRFData(rfModules[i].moduleName, rfModules[i].rssiValue, rfModules[i].isActive);
-            if (threat >= THREAT_LOW) {
-                webServer.broadcastThreatLevel(
-                    counterMeasures.getThreatLevelString(threat),
-                    counterMeasures.getProtocolString(counterMeasures.getCurrentThreat().detectedProtocol)
-                );
-            }
             #endif
             
             // Log detection to SD
             #ifdef MODULE_SD_CARD
             if (rfModules[i].isActive) {
                 float freq = (i == 0) ? 915.0f : (i == 1) ? 2400.0f : 5800.0f;
+                #ifdef MODULE_SX1281
+                if (i == 1) freq = sx1281.getCurrentFrequencyMHz();
+                #endif
+                #ifdef MODULE_RX5808
+                if (i == 2) freq = rx5808.getCurrentFrequency();
+                #endif
                 const char* proto = rfModules[i].protocolMAVLink ? "MAVLink" :
                                     rfModules[i].protocolCRSF ? "CRSF" : "Unknown";
                 dataLogger.logRFData(rfModules[i].moduleName, rfModules[i].rssiValue, freq, proto);
             }
             #endif
             
-            // LoRa alert broadcast on critical threat
-            #ifdef MODULE_LORA
-            if (threat >= THREAT_CRITICAL) {
-                DetectionAlert alert = {};
-                #ifdef MODULE_GPS
-                GPSData gpsData = gpsModule.getData();
-                alert.latitude = gpsData.latitude;
-                alert.longitude = gpsData.longitude;
-                alert.altitude = gpsData.altitude;
-                #endif
-                alert.rssi = rfModules[i].rssiValue;
-                alert.threatLevel = (uint8_t)threat;
-                alert.timestamp = millis();
-                snprintf(alert.droneID, sizeof(alert.droneID), "%s_THREAT", rfModules[i].moduleName);
-                if (spiManager.acquire(pdMS_TO_TICKS(2000))) {
-                    meshtasticClient.broadcastDetectionAlert(alert);
-                    spiManager.release();
-                }
-            }
-            #endif
-            
-            // Auto-respond with countermeasures if armed
-            #ifdef ENABLE_COUNTERMEASURES
-            if (counterMeasures.isArmed() && threat >= THREAT_HIGH) {
-                if (spiManager.acquire(pdMS_TO_TICKS(200))) {
-                    counterMeasures.autoRespond(i, rfModules[i].rssiValue, rfModules[i].chipSelectPin);
-                    spiManager.release();
-                }
-            }
-            #endif
         }
+        #ifdef MODULE_WEB_SERVER
+        {
+            const ActivityData current = activityClassifier.getCurrentActivity();
+            const char* source = current.isActive && current.moduleIndex < 3
+                                     ? rfModules[current.moduleIndex].moduleName
+                                     : "All fitted receivers";
+            webServer.broadcastActivityLevel(
+                activityClassifier.getActivityLevelString(current.level),
+                source);
+        }
+        #endif
+
         
         // --- Periodic multi-band sweep (every 10th cycle) ---
         static uint8_t sweepCounter = 0;
@@ -545,14 +507,14 @@ void taskDisplayUpdate(void* parameter) {
             yPos += 11;
         }
         
-        // Threat indicator
-        ThreatData threat = counterMeasures.getCurrentThreat();
+        // Relative activity indicator; never labels the source as a threat.
+        ActivityData activity = activityClassifier.getCurrentActivity();
         display.setFont(u8g2_font_5x7_tr);
-        if (threat.isActive) {
-            char threatBuf[32];
-            snprintf(threatBuf, sizeof(threatBuf), "THREAT: %s", 
-                     counterMeasures.getThreatLevelString(threat.level));
-            display.drawStr(0, 63, threatBuf);
+        if (activity.isActive) {
+            char activityBuf[32];
+            snprintf(activityBuf, sizeof(activityBuf), "ACTIVITY: %s",
+                     activityClassifier.getActivityLevelString(activity.level));
+            display.drawStr(0, 63, activityBuf);
         } else {
             #ifdef MODULE_GPS
             if (gpsModule.isFixValid()) {
@@ -730,15 +692,19 @@ void setup() {
     esp_task_wdt_add(NULL);       // Add current task (setup/loop)
     Serial.println("[INIT] Watchdog timer: 30s");
     
+    // --- Initialize shared I2C bus before the fuel gauge and display ---
+    #if defined(MODULE_BATTERY_GAUGE) || defined(MODULE_OLED) || defined(MODULE_COMPASS)
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+    #endif
+
     // --- Initialize Power Manager ---
     powerManager.begin();
     
     // --- Initialize SPI Manager ---
     spiManager.begin();
     
-    // --- Initialize I2C + OLED ---
+    // --- Initialize OLED ---
     #ifdef MODULE_OLED
-    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     display.begin();
     display.setFont(u8g2_font_6x10_tr);
     display.clearBuffer();
@@ -765,20 +731,24 @@ void setup() {
         spiManager.release();
     }
     #endif
+
+    #ifdef MODULE_SX1281
+    Serial.println("[INIT] SX1281 (2.4 GHz passive RSSI)...");
+    if (spiManager.acquire(pdMS_TO_TICKS(1000))) {
+        if (!sx1281.begin()) Serial.println("[ERROR] SX1281 init failed");
+        spiManager.release();
+    }
+    #endif
     
     #ifdef MODULE_RX5808
     Serial.println("[INIT] RX5808 (5.8 GHz)...");
     if (!rx5808.begin()) Serial.println("[ERROR] RX5808 init failed");
     #endif
     
-    // --- Initialize Countermeasures ---
-    counterMeasures.initialize();
     
     // --- Initialize Alert Manager ---
     alertManager.begin(true, true);
     
-    // --- Initialize Signal Database ---
-    signalDB.begin();
     
     // --- Initialize Web Server (before Remote ID!) ---
     #ifdef MODULE_WEB_SERVER
@@ -818,11 +788,8 @@ void setup() {
     // --- Initialize SD Card Logger ---
     #ifdef MODULE_SD_CARD
     Serial.println("[INIT] SD Card Logger...");
-    if (spiManager.acquire(pdMS_TO_TICKS(1000))) {
-        if (!dataLogger.begin(PIN_SD_CS)) {
-            Serial.println("[ERROR] SD card init failed");
-        }
-        spiManager.release();
+    if (!dataLogger.begin(PIN_SD_CS)) {
+        Serial.println("[ERROR] SD card init failed");
     }
     #endif
     

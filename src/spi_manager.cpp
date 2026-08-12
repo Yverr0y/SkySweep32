@@ -24,18 +24,19 @@ bool SPIManager::begin() {
     digitalWrite(PIN_CC1101_CS, HIGH);
     #endif
     
+    #ifdef MODULE_SX1281
+    pinMode(PIN_SX1281_CS, OUTPUT);
+    digitalWrite(PIN_SX1281_CS, HIGH);
+    #endif
     #ifdef MODULE_NRF24
     pinMode(PIN_NRF24_CS, OUTPUT);
     digitalWrite(PIN_NRF24_CS, HIGH);
     #endif
-    
-    
     #ifdef MODULE_LORA
     pinMode(PIN_LORA_CS, OUTPUT);
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
-    
-    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B) && !defined(BOARD_SKYSWEEP32_REV_C)
+    #ifdef MODULE_SD_CARD
     pinMode(PIN_SD_CS, OUTPUT);
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
@@ -67,13 +68,16 @@ void SPIManager::deselectAll() {
     #ifdef MODULE_CC1101
     digitalWrite(PIN_CC1101_CS, HIGH);
     #endif
+    #ifdef MODULE_SX1281
+    digitalWrite(PIN_SX1281_CS, HIGH);
+    #endif
     #ifdef MODULE_NRF24
     digitalWrite(PIN_NRF24_CS, HIGH);
     #endif
     #ifdef MODULE_LORA
     digitalWrite(PIN_LORA_CS, HIGH);
     #endif
-    #if defined(MODULE_SD_CARD) && !defined(BOARD_SKYSWEEP32_REV_B) && !defined(BOARD_SKYSWEEP32_REV_C)
+    #ifdef MODULE_SD_CARD
     digitalWrite(PIN_SD_CS, HIGH);
     #endif
 }

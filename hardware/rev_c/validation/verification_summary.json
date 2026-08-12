@@ -2,9 +2,9 @@
   "design": "SkySweep32 Rev C Passive Monitor",
   "maturity": "READY_FOR_FIRST_PROTOTYPE",
   "production_validated": false,
-  "timestamp_utc": "2026-08-12T21:00:04.445962+00:00",
-  "source_revision": "832e8c04ab33f35edfac6a6d4b222cb8b3c33ec5",
-  "source_tree_dirty": true,
+  "timestamp_utc": "2026-08-12T21:09:39.682537+00:00",
+  "source_revision": "9542a8328e2ef331ea2df5176d78a29f9e3644ce",
+  "source_tree_dirty": false,
   "tools": {
     "kicad": "10.0.5",
     "kicad_sch_api": "0.5.6",

@@ -1,6 +1,8 @@
 # SkySweep32
 
-Passive RF energy-observation and logging platform based on ESP32.
+Open-source passive multi-band RF monitor and logger built around ESP32-S3.
+
+**855–925 MHz · 2.4 GHz · 5.8 GHz · BLE/Wi-Fi · GNSS · microSD · Web UI**
 
 [![Firmware CI](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/platformio.yml)
 [![Hardware gates](https://github.com/bobberdolle1/SkySweep32/actions/workflows/hardware.yml/badge.svg)](https://github.com/bobberdolle1/SkySweep32/actions/workflows/hardware.yml)
@@ -13,120 +15,122 @@ Passive RF energy-observation and logging platform based on ESP32.
 <a name="english"></a>
 ## English
 
-### Current status
+SkySweep32 Rev C combines three passive RF observation paths with local
+logging, positioning, a display, battery operation, and networking in one
+open-source device.
 
-**Hardware Rev C: READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION
-VALIDATED.**
+> **Rev C is the current hardware revision.** It is ready for its first
+> physical prototype. No Rev C board has yet been physically bench-tested.
 
-Rev C has a native KiCad 10 schematic and four-layer PCB, exact fitted BOM,
-zero unexcluded ERC errors/warnings, zero unexcluded DRC violations and zero
-unconnected pads, a complete PCBA STEP, CAD-checked enclosure with
-fasteners/service envelopes, fabrication exports, and a compiling canonical
-firmware target. Eight ERC footprint-filter exceptions and one DRC mixed-pad
-exception are explicit, narrowly scoped, and machine-audited. No Rev C board has
-yet been assembled or bench-tested. These are design/CAD results, not proof of
-RF performance, reliability, compliance, manufacturing yield, or field
-operation.
+![Rev C PCB assembly preview](hardware/rev_c/previews/pcb_iso.png)
 
-The public `v0.6.1` firmware release predates Rev C and targets legacy ESP32
-DevKit wiring. Do not flash those prebuilt binaries onto Rev C. Build the
-`esp32s3_rev_c_passive` environment from current source.
+### Start here
 
-| Revision | Status | Authority |
-|---|---|---|
-| [Rev C](hardware/rev_c/) | Current; first physical prototype only | Canonical schematic, PCB, BOM, pin contract, enclosure, and evidence |
-| [Rev B](hardware/rev_b/) | Failed/unverified; do not order | Historical audit evidence only |
-| [Rev A](hardware/LEGACY_REV_A_STATUS.md) | Legacy/unverified; do not order | Issue #10 parser-compatibility history only |
+- [Build Rev C](BUILD_THIS.md) — one concise route to the current prototype.
+- [Hardware](hardware/rev_c/README.md) — schematic, PCB, BOM, enclosure, and
+  source-of-truth hierarchy.
+- [Firmware](#firmware-compatibility) — build the canonical ESP32-S3 target.
+- [Roadmap](hardware/rev_c/ROADMAP.md) — physical evidence before refinement.
+- [Validation](hardware/rev_c/validation/verification_summary.json) — current
+  reproducible CAD/build evidence and its limits.
+- [Website](https://bobberdolle1.github.io/SkySweep32/) — product overview in
+  English and Russian.
 
-### Honest capability matrix
+### What SkySweep32 does
 
-`Implemented in source` does not mean physically validated.
+- **855–925 MHz:** E07-900M10S/CC1101 channelized RSSI and activity
+  observation. 433 MHz is outside the Rev C contract.
+- **2.4 GHz:** E28-2G4M12SX/SX1281 instantaneous-RSSI sweep with a dedicated
+  internal U.FL antenna.
+- **5.8 GHz:** RX5808-based eight-channel analog RSSI observation from
+  5645–5945 MHz. Every procured lot needs the documented incoming check.
+- **Local device functions:** GNSS logging, microSD storage, OLED status,
+  buttons/buzzer, protected battery operation, native USB, Wi-Fi dashboard,
+  BLE receive functions, and ESP-NOW source support.
 
-| Capability | Source state | Rev C hardware state | Evidence / limit |
-|---|---|---|---|
-| 855–925 MHz observation | CC1101 register/RSSI driver compiles | Ebyte E07-900M10S fitted | Channelized RSSI/activity only; RF response unmeasured; no 433 MHz |
-| 2.4 GHz observation | SX1281 instantaneous-RSSI driver compiles | Ebyte E28-2G4M12SX fitted | Coarse RSSI/activity sweep only; no protocol or transmitter identity |
-| Wi-Fi dashboard | Implemented and compiles | ESP32-S3 radio present | Not run on physical Rev C |
-| BLE Remote ID | Experimental parser compiles | ESP32-S3 BLE present | No ASTM/ASD-STAN conformance suite; no FAA/ANSI compliance claim |
-| GNSS | NMEA path compiles | u-blox SAM-M10Q-00B fitted | No live-fix or antenna test |
-| microSD logging | Implemented and compiles | Molex 104031-0811 fitted | No physical write/endurance test |
-| ESP-NOW alerts | Implemented and compiles | ESP32-S3 radio present | No range, coexistence, or multi-node bench test |
-| MAVLink / CRSF parsing | Host unit tests and sanitizers pass | No current RF demodulator supplies these byte streams | Parser capability only; not over-air protocol detection |
-| TinyML inference | Placeholder dummy model exists in legacy optional source | Excluded from Rev C | Not implemented; rule-based labels are not trained inference |
-| 5.8 GHz FPV observation | RX5808 channel/RSSI driver compiles | Procurement-qualified `RX5808-2012-12P` envelope fitted | Eight hardware-selected channels and analog RSSI; supplier/pinout and RF response require incoming/bench checks |
-| LoRa / “Meshtastic” | Proprietary experimental packet code | Excluded from Rev C | Not Meshtastic protocol compatibility; no localization validation |
-| ATAK CoT | Optional source compiles in legacy full-feature builds | No special Rev C hardware | No interoperability or field test |
-| Compass direction finding | Heading-source code only | Excluded from Rev C | A magnetometer cannot determine RF bearing by itself |
-| Active countermeasures | Removed from current source and hardware | Excluded | SkySweep32 is a passive monitor |
+These are passive energy/RSSI observation paths. They do not identify a
+protocol or transmitter, demodulate video, provide RF direction finding, or
+perform active RF interference.
 
-SkySweep32 must not be described as field-tested, compliant, accurate drone
-classification, direction finding, or production-ready without new physical
-evidence.
+### Rev C hardware
 
-### Rev C architecture
-
-- Espressif `ESP32-S3-WROOM-1-N16R8` with native USB-C programming.
-- Ebyte `E07-900M10S` for passive 855–925 MHz RSSI/activity observation.
-- Ebyte `E28-2G4M12SX` / SX1281 for passive 2.4 GHz instantaneous-RSSI
-  observation, with Adafruit `PID 2308` internal U.FL antenna.
-- Qualified-envelope `RX5808-2012-12P` for eight-channel 5.8 GHz analog RSSI
-  observation; every procured lot requires the documented incoming checks.
+- `ESP32-S3-WROOM-1-N16R8` with native USB-C programming.
+- Ebyte `E07-900M10S`, Ebyte `E28-2G4M12SX`/SX1281, and a
+  procurement-qualified `RX5808-2012-12P` envelope.
 - u-blox `SAM-M10Q-00B`, Molex `104031-0811` microSD socket, and Adafruit
   `PID 326` OLED on a keyed harness.
 - Protected USB-C/battery power path using BQ24074, TPS61232, MAX17048, and
-  `AP63203WU-7`, with the specified protected Adafruit `PID 328` battery.
-- 150 × 95 mm four-layer PCB; continuous L2 ground reference.
-- 165.4 × 117.4 × 33.5 mm printed indoor enclosure generated around the
-  complete PCBA, battery, display, antennas, harnesses, and fasteners. Not
-  sealed or IP rated.
-- No LoRa, trained TinyML, RF direction-finding, or active-countermeasure
-  hardware.
+  AP63203WU-7 with the specified protected Adafruit `PID 328` battery.
+- 150 × 95 mm four-layer PCB with a continuous L2 ground reference.
+- 165.4 × 117.4 × 33.5 mm printed indoor enclosure generated around the PCBA,
+  battery, display, antennas, harnesses, and M3 hardware. It is not sealed or
+  IP rated.
 
-See [Rev C architecture](hardware/rev_c/ARCHITECTURE.md), [exact manifest](hardware/rev_c/hardware_manifest.json), and [engineering audit](hardware/ENGINEERING_AUDIT_2026-08-11.md).
+See the [Rev C architecture](hardware/rev_c/ARCHITECTURE.md) and
+[exact component manifest](hardware/rev_c/hardware_manifest.json) for the
+canonical implementation.
 
-### Build and verify
+### Capabilities and limits
 
-Requirements: Python 3.11+, PlatformIO, KiCad 10, FreeCAD 1.0+, and the pinned
-Python package/checksums in [`hardware/toolchain.json`](hardware/toolchain.json).
+`Implemented in source` is not physical validation.
+
+| Capability | Rev C implementation | Current limit |
+|---|---|---|
+| 855–925 MHz observation | E07/CC1101 RSSI/activity | RF response unmeasured; no protocol identity |
+| 2.4 GHz observation | E28/SX1281 instantaneous RSSI | Coarse energy/activity only; no demodulation |
+| 5.8 GHz observation | RX5808 channel selection + analog RSSI | Supplier/pinout and RF response need physical checks |
+| Wi-Fi / BLE | ESP32-S3 dashboard and receive functions | No physical Rev C run; Remote ID has no conformance evidence |
+| GNSS / storage / display | Exact fitted modules and source support | No live-fix, endurance, or physical UI test |
+| ESP-NOW | Source support | No range, coexistence, or multi-node bench test |
+| TinyML | Excluded from Rev C | Legacy source has a dummy model; trained inference is not implemented |
+| LoRa / Meshtastic | Excluded from Rev C motherboard | A possible future external expansion, not Rev C hardware |
+
+### Build and validation
+
+[BUILD_THIS.md](BUILD_THIS.md) is the builder entrypoint. It links to the
+fitted BOM, fabrication package, enclosure, assembly procedure, canonical
+firmware, and prototype checklist without mixing revisions.
+
+The detailed [Rev C build guide](hardware/rev_c/BUILD.md) requires the
+complete local gate before purchase:
 
 ```bash
-# Canonical Rev C firmware
-python scripts/generate_rev_c_pinmap.py --check
-pio run -e esp32s3_rev_c_passive
-
-# Host parser tests
-make -C test/host
-
-# Complete electrical, PCB, mechanical, fabrication, render, and firmware gate
+python hardware/rev_c/verify_schematic_parity.py
 python hardware/verify.py
 ```
 
-The verifier records tool versions, commands, timestamp, source revision, gate
-results, and evidence paths in
-[`hardware/rev_c/validation/verification_summary.json`](hardware/rev_c/validation/verification_summary.json).
-Skipped gates are recorded as skipped, never as passes.
+The verification record includes ERC/DRC results, precise exclusion audit,
+CAD interference checks, fabrication exports, and the firmware build. These
+are design/CAD results only; they do not establish RF performance, reliability,
+compliance, manufacturing yield, or field operation.
 
-### First-prototype files
+### Firmware compatibility
 
-- [Rev C engineering README](hardware/rev_c/README.md)
-- [Rev C build guide](hardware/rev_c/BUILD.md)
-- [Fitted BOM](hardware/rev_c/manufacturing/bom_fitted.csv)
-- [Assembly and bring-up](hardware/rev_c/ASSEMBLY_AND_BRINGUP.md)
-- [Physical validation checklist](hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md)
-- [Mechanical drawing](hardware/rev_c/enclosure/rev_c_mechanical_drawing.svg)
-- [Evidence roadmap](hardware/rev_c/ROADMAP.md)
-- [Fabrication manifest](hardware/rev_c/manufacturing/fabrication_manifest.json)
+Build the current hardware from source only:
 
-These files support one engineering prototype spin. They are not a
-mass-production release.
+```bash
+pio run -e esp32s3_rev_c_passive
+pio run -e esp32s3_rev_c_passive --target upload
+```
 
-### Legacy firmware profiles
+> **Do not flash `v0.6.1` binaries onto Rev C.** They target legacy ESP32 DevKit
+> wiring. `esp32dev_base`, `esp32dev_standard`, `esp32dev_pro`, and
+> `esp32s3_rev_b_pro` remain compile-checked only for historical regression;
+> their pin maps, BOMs, enclosures, and release binaries are incompatible with
+> Rev C.
 
-`esp32dev_base`, `esp32dev_standard`, `esp32dev_pro`, and
-`esp32s3_rev_b_pro` remain compile-checked for regression/history. Their pin
-maps, BOMs, and enclosure files are incompatible with Rev C. Documentation under
-`docs/en/` and `docs/ru/` that describes DevKit “tiers” is retained only as
-legacy v0.6.1 firmware history and must not be used to procure Rev C hardware.
+### Validation and engineering history
+
+[Validation](hardware/rev_c/validation/verification_summary.json) records the
+exact tools, source revision, commands, evidence paths, ERC/DRC results, and
+narrow documented exclusions. A skipped gate is recorded as skipped, never as
+passed.
+
+Rev C is the only current hardware source. [Rev B](hardware/rev_b/) is a failed
+and unverified historical baseline; [Rev A](hardware/LEGACY_REV_A_STATUS.md) is
+legacy parser-compatibility history. Neither may be ordered or used to build
+Rev C. See the [engineering audit](hardware/ENGINEERING_AUDIT_2026-08-11.md)
+for the evidence.
 
 ### License and lawful use
 
@@ -139,58 +143,123 @@ The canonical hardware contains no active interference functions.
 <a name="russian"></a>
 ## Русский
 
-### Текущий статус
+SkySweep32 Rev C объединяет три тракта пассивного RF-наблюдения с локальным
+журналированием, позиционированием, дисплеем, питанием от аккумулятора и
+сетевыми функциями в одном open-source устройстве.
 
-**Hardware Rev C: ГОТОВ К ПЕРВОМУ ФИЗИЧЕСКОМУ ПРОТОТИПУ — НЕ ПРОВЕРЕН ДЛЯ
-СЕРИЙНОГО ПРОИЗВОДСТВА.**
+> **Rev C — текущая аппаратная ревизия.** Она готова к первому физическому
+> прототипу. Физическая плата Rev C ещё не прошла стендовые испытания.
 
-Для Rev C подготовлены нативная схема KiCad 10, четырёхслойная PCB, точный BOM,
-ERC без неисключённых ошибок/предупреждений и DRC без неисключённых нарушений
-или неподключённых цепей, полная STEP-сборка PCBA, корпус с CAD-проверками
-коллизий и сервисных зон, Gerber/drill/placement-файлы и отдельная собираемая
-конфигурация прошивки. Восемь исключений ERC для фильтров посадочных мест и одно
-исключение DRC для смешанных контактных площадок явно задокументированы и
-проверяются автоматически. Физическая плата Rev C ещё не собрана и не испытана.
-RF-характеристики, надёжность, соответствие нормам и производственный выход не
-подтверждены.
+![Предпросмотр сборки PCB Rev C](hardware/rev_c/previews/pcb_iso.png)
 
-Готовые бинарные файлы релиза `v0.6.1` относятся к старой разводке ESP32 DevKit
-и несовместимы с Rev C. Для Rev C собирайте только
-`esp32s3_rev_c_passive` из текущего исходного кода.
+### Начните отсюда
 
-### Что реально делает Rev C
+- [Собрать Rev C](BUILD_THIS.md) — короткий маршрут к текущему прототипу.
+- [Аппаратная часть](hardware/rev_c/README.md) — схема, PCB, BOM, корпус и
+  иерархия источников истины.
+- [Прошивка](#совместимость-прошивки) — сборка канонической цели ESP32-S3.
+- [Дорожная карта](hardware/rev_c/ROADMAP.md) — сначала физические измерения,
+  затем изменения.
+- [Валидация](hardware/rev_c/validation/verification_summary.json) —
+  воспроизводимые CAD/build-проверки и их ограничения.
+- [Сайт проекта](https://bobberdolle1.github.io/SkySweep32/).
 
-- E07-900M10S: пассивное наблюдение RSSI/активности 855–925 МГц; 433 МГц
-  запрещены контрактом.
-- E28-2G4M12SX/SX1281: пассивный обзор мгновенного RSSI в диапазоне 2.4 ГГц.
-  Это не демодуляция и не распознавание DJI/ELRS/другого протокола.
-- RX5808-2012-12P: восемь аппаратно выбираемых каналов 5645–5945 МГц и
-  аналоговый RSSI; поставщик, распиновка и RF-отклик проверяются на первом
-  экземпляре.
-- ESP32-S3: Wi-Fi/BLE и ESP-NOW; работа на физической Rev C ещё не проверена.
-- SAM-M10Q, microSD, OLED, защищённый аккумулятор и зарядный тракт
-  предусмотрены конкретными деталями, но требуют стендовых испытаний.
-- BLE Remote ID остаётся экспериментальным: тестов на соответствие
-  ASTM/ASD-STAN нет.
-- TinyML не реализован: в legacy-исходниках лежит фиктивная модель.
-- LoRa, радиопеленгация и активное подавление исключены из Rev C.
+### Что делает SkySweep32
 
-Rev A и Rev B — несовместимые, непроверенные исторические версии. Их нельзя
-заказывать и нельзя использовать их pin map/BOM/корпуса для Rev C.
+- **855–925 МГц:** E07-900M10S/CC1101, канальное пассивное наблюдение RSSI и
+  активности. 433 МГц не входит в контракт Rev C.
+- **2.4 ГГц:** E28-2G4M12SX/SX1281, обзор мгновенного RSSI с отдельной
+  внутренней антенной U.FL.
+- **5.8 ГГц:** RX5808, восемь каналов и аналоговый RSSI в диапазоне
+  5645–5945 МГц. Каждая закупленная партия требует входного контроля.
+- **Локальные функции:** GNSS-журналирование, microSD, OLED, кнопки/зуммер,
+  защищённое аккумуляторное питание, native USB, Wi-Fi dashboard, приёмные
+  BLE-функции и исходная поддержка ESP-NOW.
 
-### Сборка и проверка
+Это пассивное наблюдение энергии/RSSI. Устройство не определяет протокол или
+передатчик, не демодулирует видео, не выполняет радиопеленгацию и не создаёт
+активные радиопомехи.
+
+### Аппаратная часть Rev C
+
+- `ESP32-S3-WROOM-1-N16R8` с программированием через native USB-C.
+- Ebyte `E07-900M10S`, Ebyte `E28-2G4M12SX`/SX1281 и проверяемый при приёмке
+  габарит `RX5808-2012-12P`.
+- u-blox `SAM-M10Q-00B`, разъём microSD Molex `104031-0811` и OLED Adafruit
+  `PID 326` на ключевом шлейфе.
+- Защищённый тракт USB-C/аккумулятора: BQ24074, TPS61232, MAX17048,
+  AP63203WU-7 и защищённый аккумулятор Adafruit `PID 328`.
+- Четырёхслойная PCB 150 × 95 мм с непрерывной землёй L2.
+- Печатный корпус для помещения 165.4 × 117.4 × 33.5 мм, спроектированный
+  вокруг PCBA, аккумулятора, дисплея, антенн, шлейфов и крепежа M3. Он не
+  герметичен и не имеет IP-рейтинга.
+
+Каноническая реализация описана в [архитектуре Rev C](hardware/rev_c/ARCHITECTURE.md)
+и [точном манифесте компонентов](hardware/rev_c/hardware_manifest.json).
+
+### Возможности и ограничения
+
+`Реализовано в исходном коде` не означает физическую проверку.
+
+| Возможность | Реализация Rev C | Текущее ограничение |
+|---|---|---|
+| Наблюдение 855–925 МГц | E07/CC1101, RSSI/активность | RF-отклик не измерен; протокол не определяется |
+| Наблюдение 2.4 ГГц | E28/SX1281, мгновенный RSSI | Только энергия/активность; без демодуляции |
+| Наблюдение 5.8 ГГц | RX5808, каналы + аналоговый RSSI | Нужны входной контроль и RF-измерения |
+| Wi-Fi / BLE | Dashboard и приёмные функции ESP32-S3 | Нет запуска на физической Rev C; Remote ID без доказательств соответствия |
+| GNSS / storage / display | Точные установленные модули и исходный код | Нет live-fix, endurance или физического UI-теста |
+| ESP-NOW | Поддержка в исходном коде | Нет стендовых дальностных и multi-node тестов |
+| TinyML | Исключён из Rev C | В legacy-коде фиктивная модель; обученной модели нет |
+| LoRa / Meshtastic | Исключён из материнской платы Rev C | Возможное внешнее расширение в будущем, не аппаратная часть Rev C |
+
+### Сборка и валидация
+
+[BUILD_THIS.md](BUILD_THIS.md) — входная страница для сборщика. Она связывает
+точный BOM, fabrication package, корпус, инструкцию сборки, каноническую
+прошивку и чек-лист прототипа без смешения ревизий.
+
+Подробное [руководство Rev C](hardware/rev_c/BUILD.md) требует перед заказом
+выполнить:
 
 ```bash
-python scripts/generate_rev_c_pinmap.py --check
-pio run -e esp32s3_rev_c_passive
-make -C test/host
+python hardware/rev_c/verify_schematic_parity.py
 python hardware/verify.py
 ```
 
-Основные документы: [Rev C](hardware/rev_c/README.md),
-[сборка и первый запуск](hardware/rev_c/ASSEMBLY_AND_BRINGUP.md),
-[чек-лист физического прототипа](hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md),
-[аудит](hardware/ENGINEERING_AUDIT_2026-08-11.md).
+Запись валидации содержит ERC/DRC, точный аудит исключений, CAD-проверки
+коллизий, производственные файлы и сборку прошивки. Это результаты CAD/build,
+а не доказательство RF-характеристик, надёжности, соответствия нормам,
+производственного выхода или полевой работы.
 
-Лицензия: GNU GPL v3. Каноническая Rev C — только пассивное устройство и не
-содержит аппаратуры активных помех.
+### Совместимость прошивки
+
+Для текущего устройства собирайте прошивку только из исходного кода:
+
+```bash
+pio run -e esp32s3_rev_c_passive
+pio run -e esp32s3_rev_c_passive --target upload
+```
+
+> **Не прошивайте Rev C бинарными файлами `v0.6.1`.** Они относятся к старой
+> разводке ESP32 DevKit. `esp32dev_base`, `esp32dev_standard`, `esp32dev_pro` и
+> `esp32s3_rev_b_pro` остались только для compile-check исторических регрессий;
+> их pin map, BOM, корпуса и release binaries несовместимы с Rev C.
+
+### Валидация и инженерная история
+
+[Валидация](hardware/rev_c/validation/verification_summary.json) фиксирует
+точные инструменты, исходную ревизию, команды, пути к evidence, результаты
+ERC/DRC и узкие документированные исключения. Пропущенная проверка всегда
+записывается как skipped, а не passed.
+
+Rev C — единственный текущий источник аппаратной части. [Rev B](hardware/rev_b/)
+— неудачная и непроверенная историческая база, а
+[Rev A](hardware/LEGACY_REV_A_STATUS.md) — legacy-история parser compatibility.
+Их нельзя заказывать или использовать для сборки Rev C. Доказательства собраны
+в [инженерном аудите](hardware/ENGINEERING_AUDIT_2026-08-11.md).
+
+### Лицензия и законное использование
+
+GNU GPL v3. Пассивный приём может регулироваться законом и может раскрывать
+частные или защищённые данные. Соблюдайте местные нормы радио-, privacy-,
+aviation- и data-law. Каноническая аппаратная часть не содержит активных помех.

@@ -2,7 +2,7 @@
 > **LEGACY v0.6.1 DEVKIT TIERS — NOT REV C — DO NOT PROCURE FROM THIS PAGE.**
 > These configurations and capability claims are historical and physically
 > unverified. Rev C has one exact passive architecture documented
-> [here](../../hardware/rev_c/README.md).
+> [here](https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c).
 
 
 ## 📦 Hardware Tiers

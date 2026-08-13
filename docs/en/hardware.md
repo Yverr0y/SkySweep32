@@ -1,7 +1,7 @@
 # Hardware Setup Guide
 > **LEGACY v0.6.1 DEVKIT DOCUMENTATION — NOT REV C — DO NOT BUY PARTS FROM THIS PAGE.**
 > The generic modules, wiring, prices, and capability claims below were not
-> physically validated. Use the exact [Rev C prototype documentation](../../hardware/rev_c/README.md).
+> physically validated. Use the exact [Rev C prototype documentation](https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c).
 
 
 ## Bill of Materials (BOM)

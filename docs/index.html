@@ -42,7 +42,7 @@
   <h1>Engineering evidence, not marketing claims.</h1>
   <p class="lede">SkySweep32 Rev C is a requirements-first ESP32-S3 carrier for passive sub-GHz, 2.4 GHz, and 5.8 GHz energy/RSSI observation, GNSS, logging, display, and local networking. It replaces the failed Rev B prototype.</p>
   <div class="status" id="status"><strong>READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION VALIDATED</strong>No Rev C board has been assembled or bench-tested. ERC, DRC, fabrication export, firmware compilation, and CAD interference checks pass reproducibly. RF performance, reliability, compliance, and production yield remain unverified.</div>
-  <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c">Rev C engineering files</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Physical test checklist</a></div>
+  <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/BUILD.md">Build Rev C</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Physical test checklist</a></div>
 </header>
 
 <section>
@@ -88,7 +88,7 @@ pio run -e esp32s3_rev_c_passive
 make -C test/host
 python hardware/verify.py</pre>
   <p class="fine">The verifier records exact tool versions, source revision, timestamp, commands, gate results, and evidence paths. A skipped gate remains SKIPPED. Generated reports never advance the design to assembled, bench-tested, field-tested, or production-validated status.</p>
-  <div class="actions"><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/ASSEMBLY_AND_BRINGUP.md">Assembly and bring-up</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/ENGINEERING_AUDIT_2026-08-11.md">Baseline audit</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/manufacturing/fabrication_manifest.json">Fabrication manifest</a></div>
+  <div class="actions"><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/BUILD.md">Build guide</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/ASSEMBLY_AND_BRINGUP.md">Assembly and bring-up</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/ENGINEERING_AUDIT_2026-08-11.md">Baseline audit</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/manufacturing/fabrication_manifest.json">Fabrication manifest</a></div>
 </section>
 
 <section class="ru" id="russian" lang="ru">
@@ -97,7 +97,7 @@ python hardware/verify.py</pre>
   <div class="status"><strong>ГОТОВ К ПЕРВОМУ ФИЗИЧЕСКОМУ ПРОТОТИПУ — НЕ ПРОВЕРЕН ДЛЯ СЕРИЙНОГО ПРОИЗВОДСТВА</strong>Физическая Rev C ещё не собрана. Воспроизводимо проходят ERC, DRC, экспорт производства, компиляция прошивки и CAD-проверки коллизий. RF-характеристики, надёжность, нормативное соответствие и производственный выход не подтверждены.</div>
   <p class="lede">Rev C использует ESP32-S3-WROOM-1-N16R8, E07-900M10S, E28-2G4M12SX/SX1281, проверяемый при приёмке RX5808-2012-12P, SAM-M10Q-00B, Molex 104031-0811, защищённый аккумулятор и зарядный тракт. Диапазоны 2.4/5.8 ГГц дают только наблюдение энергии/RSSI, а не распознавание протокола. BLE Remote ID экспериментален и не имеет тестов на соответствие ASTM/ASD-STAN.</p>
   <p>Rev B и Rev A — несовместимые исторические версии, которые нельзя заказывать. Готовые бинарники v0.6.1 предназначены для старой ESP32 DevKit и несовместимы с Rev C. Текущая конфигурация: <code>esp32s3_rev_c_passive</code>.</p>
-  <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c">Документация Rev C</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Чек-лист прототипа</a></div>
+  <div class="actions"><a class="btn primary" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/BUILD.md">Сборка Rev C</a><a class="btn" href="https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md">Чек-лист прототипа</a></div>
 </section>
 
 <footer>SkySweep32 is licensed under GNU GPL v3. Canonical Rev C is passive hardware. Local radio, privacy, aviation, and data laws still apply.</footer>

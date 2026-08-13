@@ -5,7 +5,7 @@
 > Указанные STL — концептуальная геометрия, а не корпус с проверенной посадкой.
 > Зазоры PCB/модулей, OLED, доступ USB и microSD, антенные разъёмы, порядок
 > сборки и стойкость к среде не подтверждены. IP-рейтинг отсутствует. См.
-> [статус legacy](../../hardware/LEGACY_REV_A_STATUS.md).
+> [статус legacy](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/LEGACY_REV_A_STATUS.md).
 
 В этом документе описываются рекомендованные дизайны корпусов для различных уровней развития проекта SkySweep32 (пассивный обнаружитель дронов). Эти концепты послужат базой для инженеров и мейкеров при проектировании STL моделей под конкретные задачи и локации.
 
@@ -59,6 +59,6 @@
 
 | Файл | Статус |
 |------|--------|
-| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Концепт Rev A; посадка не проверена |
-| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Концепт Rev A; отверстия/зазоры не проверены |
-| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Концепт Rev A; подтверждён только синтаксис KiCad |
+| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/enclosures/skysweep32_pro_case_bottom.stl) | Концепт Rev A; посадка не проверена |
+| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/enclosures/skysweep32_pro_case_lid.stl) | Концепт Rev A; отверстия/зазоры не проверены |
+| [`hardware/skysweep32_pro.kicad_pcb`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/skysweep32_pro.kicad_pcb) | Концепт Rev A; подтверждён только синтаксис KiCad |

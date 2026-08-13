@@ -156,6 +156,7 @@ def main() -> int:
 
     command([sys.executable, str(ROOT / "scripts" / "generate_rev_c_pinmap.py"), "--check"])
     command([sys.executable, str(ROOT / "scripts" / "generate_dashboard.py"), "--check"])
+    command([sys.executable, str(REV / "verify_schematic_parity.py")], cwd=REV)
     kicad_command([
         str(kicad), "sch", "erc", "--severity-error", "--severity-warning",
         "--exit-code-violations", "--output", str(VALIDATION / "erc.rpt"), str(SCHEMATIC),
@@ -229,6 +230,7 @@ def main() -> int:
         "commands": {
             "pin_contract": "python scripts/generate_rev_c_pinmap.py --check",
             "dashboard_embed": "python scripts/generate_dashboard.py --check",
+            "schematic_parity": "python hardware/rev_c/verify_schematic_parity.py",
             "erc": "kicad-cli sch erc --severity-error --severity-warning --exit-code-violations",
             "drc": "kicad-cli pcb drc --refill-zones --severity-error --severity-warning --exit-code-violations",
             "pcba": "kicad-cli pcb export step --force",
@@ -239,6 +241,7 @@ def main() -> int:
         "gates": {
             "pin_contract": "PASS",
             "dashboard_embed": "PASS",
+            "schematic_pin_to_net_parity": "PASS",
             "erc_zero_errors_warnings": "PASS",
             "erc_no_globally_ignored_checks": "PASS",
             "erc_eight_documented_footprint_filter_exclusions": "PASS",

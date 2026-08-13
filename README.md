@@ -109,10 +109,12 @@ Skipped gates are recorded as skipped, never as passes.
 ### First-prototype files
 
 - [Rev C engineering README](hardware/rev_c/README.md)
+- [Rev C build guide](hardware/rev_c/BUILD.md)
 - [Fitted BOM](hardware/rev_c/manufacturing/bom_fitted.csv)
 - [Assembly and bring-up](hardware/rev_c/ASSEMBLY_AND_BRINGUP.md)
 - [Physical validation checklist](hardware/rev_c/PROTOTYPE_VALIDATION_CHECKLIST.md)
 - [Mechanical drawing](hardware/rev_c/enclosure/rev_c_mechanical_drawing.svg)
+- [Evidence roadmap](hardware/rev_c/ROADMAP.md)
 - [Fabrication manifest](hardware/rev_c/manufacturing/fabrication_manifest.json)
 
 These files support one engineering prototype spin. They are not a

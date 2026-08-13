@@ -46,23 +46,53 @@ def apply_dnp_flags(path: Path, references: set[str]) -> None:
     if missing:
         raise RuntimeError(f"could not apply native DNP flags: {', '.join(sorted(missing))}")
     path.write_text(separator.join(chunks), encoding="utf-8")
-def sync_project_erc_exclusions(schematic_path: Path, project_path: Path) -> None:
-    """Regenerate the eight narrow footprint-filter exclusions with current UUIDs."""
-    symbol_chunks = schematic_path.read_text(encoding="utf-8").split("\n\t(symbol\n")[1:]
+
+
+def promote_labels_to_global(path: Path) -> None:
+    """Turn correctly oriented local labels into cross-sheet KiCad global labels."""
+    source = path.read_text(encoding="utf-8")
+    promoted, count = re.subn(
+        r'^(\t*)\(label ("[^"]+"\n)',
+        r'\1(global_label \2\1\t(shape input)\n',
+        source,
+        flags=re.MULTILINE,
+    )
+    if not count:
+        raise RuntimeError(f"could not find generated labels in {path}")
+    path.write_text(promoted, encoding="utf-8")
+
+
+def hide_metadata_fields(path: Path) -> None:
+    """Retain sourcing fields for BOM export without cluttering human drawings."""
+    source = path.read_text(encoding="utf-8")
+    hidden, count = re.subn(
+        r'(?ms)^(\t\t\(property "(?:MPN|Manufacturer|Datasheet)" .*?\n\t\t\t\(effects\n.*?)(\n\t\t\t\)\n\t\t\))',
+        r'\1\n\t\t\t\t(hide yes)\2',
+        source,
+    )
+    if not count:
+        raise RuntimeError(f"could not find component sourcing fields in {path}")
+    path.write_text(hidden, encoding="utf-8")
+def sync_project_erc_exclusions(schematic_paths: list[Path], project_path: Path) -> None:
+    """Regenerate narrow footprint-filter exclusions with current sheet UUIDs."""
     symbols: dict[str, tuple[int, int, str]] = {}
-    for chunk in symbol_chunks:
-        reference = re.search(r'\n\t\t\(property "Reference" "([^"]+)"', chunk)
-        position = re.search(r"\n\t\t\(at (-?[\d.]+) (-?[\d.]+)", chunk)
-        uuid = re.search(r'\n\t\t\(uuid "([^"]+)"\)', chunk)
-        if not reference or reference.group(1) not in ERC_EXCLUSION_COMMENTS:
-            continue
-        if not position or not uuid:
-            raise RuntimeError(f"could not read exclusion identity for {reference.group(1)}")
-        symbols[reference.group(1)] = (
-            round(float(position.group(1)) * 10000),
-            round(float(position.group(2)) * 10000),
-            uuid.group(1),
-        )
+    for schematic_path in schematic_paths:
+        symbol_chunks = schematic_path.read_text(encoding="utf-8").split("\n\t(symbol\n")[1:]
+        for chunk in symbol_chunks:
+            reference = re.search(r'\n\t\t\(property "Reference" "([^"]+)"', chunk)
+            position = re.search(r"\n\t\t\(at (-?[\d.]+) (-?[\d.]+)", chunk)
+            uuid = re.search(r'\n\t\t\(uuid "([^"]+)"\)', chunk)
+            if not reference or reference.group(1) not in ERC_EXCLUSION_COMMENTS:
+                continue
+            if not position or not uuid:
+                raise RuntimeError(
+                    f"could not read exclusion identity for {reference.group(1)}"
+                )
+            symbols[reference.group(1)] = (
+                round(float(position.group(1)) * 10000),
+                round(float(position.group(2)) * 10000),
+                uuid.group(1),
+            )
     missing = ERC_EXCLUSION_COMMENTS.keys() - symbols.keys()
     if missing:
         raise RuntimeError(f"could not find ERC exclusion symbols: {', '.join(sorted(missing))}")
@@ -91,14 +121,70 @@ def sync_project_erc_exclusions(schematic_path: Path, project_path: Path) -> Non
 
 
 
+SHEET_FILES = {
+    "power": HERE / "01_power.kicad_sch",
+    "control": HERE / "02_control_and_alerts.kicad_sch",
+    "rf24": HERE / "03_rf_2g4_subghz.kicad_sch",
+    "rf58": HERE / "04_rf_5g8.kicad_sch",
+    "peripherals": HERE / "05_gnss_storage_display.kicad_sch",
+}
+
+
+
+SHEET_TRANSFORMS = {
+    "01_power": (1.0, 1.0, 0.0, 0.0),
+    "02_control_and_alerts": (1.0, 1.0, 0.0, 0.0),
+    "03_rf_2g4_subghz": (1.0, 1.0, 0.0, 0.0),
+    "04_rf_5g8": (1.0, 1.0, 0.0, 0.0),
+    "05_gnss_storage_display": (1.0, 1.0, 0.0, 0.0),
+}
+def set_title_block(sch: ksa.Schematic, title: str, page: str) -> None:
+    sch.set_title_block(
+        title=title,
+        date="2026-08-12",
+        rev="C-PROTOTYPE",
+        company="SkySweep32 Project",
+        comments={
+            1: "PASSIVE RECEIVE/ENERGY OBSERVATION ONLY",
+            2: "READY FOR FIRST PROTOTYPE / NOT PRODUCTION VALIDATED",
+            3: page,
+        },
+    )
+
+
 def generate() -> None:
     dnp_references: set[str] = set()
+    generated_sheets: list[Path] = []
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     os.environ["KICAD_SYMBOL_DIR"] = str(SYMBOL_DIR)
     cache = ksa.get_symbol_cache()
     cache.clear_cache()
     cache.discover_libraries([str(SYMBOL_DIR)])
-    sch = ksa.create_schematic("SkySweep32 Rev C Passive Monitor")
+    root = ksa.create_schematic("SkySweep32 Rev C Passive Monitor")
+    sch = root
+    current_path = SCHEMATIC
+    sheet_component_index = 0
+
+    def start_sheet(path: Path, title: str) -> None:
+        nonlocal sch, current_path, dnp_references, sheet_component_index
+        sch = ksa.create_schematic(title)
+        current_path = path
+        dnp_references = set()
+        sheet_component_index = 0
+
+    def finish_sheet(title: str, page: str) -> None:
+        sch.add_text(title.upper(), position=(20, 18), size=1.8)
+        sch.add_text(
+            "Named global labels are the reviewed inter-sheet net contract.",
+            position=(20, 22),
+            size=1.0,
+        )
+        set_title_block(sch, title, page)
+        sch.save(current_path)
+        apply_dnp_flags(current_path, dnp_references)
+        hide_metadata_fields(current_path)
+        promote_labels_to_global(current_path)
+        generated_sheets.append(current_path)
 
     def component(
         lib_id: str,
@@ -113,11 +199,16 @@ def generate() -> None:
         rotation: float = 0,
         dnp: bool = False,
     ):
+        nonlocal sheet_component_index
+        # Preserve enough clearance for labels on opposite-side module pins.
+        column, row = divmod(sheet_component_index, 5)
+        layout_position = (48.0 + row * 34.0, 62.0 + column * 30.0)
+        sheet_component_index += 1
         part = sch.components.add(
             lib_id=lib_id,
             reference=ref,
             value=value,
-            position=position,
+            position=layout_position,
             footprint=footprint,
             rotation=rotation,
         )
@@ -139,13 +230,12 @@ def generate() -> None:
             raise ValueError(f"No pin {ref}.{number}")
         if part.rotation != 0:
             raise ValueError(f"Connection helper requires an unrotated symbol: {ref}")
-        # kicad-sch-api 0.5.6 mirrors the KiCad symbol-local Y axis when its
-        # pin= convenience is used. Calculate KiCad's screen-coordinate
-        # transform explicitly so labels and no-connect flags land on the
-        # intended numbered pins rather than vertically mirrored neighbors.
+        # Translation keeps the reviewed symbol-to-pin geometry unchanged.
         return (part.position.x + pin.position.x, part.position.y - pin.position.y)
 
     def label(ref: str, pin: str, net: str) -> None:
+        # Component positions are transformed into the readable sheet space, so
+        # the underlying pin coordinates already include that transform.
         sch.add_label(net, position=pin_position(ref, pin), size=1.0)
 
     def no_connect(ref: str, pin: str) -> None:
@@ -215,13 +305,8 @@ def generate() -> None:
         label(ref, "1", a)
         label(ref, "2", b)
 
-    # Sheet annotations establish a readable functional hierarchy without
-    # introducing duplicated cross-sheet power and interface definitions.
-    sch.add_text("USB-C, PROTECTED BATTERY, POWER PATH AND REGULATORS", position=(35, 25), size=1.6)
-    sch.add_text("ESP32-S3 CONTROL, PROGRAMMING AND USER I/O", position=(105, 25), size=1.6)
-    sch.add_text("PASSIVE RF RECEIVERS", position=(35, 125), size=1.6)
-    sch.add_text("GNSS, STORAGE AND REMOVABLE DISPLAY", position=(105, 125), size=1.6)
-    sch.add_text("READY FOR FIRST PROTOTYPE — NOT PRODUCTION VALIDATED", position=(105, 202), size=1.4)
+
+    start_sheet(SHEET_FILES["power"], "01 — USB, Battery and Power")
 
     # USB-C and protection.
     component(
@@ -461,6 +546,9 @@ def generate() -> None:
     component("power:PWR_FLAG", "#FLG03", "PWR_FLAG", (75, 34), "")
     label("#FLG03", "1", "GND")
 
+    finish_sheet("01 — USB, Battery and Power", "Sheet 1 of 5")
+    start_sheet(SHEET_FILES["control"], "02 — ESP32-S3 Control and Alerts")
+
     # MCU and programming.
     mcu = manifest["mcu"]
     component(
@@ -541,6 +629,11 @@ def generate() -> None:
         component("Connector:TestPoint", ref, net, pos, "TestPoint:TestPoint_Pad_D1.0mm", dnp=True)
         label(ref, "1", net)
 
+
+    control_sch = sch
+    control_path = current_path
+    control_dnp_references = dnp_references
+    start_sheet(SHEET_FILES["rf24"], "03 — 2.4 GHz and Sub-GHz Receivers")
     # Exact passive RF modules. Connector symbols expose every manufacturer pad
     # number; footprints encode the physical land patterns.
     component(
@@ -600,6 +693,9 @@ def generate() -> None:
     add_cap("C10", "10u", (80, 183), "3V3", "Capacitor_SMD:C_0805_2012Metric")
     add_cap("C11", "100n", (87, 183), "3V3")
 
+    finish_sheet("03 — 2.4 GHz and Sub-GHz Receivers", "Sheet 3 of 5")
+    start_sheet(SHEET_FILES["rf58"], "04 — 5.8 GHz Receiver")
+
     component(
         "Connector_Generic:Conn_02x06_Odd_Even",
         "RF3",
@@ -650,6 +746,9 @@ def generate() -> None:
     )
     label("C26", "1", "SYS_5V")
     label("C26", "2", "GND")
+
+    finish_sheet("04 — 5.8 GHz Receiver", "Sheet 4 of 5")
+    start_sheet(SHEET_FILES["peripherals"], "05 — GNSS, Storage and Display")
 
     # GNSS with the exact 20-pad u-blox pin contract.
     component(
@@ -715,6 +814,11 @@ def generate() -> None:
         label("J3", pin, net)
     add_cap("C16", "10u", (178, 151), "3V3", "Capacitor_SMD:C_0805_2012Metric")
 
+    finish_sheet("05 — GNSS, Storage and Display", "Sheet 5 of 5")
+    sch = control_sch
+    current_path = control_path
+    dnp_references = control_dnp_references
+
     # Local alerts. The flyback diodes return to the respective positive rail;
     # gate pull-downs guarantee off state during reset.
     component(
@@ -765,22 +869,63 @@ def generate() -> None:
     label("D4", "1", "SYS_5V")
     label("D4", "2", "VIBRATION_DRAIN")
 
-    # Project metadata used in title block and BOM review.
-    sch.set_title_block(
-        title="SkySweep32 Rev C Passive Monitor",
-        date="2026-08-11",
-        rev="C-PROTOTYPE",
-        company="SkySweep32 Project",
-        comments={
-            1: "PASSIVE RECEIVE/ENERGY OBSERVATION ONLY",
-            2: "READY FOR FIRST PROTOTYPE / NOT PRODUCTION VALIDATED",
-            3: "Generated from reviewed exact-part contract",
-        },
+    finish_sheet("02 — ESP32-S3 Control and Alerts", "Sheet 2 of 5")
+
+    root.add_text("SkySweep32 Rev C Passive Monitor", position=(24, 24), size=2.2)
+    root.add_text(
+        "DESIGN OVERVIEW — PASSIVE RECEIVE / ENERGY OBSERVATION ONLY",
+        position=(24, 30),
+        size=1.5,
     )
-    sch.save(SCHEMATIC)
-    apply_dnp_flags(SCHEMATIC, dnp_references)
-    sync_project_erc_exclusions(SCHEMATIC, PROJECT)
-    print(f"[OK] Wrote {SCHEMATIC}")
+    root.add_text(
+        "READY FOR FIRST PHYSICAL PROTOTYPE — NOT PRODUCTION VALIDATED",
+        position=(24, 35),
+        size=1.2,
+    )
+    for name, filename, position, description in (
+        (
+            "01 — USB, Battery and Power",
+            "01_power.kicad_sch",
+            (22, 48),
+            "USB-C protection, charger/power path, fuel gauge, 5 V and 3.3 V rails",
+        ),
+        (
+            "02 — ESP32-S3 Control and Alerts",
+            "02_control_and_alerts.kicad_sch",
+            (112, 48),
+            "ESP32-S3, native USB, reset/boot/user controls, test points and alerts",
+        ),
+        (
+            "03 — 2.4 GHz and Sub-GHz Receivers",
+            "03_rf_2g4_subghz.kicad_sch",
+            (22, 105),
+            "E28/SX1281 and E07/CC1101 receiver modules and J5 antenna interface",
+        ),
+        (
+            "04 — 5.8 GHz Receiver",
+            "04_rf_5g8.kicad_sch",
+            (112, 105),
+            "RX5808 selected-channel RSSI receiver and J7 antenna interface",
+        ),
+        (
+            "05 — GNSS, Storage and Display",
+            "05_gnss_storage_display.kicad_sch",
+            (67, 162),
+            "SAM-M10Q GNSS, microSD, and keyed OLED I2C harness",
+        ),
+    ):
+        root.add_sheet(name, filename, position, (70, 32), page_number="1")
+        root.add_text(description, position=(position[0] + 2, position[1] + 22), size=0.9)
+    root.add_text(
+        "Electrical contract: named global labels are attached to reviewed numbered pins. "
+        "Exact MPNs and firmware GPIO contract: hardware_manifest.json.",
+        position=(24, 205),
+        size=1.0,
+    )
+    set_title_block(root, "SkySweep32 Rev C Passive Monitor", "Sheet 0 — System Overview")
+    root.save(SCHEMATIC)
+    sync_project_erc_exclusions([SCHEMATIC, *generated_sheets], PROJECT)
+    print(f"[OK] Wrote {SCHEMATIC} and {len(generated_sheets)} functional sheets")
 
 
 if __name__ == "__main__":

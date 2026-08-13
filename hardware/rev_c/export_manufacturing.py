@@ -68,6 +68,15 @@ def write_accessories() -> None:
         writer.writerow(["Refs", "Qty", "Manufacturer", "MPN_or_standard", "Variant", "Description"])
         writer.writerows(rows)
 
+def strip_trailing_whitespace(path: Path) -> None:
+    """Normalize KiCad SVG output so generated artifacts pass repository checks."""
+    path.write_text(
+        "\n".join(line.rstrip() for line in path.read_text(encoding="utf-8").splitlines()) + "\n",
+        encoding="utf-8",
+    )
+
+
+
 
 def write_deterministic_zip(files: list[Path], destination: Path) -> None:
     with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
@@ -87,7 +96,8 @@ def main() -> int:
     GERBERS.mkdir()
     for name in (
         "bom.csv", "bom_fitted.csv", "positions.csv", "assembly_items.csv",
-        "assembly_drawing.pdf", "schematic.pdf", "drill_report.rpt",
+        "assembly_drawing.pdf", "assembly_top.svg", "assembly_bottom.svg",
+        "schematic.pdf", "drill_report.rpt",
         "skysweep32_rev_c_gerbers.zip", "fabrication_manifest.json",
     ):
         (OUT / name).unlink(missing_ok=True)
@@ -117,6 +127,21 @@ def main() -> int:
         "--layers", "F.Fab,B.Fab,Edge.Cuts", "--mode-multipage", "--black-and-white",
         "--sketch-pads-on-fab-layers", "--crossout-DNP-footprints-on-fab-layers",
     )
+    svg_options = (
+        "--mode-single", "--fit-page-to-board", "--exclude-drawing-sheet",
+        "--black-and-white", "--sketch-pads-on-fab-layers",
+        "--crossout-DNP-footprints-on-fab-layers",
+    )
+    run(
+        "pcb", "export", "svg", str(BOARD), "--output", str(OUT / "assembly_top.svg"),
+        "--layers", "F.Fab,F.Silkscreen,Edge.Cuts", *svg_options,
+    )
+    run(
+        "pcb", "export", "svg", str(BOARD), "--output", str(OUT / "assembly_bottom.svg"),
+        "--layers", "B.Fab,B.Silkscreen,Edge.Cuts", "--mirror", *svg_options,
+    )
+    strip_trailing_whitespace(OUT / "assembly_top.svg")
+    strip_trailing_whitespace(OUT / "assembly_bottom.svg")
     run(
         "sch", "export", "pdf", str(SCHEMATIC), "--output", str(OUT / "schematic.pdf"),
         "--black-and-white", "--no-background-color",

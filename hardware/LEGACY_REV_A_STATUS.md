@@ -25,11 +25,13 @@ connectivity items in that generated file. It does not establish correct module
 pinouts, safe power design, RF performance, mechanical fit, manufacturability or
 assembled operation.
 
-## Rev B
+## Subsequent revisions
 
-A requirements-first Rev B redesign is in progress. It will use a native KiCad
-schematic as the electrical source of truth, locked module variants, a
-machine-readable pin manifest, CAD-derived previews and explicit PASS / FAIL /
-UNVERIFIED validation reports. Until those artifacts and checks exist, no
-SkySweep32 Pro PCB or enclosure in this repository should be ordered as a
-validated design.
+Rev B was also retired as a failed/unverified historical baseline; it is not an
+in-progress redesign and must not be ordered. Rev C is the only current
+engineering prototype design. Its source, exact procurement data, firmware
+target, and CAD evidence are under [`rev_c/`](rev_c/).
+
+Rev A and Rev B remain incompatible with Rev C. Their PCB files, enclosures,
+BOMs, pin maps, generators, and DevKit firmware are historical evidence only;
+they must not be mixed into a Rev C order or build.

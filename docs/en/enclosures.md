@@ -6,7 +6,7 @@
 > Their PCB/module clearances, OLED alignment, USB and microSD access, antenna
 > hardware, assembly sequence and environmental performance are unverified.
 > They are explicitly not IP-rated. See the
-> [legacy status](../../hardware/LEGACY_REV_A_STATUS.md).
+> [legacy status](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/LEGACY_REV_A_STATUS.md).
 
 This document outlines the recommended enclosure designs for the different tiers of the SkySweep32 passive drone detector. We provide conceptual guidelines so that makers and field engineers can design and 3D print cases suited for their specific environment.
 
@@ -61,6 +61,6 @@ validated print/assembly files:
 
 | File | Status |
 |------|--------|
-| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](../../hardware/enclosures/skysweep32_pro_case_bottom.stl) | Rev A concept; fit unverified |
-| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](../../hardware/enclosures/skysweep32_pro_case_lid.stl) | Rev A concept; openings/clearance unverified |
-| [`hardware/skysweep32_pro.kicad_pcb`](../../hardware/skysweep32_pro.kicad_pcb) | Rev A concept; KiCad syntax compatible only |
+| [`hardware/enclosures/skysweep32_pro_case_bottom.stl`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/enclosures/skysweep32_pro_case_bottom.stl) | Rev A concept; fit unverified |
+| [`hardware/enclosures/skysweep32_pro_case_lid.stl`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/enclosures/skysweep32_pro_case_lid.stl) | Rev A concept; openings/clearance unverified |
+| [`hardware/skysweep32_pro.kicad_pcb`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/skysweep32_pro.kicad_pcb) | Rev A concept; KiCad syntax compatible only |

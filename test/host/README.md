@@ -19,6 +19,19 @@ This compiles the real parser sources with **AddressSanitizer + UndefinedBehavio
 and runs the suite. Any out-of-bounds read/write on a malformed frame aborts the
 process, so the "malicious frame" cases double as overflow regression guards.
 
+### Windows
+
+Use a Linux-hosted compiler through WSL so the suite retains its ASan/UBSan
+coverage:
+
+```powershell
+wsl -d Ubuntu-24.04 -- bash -lc "cd /mnt/f/Projects/skysweep32/test/host && g++ --version && make clean && make"
+```
+
+The command requires Ubuntu's `build-essential` package. Native MinGW toolchains
+can compile these sources, but their sanitizer runtimes are not consistently
+available; do not silently drop the sanitizer flags to substitute that result.
+
 Coverage includes:
 
 - CRSF: hostile length bytes (`0xFE`/`0xFF`) and over-max payloads are rejected

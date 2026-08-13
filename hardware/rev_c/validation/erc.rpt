@@ -1,7 +1,17 @@
-ERC report (2026-08-13T00:02:41, Encoding UTF8)
+ERC report (2026-08-13T12:03:19, Encoding UTF8)
 Report includes: Errors, Warnings
 
 ***** Sheet /
+
+***** Sheet /01 — USB, Battery and Power/
+
+***** Sheet /03 — 2.4 GHz and Sub-GHz Receivers/
+
+***** Sheet /05 — GNSS, Storage and Display/
+
+***** Sheet /02 — ESP32-S3 Control and Alerts/
+
+***** Sheet /04 — 5.8 GHz Receiver/
 
  ** ERC messages: 0  Errors 0  Warnings 0
 

@@ -5,7 +5,7 @@
 > Эта страница описывает исторический концепт, а не проверенные файлы
 > производства. KiCad разбирает PCB, но электрическая схема, generic footprints
 > модулей, РЧ-тракты, питание, корпус и работа собранного устройства не
-> подтверждены. См. [`hardware/LEGACY_REV_A_STATUS.md`](../../hardware/LEGACY_REV_A_STATUS.md).
+> подтверждены. См. [`hardware/LEGACY_REV_A_STATUS.md`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/LEGACY_REV_A_STATUS.md).
 
 > **Уровень**: 🔴 Pro (Sentinel) — Полная сборка: ESP32 + NRF24 + CC1101 + RX5808 + OLED + GPS + LoRa + SD Card  
 > **Размер платы**: 120 × 80 мм, 2 слоя FR4, 1.6 мм  

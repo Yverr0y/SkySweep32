@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/erc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-08-13T00:02:44",
+    "date": "2026-08-13T12:03:22",
     "ignored_checks": [],
     "included_severities": [
         "exclusion"
@@ -10,37 +10,20 @@
     "sheets": [
         {
             "path": "/",
-            "uuid_path": "/30f1f7e4-d1cb-42df-abd4-9251eece2be0",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c",
             "violations": [
                 {
-                    "comment": "J6 uses the reviewed side-entry JST PH footprint; the stock generic connector filter only matches underscore-prefixed connector names.",
+                    "comment": "U6 uses the reviewed MAX17048 TDFN footprint while its nine electrical lands are represented by a generic numbered symbol.",
                     "description": "Assigned footprint doesn't match footprint filters",
                     "excluded": true,
                     "items": [
                         {
-                            "description": "Символ J6 [Conn_01x02]",
+                            "description": "Символ U6 [Conn_01x09]",
                             "pos": {
-                                "x": 0.1778,
-                                "y": 1.0795
+                                "x": 0.8255,
+                                "y": 1.8161
                             },
-                            "uuid": "a18989ee-39d0-4c76-87cb-cd21cbee6963"
-                        }
-                    ],
-                    "severity": "warning",
-                    "type": "footprint_filter"
-                },
-                {
-                    "comment": "RF1 uses the exact E28-2G4M12SX module footprint; the stock generic 2x07 connector filter is intentionally narrower.",
-                    "description": "Assigned footprint doesn't match footprint filters",
-                    "excluded": true,
-                    "items": [
-                        {
-                            "description": "Символ RF1 [Conn_02x07_Odd_Even]",
-                            "pos": {
-                                "x": 0.3175,
-                                "y": 1.5748
-                            },
-                            "uuid": "4a9318ec-9cc4-4dc5-8299-57afe647aed7"
+                            "uuid": "935831be-8644-4c84-a98b-c849b596d01e"
                         }
                     ],
                     "severity": "warning",
@@ -54,10 +37,44 @@
                         {
                             "description": "Символ F1 [Polyfuse]",
                             "pos": {
-                                "x": 0.3937,
-                                "y": 0.4064
+                                "x": 1.4986,
+                                "y": 0.6223
                             },
-                            "uuid": "155cc106-406b-458a-bf12-982e92609439"
+                            "uuid": "f5473e9d-eef5-4103-9309-ece84c607826"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_filter"
+                },
+                {
+                    "comment": "J6 uses the reviewed side-entry JST PH footprint; the stock generic connector filter only matches underscore-prefixed connector names.",
+                    "description": "Assigned footprint doesn't match footprint filters",
+                    "excluded": true,
+                    "items": [
+                        {
+                            "description": "Символ J6 [Conn_01x02]",
+                            "pos": {
+                                "x": 1.8415,
+                                "y": 0.9144
+                            },
+                            "uuid": "935f6b1f-1c8d-4d1d-9b27-0cba94bf0361"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_filter"
+                },
+                {
+                    "comment": "RF1 uses the exact E28-2G4M12SX module footprint; the stock generic 2x07 connector filter is intentionally narrower.",
+                    "description": "Assigned footprint doesn't match footprint filters",
+                    "excluded": true,
+                    "items": [
+                        {
+                            "description": "Символ RF1 [Conn_02x07_Odd_Even]",
+                            "pos": {
+                                "x": 0.4826,
+                                "y": 0.6223
+                            },
+                            "uuid": "953568bd-d985-44eb-9684-6a6244453b22"
                         }
                     ],
                     "severity": "warning",
@@ -71,44 +88,10 @@
                         {
                             "description": "Символ RF2 [Conn_02x11_Odd_Even]",
                             "pos": {
-                                "x": 0.635,
-                                "y": 1.5748
+                                "x": 1.4986,
+                                "y": 0.6223
                             },
-                            "uuid": "99ca7a25-312e-4727-b2b0-6f513257d667"
-                        }
-                    ],
-                    "severity": "warning",
-                    "type": "footprint_filter"
-                },
-                {
-                    "comment": "U6 uses the reviewed MAX17048 TDFN footprint while its nine electrical lands are represented by a generic numbered symbol.",
-                    "description": "Assigned footprint doesn't match footprint filters",
-                    "excluded": true,
-                    "items": [
-                        {
-                            "description": "Символ U6 [Conn_01x09]",
-                            "pos": {
-                                "x": 0.7747,
-                                "y": 1.1049
-                            },
-                            "uuid": "7e01ad43-1adc-415b-9aeb-ff5bab414e5c"
-                        }
-                    ],
-                    "severity": "warning",
-                    "type": "footprint_filter"
-                },
-                {
-                    "comment": "RF3 uses the procurement-qualified RX5808-2012-12P footprint; the stock generic 2x06 connector filter is intentionally narrower.",
-                    "description": "Assigned footprint doesn't match footprint filters",
-                    "excluded": true,
-                    "items": [
-                        {
-                            "description": "Символ RF3 [Conn_02x06_Odd_Even]",
-                            "pos": {
-                                "x": 0.9144,
-                                "y": 1.5748
-                            },
-                            "uuid": "8f9ea105-4300-4710-b06e-674c68733dad"
+                            "uuid": "2cee2a75-f028-498d-800f-5aefcf6eca3f"
                         }
                     ],
                     "severity": "warning",
@@ -122,10 +105,10 @@
                         {
                             "description": "Символ GPS1 [Conn_02x10_Odd_Even]",
                             "pos": {
-                                "x": 1.0795,
-                                "y": 1.5748
+                                "x": 0.4826,
+                                "y": 0.6223
                             },
-                            "uuid": "1d89c5c6-b6cb-4464-854e-4c33975f50bc"
+                            "uuid": "769d9afc-ac89-4a94-9ef8-3fc2428c108d"
                         }
                     ],
                     "severity": "warning",
@@ -139,16 +122,58 @@
                         {
                             "description": "Символ J3 [Conn_01x04]",
                             "pos": {
-                                "x": 1.6891,
-                                "y": 1.3843
+                                "x": 1.4986,
+                                "y": 1.2192
                             },
-                            "uuid": "cc6b9c3c-143a-4952-ac8e-b7edf88da6c1"
+                            "uuid": "56413e64-9c6b-4587-8d1a-b177ca118bf2"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_filter"
+                },
+                {
+                    "comment": "RF3 uses the procurement-qualified RX5808-2012-12P footprint; the stock generic 2x06 connector filter is intentionally narrower.",
+                    "description": "Assigned footprint doesn't match footprint filters",
+                    "excluded": true,
+                    "items": [
+                        {
+                            "description": "Символ RF3 [Conn_02x06_Odd_Even]",
+                            "pos": {
+                                "x": 0.4826,
+                                "y": 0.6223
+                            },
+                            "uuid": "650b2c8e-2ea7-4c41-bdb2-8c210b1715ea"
                         }
                     ],
                     "severity": "warning",
                     "type": "footprint_filter"
                 }
             ]
+        },
+        {
+            "path": "/01 — USB, Battery and Power/",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c/a7973572-f643-4252-b536-53bef7c316b1",
+            "violations": []
+        },
+        {
+            "path": "/03 — 2.4 GHz and Sub-GHz Receivers/",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c/d2f0e8ec-7d1b-412e-82fe-c057f1839951",
+            "violations": []
+        },
+        {
+            "path": "/05 — GNSS, Storage and Display/",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c/fb9a5cd6-d8ec-4c68-9cc8-93727f091e60",
+            "violations": []
+        },
+        {
+            "path": "/02 — ESP32-S3 Control and Alerts/",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c/f4f84a5d-0dab-4457-bc27-a7a264c49a5f",
+            "violations": []
+        },
+        {
+            "path": "/04 — 5.8 GHz Receiver/",
+            "uuid_path": "/eea4a693-4a80-47ee-908a-3c84eab7084c/68ace72e-6f0c-4c2d-bd41-f48942448ad2",
+            "violations": []
         }
     ],
     "source": "skysweep32_rev_c.kicad_sch"

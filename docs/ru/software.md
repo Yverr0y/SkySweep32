@@ -1,7 +1,7 @@
 # Руководство по настройке ПО
 > **LEGACY-ПРОФИЛИ DEVKIT v0.6.1.** Распиновка уровней ниже несовместима с Rev C.
 > Для текущей платы собирайте только `esp32s3_rev_c_passive`; см.
-> [документацию Rev C](../../hardware/rev_c/README.md).
+> [документацию Rev C](https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c).
 
 
 ## Быстрый старт

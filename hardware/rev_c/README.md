@@ -55,6 +55,19 @@ circuit and geometry.
 - Optional vibration output parts are DNP and excluded from fitted BOM and
   placement exports.
 
+## Build this revision
+
+Use [BUILD.md](BUILD.md) as the single first-prototype procurement, assembly,
+and source-build path. It links the exact fabrication package, fitted BOM,
+non-PCB accessories, first-power limits, and canonical PlatformIO environment.
+Do not use any Rev A/Rev B document or `v0.6.1` binary for Rev C.
+
+The hierarchy starts at
+[`skysweep32_rev_c.kicad_sch`](skysweep32_rev_c.kicad_sch): overview plus five
+functional sheets for power, control/alerts, 2.4 GHz/sub-GHz, 5.8 GHz, and
+GNSS/storage/display. `verify_schematic_parity.py` proves its named
+reference/pin/net contract against the pre-hierarchy review baseline.
+
 The native KiCad schematic is
 [`skysweep32_rev_c.kicad_sch`](skysweep32_rev_c.kicad_sch). Fresh unexcluded
 ERC evidence is [`validation/erc.rpt`](validation/erc.rpt); the eight narrowly
@@ -126,6 +139,13 @@ envelopes built from referenced drawings. They are not manufacturer precision
 CAD. Standard KiCad models are used only where package geometry was checked.
 CAD collision checks do not replace sample measurement.
 
+## Evidence roadmap
+
+[ROADMAP.md](ROADMAP.md) defines the mandatory first-board measurements and
+the evidence that could justify a later revision. It is deliberately separate
+from the current fabrication package: no future feature is part of Rev C until
+the required evidence exists.
+
 ## Reproducible verification
 
 Requirements are pinned in [`../toolchain.json`](../toolchain.json). From the
@@ -148,6 +168,11 @@ Primary outputs:
 - [`manufacturing/bom_fitted.csv`](manufacturing/bom_fitted.csv)
 - [`manufacturing/assembly_items.csv`](manufacturing/assembly_items.csv)
 - [`manufacturing/positions.csv`](manufacturing/positions.csv)
+- [`manufacturing/assembly_top.svg`](manufacturing/assembly_top.svg) and
+  [`manufacturing/assembly_bottom.svg`](manufacturing/assembly_bottom.svg):
+  primary zoomable fitted-placement/orientation drawings; use
+  `positions.csv` for machine assembly and
+  [`ASSEMBLY_AND_BRINGUP.md`](ASSEMBLY_AND_BRINGUP.md) for the sequence.
 - [`manufacturing/skysweep32_rev_c_gerbers.zip`](manufacturing/skysweep32_rev_c_gerbers.zip)
 
 Do not infer `PROTOTYPE_ASSEMBLED`, `BENCH_TESTED`, `FIELD_TESTED`, or

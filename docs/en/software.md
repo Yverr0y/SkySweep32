@@ -1,7 +1,7 @@
 # Software Configuration Guide
 > **LEGACY v0.6.1 DEVKIT PROFILES.** The tier pin maps below are incompatible
 > with Rev C. For current hardware build only `esp32s3_rev_c_passive`; see the
-> [Rev C README](../../hardware/rev_c/README.md).
+> [Rev C README](https://github.com/bobberdolle1/SkySweep32/tree/master/hardware/rev_c).
 
 
 ## Quick Start

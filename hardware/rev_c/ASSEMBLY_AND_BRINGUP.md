@@ -16,7 +16,9 @@ Use only the files in [`manufacturing/`](manufacturing/). Send the fabricator:
 - both PTH and NPTH drill files from `gerbers/` if the supplier does not accept
   the zip as-is;
 - `bom_fitted.csv` and `positions.csv` for assembly;
-- `assembly_drawing.pdf` and `schematic.pdf` for review.
+- `assembly_top.svg` and `assembly_bottom.svg` for zoomable placement and
+  orientation review;
+- `assembly_drawing.pdf` and `schematic.pdf` for manufacturing review.
 
 Specify 150 × 95 mm, four-layer FR-4, 1.6 mm finished thickness, ENIG, 35 µm
 finished copper, minimum 0.20 mm spacing, minimum 0.20 mm finished drill, and the

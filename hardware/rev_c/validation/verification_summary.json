@@ -2,8 +2,8 @@
   "design": "SkySweep32 Rev C Passive Monitor",
   "maturity": "READY_FOR_FIRST_PROTOTYPE",
   "production_validated": false,
-  "timestamp_utc": "2026-08-12T21:09:39.682537+00:00",
-  "source_revision": "9542a8328e2ef331ea2df5176d78a29f9e3644ce",
+  "timestamp_utc": "2026-08-13T09:13:08.978199+00:00",
+  "source_revision": "d80514805e9fbeda23f438ee71c85e45ca912a69",
   "source_tree_dirty": false,
   "tools": {
     "kicad": "10.0.5",
@@ -16,6 +16,7 @@
   "commands": {
     "pin_contract": "python scripts/generate_rev_c_pinmap.py --check",
     "dashboard_embed": "python scripts/generate_dashboard.py --check",
+    "schematic_parity": "python hardware/rev_c/verify_schematic_parity.py",
     "erc": "kicad-cli sch erc --severity-error --severity-warning --exit-code-violations",
     "drc": "kicad-cli pcb drc --refill-zones --severity-error --severity-warning --exit-code-violations",
     "pcba": "kicad-cli pcb export step --force",
@@ -26,6 +27,7 @@
   "gates": {
     "pin_contract": "PASS",
     "dashboard_embed": "PASS",
+    "schematic_pin_to_net_parity": "PASS",
     "erc_zero_errors_warnings": "PASS",
     "erc_no_globally_ignored_checks": "PASS",
     "erc_eight_documented_footprint_filter_exclusions": "PASS",
@@ -35,7 +37,7 @@
     "mechanical_interference_and_service": "PASS",
     "exact_bom_and_fabrication_exports": "PASS",
     "firmware_build": "PASS",
-    "renders": "SKIPPED"
+    "renders": "PASS"
   },
   "evidence": {
     "erc": "validation/erc.rpt",

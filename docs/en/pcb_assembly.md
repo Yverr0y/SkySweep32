@@ -5,7 +5,7 @@
 > This page documents a historical concept, not validated manufacturing data.
 > KiCad can parse the PCB, but its electrical design, generic module footprints,
 > RF paths, power integrity, enclosure fit and assembled operation have not been
-> validated. See [`hardware/LEGACY_REV_A_STATUS.md`](../../hardware/LEGACY_REV_A_STATUS.md).
+> validated. See [`hardware/LEGACY_REV_A_STATUS.md`](https://github.com/bobberdolle1/SkySweep32/blob/master/hardware/LEGACY_REV_A_STATUS.md).
 
 > **Tier**: 🔴 Pro (Sentinel) — Full build: ESP32 + NRF24 + CC1101 + RX5808 + OLED + GPS + LoRa + SD Card  
 > **PCB Size**: 120 × 80 mm, 2-layer FR4, 1.6 mm  

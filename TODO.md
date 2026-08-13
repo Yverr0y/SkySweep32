@@ -14,7 +14,7 @@ PASS prose.
 - [ ] Perform current-limited first power and record TP1/TP2 rails, startup, current, ripple, and temperature.
 - [ ] Verify native USB enumeration/upload in both cable orientations.
 - [ ] Exercise RESET, BOOT, USER, LED, buzzer, OLED, microSD, and GNSS.
-- [ ] Characterize E01-ML01DP5 RPD response with a controlled 2.4 GHz source.
+- [ ] Characterize E28-2G4M12SX / SX1281 instantaneous-RSSI response with a controlled 2.4 GHz source.
 - [ ] Characterize E07-900M10S RSSI response in the selected 868/915 MHz band.
 - [ ] Run simultaneous-radio/storage/display/GNSS coexistence tests.
 - [ ] Print one enclosure and measure every critical fit/service interface.
